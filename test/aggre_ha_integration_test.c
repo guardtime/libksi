@@ -951,13 +951,14 @@ void Test_HaSign_requestConfigOnly_tcp(CuTest* tc) {
 	int res;
 	KSI_AsyncService *has = NULL;
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
 	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_requestConfigOnly(tc, has);
 
 	KSI_AsyncService_free(has);
@@ -967,13 +968,14 @@ void Test_HaSign_requestConfigOnly_http(CuTest* tc) {
 	int res;
 	KSI_AsyncService *has = NULL;
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
 	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_requestConfigOnly(tc, has);
 
 	KSI_AsyncService_free(has);
@@ -1031,16 +1033,17 @@ static void asyncSigning_requestConfigOnlyUseCallback(CuTest* tc, KSI_AsyncServi
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 		CuAssert(tc, "No handle should be returned.", handle == NULL);
 
-		if (!onHold) {
-			CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+		if (onHold) {
+			if (slept >= KSITEST_ASYNC_NO_RESP_TIMEOUT_MS) {
+				KSI_LOG_debug(ctx, "%s: TIMEOUT.", __FUNCTION__);
+				CuFail(tc, "No response within timeout.");
+			}
 			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
 			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
-			continue;
 		}
-		slept = 0;
 	} while (onHold);
 	CuAssert(tc, "Callback must have been invoked.", callbackCount > 0);
 
@@ -1051,6 +1054,8 @@ void Test_HaSign_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 	int res;
 	KSI_AsyncService *has = NULL;
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
@@ -1060,7 +1065,6 @@ void Test_HaSign_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)dummyCallback);
 	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
 
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_requestConfigOnlyUseCallback(tc, has);
 
 	KSI_AsyncService_free(has);
@@ -1069,6 +1073,8 @@ void Test_HaSign_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 void Test_HaSign_requestConfigOnlyUseCallback_http(CuTest* tc) {
 	int res;
 	KSI_AsyncService *has = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
@@ -1079,28 +1085,28 @@ void Test_HaSign_requestConfigOnlyUseCallback_http(CuTest* tc) {
 	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)dummyCallback);
 	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
 
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_requestConfigOnlyUseCallback(tc, has);
 
 	KSI_AsyncService_free(has);
 }
 
-static void Test_HaSign_verifySubserviceCallbacksDisabled(CuTest* tc) {
+static void asyncSigning_verifySubserviceCallbacksDisabled(CuTest* tc, const char *scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
-	size_t i;
+	int i;
 	KSI_AsyncServiceList *list = NULL;
+
+	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)dummyCallback);
 	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
 
-	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	callbackCount = 0;
 	asyncSigning_requestConfigOnlyUseCallback(tc, has);
 	CuAssert(tc, "Callback must have been invoked.", callbackCount > 0);
@@ -1121,7 +1127,7 @@ static void Test_HaSign_verifySubserviceCallbacksDisabled(CuTest* tc) {
 		res = KSI_AsyncServiceList_elementAt(list, i, &sas);
 		CuAssert(tc, "Unable to sub async service object.", res == KSI_OK && sas != NULL);
 
-		KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+		KSI_LOG_debug(ctx, "%s: subservice %d", __FUNCTION__, i);
 		asyncSigning_requestConfigOnly(tc, sas);
 	}
 	CuAssert(tc, "Callbacks in subservices should be disabled.", callbackCount == 0);
@@ -1129,6 +1135,15 @@ static void Test_HaSign_verifySubserviceCallbacksDisabled(CuTest* tc) {
 	KSI_AsyncService_free(has);
 }
 
+static void Test_HaSign_verifySubserviceCallbacksDisabled_tcp(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_verifySubserviceCallbacksDisabled(tc, TEST_SCHEME_TCP);
+}
+
+static void Test_HaSign_verifySubserviceCallbacksDisabled_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_verifySubserviceCallbacksDisabled(tc, TEST_SCHEME_HTTP);
+}
 
 static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *scheme) {
 	int res;
@@ -1192,7 +1207,10 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *scheme
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (respHandle == NULL) {
-			CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+			if (slept >= KSITEST_ASYNC_NO_RESP_TIMEOUT_MS) {
+				KSI_LOG_debug(ctx, "%s: TIMEOUT (%dms).", __FUNCTION__, KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+				CuFail(tc, "No response within timeout.");
+			}
 			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
@@ -1431,8 +1449,9 @@ CuSuite* HaAggrIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_HaSign_verifySubserviceListOption);
 	SUITE_ADD_TEST(suite, Test_HaSign_noEndpoint_addRequest);
 	SUITE_ADD_TEST(suite, Test_HaSign_exceedMaxNofSubservices);
-	SUITE_ADD_TEST(suite, Test_HaSign_verifySubserviceCallbacksDisabled);
 
+	SUITE_ADD_TEST(suite, Test_HaSign_verifySubserviceCallbacksDisabled_tcp);
+	SUITE_ADD_TEST(suite, Test_HaSign_verifySubserviceCallbacksDisabled_http);
 	SUITE_ADD_TEST(suite, Test_HaSing_verifyOptions_tcp);
 	SUITE_ADD_TEST(suite, Test_HaSing_verifyOptions_http);
 	SUITE_ADD_TEST(suite, Test_HaSing_verifyCacheSizeOption_tcp);
