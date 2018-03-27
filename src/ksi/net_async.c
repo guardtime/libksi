@@ -825,6 +825,13 @@ static void asyncClient_setResponseError(KSI_AsyncClient *c, int state, int err,
 			c->reqCache[i]->errMsg = KSI_Utf8String_ref(errMsg);
 		}
 	}
+
+	if (c->serverConf != NULL && c->serverConf->state == state) {
+		c->serverConf->state = KSI_ASYNC_STATE_ERROR;
+		c->serverConf->err = err;
+		c->serverConf->errExt = extErr;
+		c->serverConf->errMsg = KSI_Utf8String_ref(errMsg);
+	}
 }
 
 static int handleResponse(KSI_AsyncClient *c, void *resp,
