@@ -922,7 +922,7 @@ static void asyncSigning_requestConfigOnly(CuTest* tc, KSI_AsyncService *as) {
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle == NULL) {
-			CuAssert(tc, "No response in during timeout.", slept < (KSITEST_ASYNC_SLEEP_TIME_MS * 10));
+			CuAssert(tc, "No response within timeout.", slept < (KSITEST_ASYNC_SLEEP_TIME_MS * 10));
 			/* There is nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
