@@ -108,6 +108,7 @@ for sofile in %{_libdir}/libksi.so.* ; do echo $sofile >> %{libfiles}; done;
 %{_includedir}/ksi/log.h
 %{_includedir}/ksi/net.h
 %{_includedir}/ksi/net_async.h
+%{_includedir}/ksi/net_ha.h
 %{_includedir}/ksi/net_http.h
 %{_includedir}/ksi/net_tcp.h
 %{_includedir}/ksi/net_file.h
