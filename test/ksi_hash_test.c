@@ -690,6 +690,46 @@ static void testAddToCloseAndReset(CuTest *tc) {
 
 }
 
+void testCreateHashNoContext(CuTest *tc) {
+	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *exp = NULL;
+	int res;
+
+	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &exp);
+
+
+	res = KSI_DataHash_create(NULL, "LAPTOP", 6, KSI_HASHALG_SHA2_256, &hsh);
+	CuAssert(tc, "Unable to create hash with a NULL context.", res == KSI_OK);
+	CuAssert(tc, "Hash values do not match.", KSI_DataHash_equals(hsh, exp));
+
+	KSI_DataHash_free(exp);
+	KSI_DataHash_free(hsh);
+}
+
+void testOpenCloseNoContext(CuTest *tc) {
+	KSI_DataHasher *hsr = NULL;
+	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *exp = NULL;
+	int res;
+
+	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &exp);
+
+	res = KSI_DataHasher_open(NULL, KSI_HASHALG_SHA2_256, &hsr);
+	CuAssert(tc, "Unable to create hasher with a NULL context.", res == KSI_OK);
+
+	res = KSI_DataHasher_add(hsr, "LAPTOP", 6);
+	CuAssert(tc, "Unable to add data to hasher with a NULL context.", res == KSI_OK);
+
+	res = KSI_DataHasher_close(hsr, &hsh);
+	CuAssert(tc, "Unable to close hasher with a NULL context.", res == KSI_OK);
+	CuAssert(tc, "Hash values do not match.", KSI_DataHash_equals(hsh, exp));
+
+	KSI_DataHash_free(exp);
+	KSI_DataHash_free(hsh);
+	KSI_DataHash_free(hsr);
+}
+
+
 CuSuite* KSITest_Hash_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
@@ -717,6 +757,8 @@ CuSuite* KSITest_Hash_getSuite(void) {
 	SUITE_ADD_TEST(suite, testDoubleClose);
 	SUITE_ADD_TEST(suite, testAddToClosed);
 	SUITE_ADD_TEST(suite, testAddToCloseAndReset);
+	SUITE_ADD_TEST(suite, testCreateHashNoContext);
+	SUITE_ADD_TEST(suite, testOpenCloseNoContext);
 
 	return suite;
 }

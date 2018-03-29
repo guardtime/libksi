@@ -99,6 +99,8 @@ extern "C" {
 	 * hasher object.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The KSI context can be NULL, but this will make debugging more difficult and
+	 * 		will reduce performance.
 	 * \see #KSI_DataHasher_add, #KSI_DataHasher_close
 	 */
 	int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher **hasher);
@@ -177,6 +179,8 @@ extern "C" {
 	 * \param[out]	hash			Pointer to the pointer receiving the data hash object.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The KSI context can be NULL, but this will make debugging more difficult and
+	 * 		will reduce performance.
 	 * \see #KSI_DataHash_free
 	 */
 	int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, KSI_HashAlgorithm algo_id, KSI_DataHash **hash);
@@ -218,6 +222,8 @@ extern "C" {
 	 * \param[in]		digest_length	Length of the binary digest value.
 	 * \param[in]		hash			Pointer that will receive pointer to the hash object.
 	 *
+	 * \note The KSI context can be NULL, but this will make debugging more difficult and
+	 * 		will reduce performance.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHash_free, #KSI_DataHash_extract, #KSI_DataHash_fromImprint, #KSI_DataHash_create, #KSI_DataHasher_close
 	 */
@@ -242,6 +248,8 @@ extern "C" {
 	 * \param[in]	imprint_length	Length of the imprint.
 	 * \param[out]	hash			Pointer that will receive pointer to the data hash objet.
 	 *
+	 * \note The KSI context can be NULL, but this will make debugging more difficult and
+	 * 		will reduce performance.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_DataHash_free, #KSI_DataHash_getImprint, #KSI_DataHash_fromDigest
 	 */

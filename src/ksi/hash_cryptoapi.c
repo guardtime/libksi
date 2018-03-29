@@ -253,7 +253,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 	HCRYPTPROV tmp_CSP = 0;
 
 	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || hasher == NULL){
+	if (hasher == NULL){
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
