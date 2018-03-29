@@ -724,9 +724,9 @@ void testOpenCloseNoContext(CuTest *tc) {
 	CuAssert(tc, "Unable to close hasher with a NULL context.", res == KSI_OK);
 	CuAssert(tc, "Hash values do not match.", KSI_DataHash_equals(hsh, exp));
 
+	KSI_DataHasher_free(hsr);
 	KSI_DataHash_free(exp);
 	KSI_DataHash_free(hsh);
-	KSI_DataHash_free(hsr);
 }
 
 
