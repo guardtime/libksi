@@ -1,5 +1,6 @@
 Version 3.18
 
+* IMPROVEMENT: KSI_DataHash and KSI_DataHasher accept NULL as KSI context.
 * IMPROVEMENT: Updated example code in README.md.
 
 Version 3.17

@@ -30,8 +30,8 @@ typedef struct CRYPTO_HASH_CTX_st {
 	HCRYPTHASH pt_hHash;	/**< Hasher object. */
 } CRYPTO_HASH_CTX;
 
-static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt){
-	if (cryptoCtxt != NULL){
+static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt) {
+	if (cryptoCtxt != NULL) {
 		/* All hash objects that have been created by using a specific CSP must be  destroyed before that CSP
 		 * handle is released with the CryptReleaseContext function. */
 		if (cryptoCtxt->pt_hHash) CryptDestroyHash(cryptoCtxt->pt_hHash);
@@ -40,7 +40,7 @@ static void CRYPTO_HASH_CTX_free(CRYPTO_HASH_CTX *cryptoCtxt){
 	}
 }
 
-static int CRYPTO_HASH_CTX_new(CRYPTO_HASH_CTX **cryptoCTX){
+static int CRYPTO_HASH_CTX_new(CRYPTO_HASH_CTX **cryptoCTX) {
 	CRYPTO_HASH_CTX *tmp_crypto_ctx = NULL;
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -95,7 +95,7 @@ static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	/* Hash object. */
 	HCRYPTHASH pHash = 0;
 
-	if (hasher == NULL || data_hash == NULL){
+	if (hasher == NULL || data_hash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -163,7 +163,7 @@ static int ksi_DataHasher_reset(KSI_DataHasher *hasher) {
 	/* Hash object. */
 	HCRYPTHASH pTmp_hash = 0;
 
-	if (hasher == NULL){
+	if (hasher == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -182,7 +182,7 @@ static int ksi_DataHasher_reset(KSI_DataHasher *hasher) {
 	}
 
 	/* If hash object already exists, destroy it. */
-	if (pCryptoCTX->pt_hHash != 0){
+	if (pCryptoCTX->pt_hHash != 0) {
 		CryptDestroyHash(pCryptoCTX->pt_hHash);
 		pCryptoCTX->pt_hHash = 0;
 	}
@@ -217,7 +217,7 @@ static int ksi_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t d
 	/* Hash object. */
 	HCRYPTHASH pHash = 0;
 
-	if (hasher == NULL || data == NULL){
+	if (hasher == NULL || data == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -227,12 +227,12 @@ static int ksi_DataHasher_add(KSI_DataHasher *hasher, const void *data, size_t d
 	pCryptoCTX = (CRYPTO_HASH_CTX*)hasher->hashContext;
 	pHash = pCryptoCTX->pt_hHash;
 
-	if(data_length > UINT_MAX){
+	if(data_length > UINT_MAX) {
 		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add mote than UINT_MAX data to the hasher.");
 		goto cleanup;
 	}
 
-	if (!CryptHashData(pHash, data, (DWORD)data_length, 0)){
+	if (!CryptHashData(pHash, data, (DWORD)data_length, 0)) {
 		DWORD error = GetLastError();
 		KSI_LOG_debug(ctx, "Cryptoapi: HashData error %i.", error);
 		KSI_pushError(ctx, res = KSI_UNKNOWN_ERROR, "Cryptoapi: Unable to add data to the hash.");
@@ -253,7 +253,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 	HCRYPTPROV tmp_CSP = 0;
 
 	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || hasher == NULL){
+	if (hasher == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -288,7 +288,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 	}
 
 	/* Create new crypto service provider (CSP). */
-	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)){
+	if (!CryptAcquireContext(&tmp_CSP, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
 		char errm[1024];
 		KSI_snprintf(errm, sizeof(errm), "Wincrypt Error (%d).", GetLastError());
 		KSI_pushError(ctx, res = KSI_CRYPTO_FAILURE, errm);

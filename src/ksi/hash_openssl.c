@@ -176,7 +176,7 @@ int KSI_DataHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHasher 
 	KSI_DataHasher *tmp_hasher = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || hasher == NULL) {
+	if (hasher == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
