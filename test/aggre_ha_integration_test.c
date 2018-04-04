@@ -830,11 +830,22 @@ void Test_HaSign_exceedMaxNofSubservices(CuTest* tc) {
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	for (i = 0; i < KSI_HA_MAX_SUBSERVICES; i++) {
+	for (i = 0; i < KSI_CTX_HA_MAX_SUBSERVICES; i++) {
 		res = KSI_AsyncService_setEndpoint(has,
 				KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 	}
+
+	res = KSI_AsyncService_setEndpoint(has,
+			KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+	CuAssert(tc, "Configuration of service endpoint should fail.", res == KSI_INVALID_STATE);
+
+	res = KSI_CTX_setOption(ctx, KSI_OPT_HA_SAFEGUARD, (void *)(KSI_CTX_HA_MAX_SUBSERVICES + 1));
+	CuAssert(tc, "Unable to set KSI_CTX option.", res == KSI_OK);
+
+	res = KSI_AsyncService_setEndpoint(has,
+			KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setEndpoint(has,
 			KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
@@ -1438,6 +1449,7 @@ void Test_HaSign_requestConfigAndAggrRequest_loop_http(CuTest* tc) {
 static void preTest(void) {
 	KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, NULL);
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_CONF_RECEIVED_CALLBACK, NULL);
+	KSI_CTX_setOption(ctx, KSI_OPT_HA_SAFEGUARD, (void *)KSI_CTX_HA_MAX_SUBSERVICES);
 }
 
 CuSuite* HaAggrIntegrationTests_getSuite(void) {

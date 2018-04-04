@@ -31,7 +31,6 @@ extern "C" {
  * @{
  */
 
-#define KSI_HA_MAX_SUBSERVICES 3
 /**
  * Creates and initalizes a concrete HA async service object to be used to interract with aggregator endpoint.
  * \param[in]		ctx				KSI context.

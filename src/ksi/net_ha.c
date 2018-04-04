@@ -1103,7 +1103,7 @@ static int KSI_HighAvailabilityService_addEndpoint(KSI_AsyncService *service, co
 
 	has = (KSI_HighAvailabilityService *)service->impl;
 
-	if (KSI_AsyncServiceList_length(has->services) >= KSI_HA_MAX_SUBSERVICES) {
+	if (KSI_AsyncServiceList_length(has->services) >= has->ctx->options[KSI_OPT_HA_SAFEGUARD]) {
 		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "Exceed maximum nof HA subservices.");
 		goto cleanup;
 	}

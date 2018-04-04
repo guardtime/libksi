@@ -464,7 +464,7 @@ extern "C" {
 	 * \see #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new for constucting
 	 * high availability async service.
 	 * \see #KSI_AsyncService_free
-	 * \see #KSI_HA_MAX_SUBSERVICES for the maximum number of high availability subservices.
+	 * \see #KSI_OPT_HA_SAFEGUARD for the number of high availability subservices.
 	 * \note In order to setup several subservices on a high availability #KSI_AsyncService returned from
 	 * #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new, the method should
 	 * be called multiple times.

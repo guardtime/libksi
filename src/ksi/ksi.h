@@ -335,6 +335,8 @@ enum KSI_StatusCode {
 
 #define KSI_CTX_PUBFILE_CACHE_DEFAULT_TTL (8 * 60 * 60)
 
+#define KSI_CTX_HA_MAX_SUBSERVICES 3
+
 /**
  * Service configuration receive callback.
  * \param[in]	ctx		KSI context object.
@@ -397,6 +399,15 @@ typedef enum KSI_Option_en {
 	 * \note		Setting the timeout to 0 will always trigger the file download.
 	 */
 	KSI_OPT_PUBFILE_CACHE_TTL_SECONDS,
+
+	/**
+	 * High availability service maximum number of subservices.
+	 * \param		count		Number of subservices. Paramer of type size_t.
+	 * \see			#KSI_SigningHighAvailabilityService_new for creating aggregations service.
+	 * \see			#KSI_ExtendingHighAvailabilityService_new for creating extending service.
+	 * \see			#KSI_CTX_HA_MAX_SUBSERVICES for default value.
+	 */
+	KSI_OPT_HA_SAFEGUARD,
 
 	__KSI_NUMBER_OF_OPTIONS,
 } KSI_Option;
