@@ -120,7 +120,6 @@ extern "C" {
 	 */
 	typedef struct KSI_NetworkClient_st KSI_NetworkClient;
 
-	typedef struct KSI_HighAvailabilityRequest_st KSI_HighAvailabilityRequest;
 	typedef struct KSI_HighAvailabilityService_st KSI_HighAvailabilityService;
 	typedef struct KSI_AsyncService_st KSI_AsyncService;
 	typedef struct KSI_AsyncClient_st KSI_AsyncClient;
@@ -509,16 +508,6 @@ KSI_DEFINE_LIST(KSI_AsyncService);
 #define KSI_AsyncServiceList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AsyncServiceList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
-KSI_DEFINE_LIST(KSI_HighAvailabilityRequest);
-#define KSI_HighAvailabilityRequestList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
-#define KSI_HighAvailabilityRequestList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
-#define KSI_HighAvailabilityRequestList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
-#define KSI_HighAvailabilityRequestList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
-#define KSI_HighAvailabilityRequestList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
-#define KSI_HighAvailabilityRequestList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
-#define KSI_HighAvailabilityRequestList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
-#define KSI_HighAvailabilityRequestList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
-#define KSI_HighAvailabilityRequestList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
 
 /*

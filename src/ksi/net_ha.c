@@ -29,8 +29,10 @@
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
+typedef struct KSI_HighAvailabilityRequest_st KSI_HighAvailabilityRequest;
 
-void KSI_HighAvailabilityRequest_free(KSI_HighAvailabilityRequest *o) {
+
+static void KSI_HighAvailabilityRequest_free(KSI_HighAvailabilityRequest *o) {
 	if (o != NULL && --o->ref == 0) {
 		KSI_AsyncHandle_free(o->asyncHandle);
 
@@ -38,7 +40,7 @@ void KSI_HighAvailabilityRequest_free(KSI_HighAvailabilityRequest *o) {
 	}
 }
 
-int KSI_HighAvailabilityRequest_new(KSI_CTX *ctx, KSI_AsyncHandle *asyncHandle, KSI_HighAvailabilityRequest **o) {
+static int KSI_HighAvailabilityRequest_new(KSI_CTX *ctx, KSI_AsyncHandle *asyncHandle, KSI_HighAvailabilityRequest **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HighAvailabilityRequest *tmp = NULL;
 
@@ -1033,7 +1035,7 @@ cleanup:
 	return res;
 }
 
-void KSI_HighAvailabilityService_free(KSI_HighAvailabilityService *service) {
+static void KSI_HighAvailabilityService_free(KSI_HighAvailabilityService *service) {
 	if (service != NULL) {
 		KSI_AsyncServiceList_free(service->services);
 		KSI_AsyncHandleList_free(service->respQueue);
@@ -1088,7 +1090,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key) {
+static int KSI_HighAvailabilityService_addEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HighAvailabilityService *has = NULL;
 	KSI_AsyncService *tmp = NULL;
@@ -1177,7 +1179,7 @@ int KSI_SigningHighAvailabilityService_new(KSI_CTX *ctx, KSI_AsyncService **serv
 	tmp->setOption = (int (*)(void *, int, void *))KSI_HighAvailabilityService_setOption;
 	tmp->getOption = (int (*)(void *, int, void *))KSI_HighAvailabilityService_getOption;
 
-	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))KSI_HighAvailabilityService_setEndpoint;
+	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))KSI_HighAvailabilityService_addEndpoint;
 
 	*service = tmp;
 	tmp = NULL;

@@ -32,11 +32,6 @@ extern "C" {
  */
 
 #define KSI_HA_MAX_SUBSERVICES 3
-
-void KSI_HighAvailabilityRequest_free(KSI_HighAvailabilityRequest *o);
-int KSI_HighAvailabilityRequest_new(KSI_CTX *ctx, KSI_AsyncHandle *asyncHandle, KSI_HighAvailabilityRequest **o);
-
-
 /**
  * Creates and initalizes a concrete HA async service object to be used to interract with aggregator endpoint.
  * \param[in]		ctx				KSI context.

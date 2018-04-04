@@ -200,7 +200,6 @@ KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
 KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
 KSI_IMPLEMENT_LIST(KSI_AsyncHandle, KSI_AsyncHandle_free);
 KSI_IMPLEMENT_LIST(KSI_AsyncService, KSI_AsyncService_free);
-KSI_IMPLEMENT_LIST(KSI_HighAvailabilityRequest, KSI_HighAvailabilityRequest_free);
 
 KSI_IMPLEMENT_REF(KSI_MetaDataElement);
 KSI_IMPLEMENT_REF(KSI_MetaData);
