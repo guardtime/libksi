@@ -21,6 +21,7 @@
 
 #include <string.h>
 
+#include "net.h"
 #include "net_async.h"
 #include "tlv.h"
 #include "impl/ctx_impl.h"
@@ -91,7 +92,7 @@ static int KSI_HighAvailabilityService_addRequest(KSI_HighAvailabilityService *h
 	KSI_ERR_clearErrors(has->ctx);
 
 	if (KSI_AsyncServiceList_length(has->services) == 0) {
-		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA service is not properly initialized.");
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 		goto cleanup;
 	}
 
@@ -219,9 +220,14 @@ cleanup:
 	return res;
 }
 
+#define KSI_HA_CONF_MAX_LEVEL 20
+#define KSI_HA_CONF_MAX_PERIOD_S 20
+#define KSI_HA_CONF_MAX_REQUESTS 16000
+#define KSI_HA_CONF_CALENDAR_BEGIN 1136073600
+
 static bool isMaxLevelValid(KSI_uint64_t val) {
 	/* Values under 1 and over 20 are discarded. */
-	return (val > 0 || val <= 20);
+	return (val > 0 || val <= KSI_HA_CONF_MAX_LEVEL);
 }
 
 static bool isAggrAlgoValid(KSI_uint64_t val) {
@@ -231,17 +237,17 @@ static bool isAggrAlgoValid(KSI_uint64_t val) {
 
 static bool isAggrPeriodValid(KSI_uint64_t val) {
 	/* Values under 0.1 and over 20 seconds are discarded. */
-	return (val > 0 || val <= 20);
+	return (val > 0 || val <= KSI_HA_CONF_MAX_PERIOD_S);
 }
 
 static bool isMaxRequestsValid(KSI_uint64_t val) {
 	/* Values under 1 and over 16000 are discarded. */
-	return (val > 0 || val <= 16000);
+	return (val > 0 || val <= KSI_HA_CONF_MAX_REQUESTS);
 }
 
 static bool isCalendarTimeValid(KSI_uint64_t val) {
 	/* Values before year 2006 are discarded. */
-	return (val >= 1136073600);
+	return (val >= KSI_HA_CONF_CALENDAR_BEGIN);
 }
 
 static int KSI_Config_consolidateMaxLevel(KSI_Config *conf, KSI_Config *respCfg, bool *updated) {
@@ -568,7 +574,7 @@ static int KSI_HighAvailabilityService_getPendingCount(KSI_HighAvailabilityServi
 	KSI_ERR_clearErrors(has->ctx);
 
 	if (KSI_AsyncServiceList_length(has->services) == 0) {
-		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA service is not properly initialized.");
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 		goto cleanup;
 	}
 
@@ -609,7 +615,7 @@ static int KSI_HighAvailabilityService_getReceivedCount(KSI_HighAvailabilityServ
 	KSI_ERR_clearErrors(has->ctx);
 
 	if (KSI_AsyncServiceList_length(has->services) == 0) {
-		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA service is not properly initialized.");
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 		goto cleanup;
 	}
 
@@ -755,7 +761,7 @@ static int responseHandler(KSI_HighAvailabilityService *has, KSI_Config_Callback
 						goto cleanup;
 					}
 					if (haRequest == NULL) {
-						KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA missing request context.");
+						KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 						goto cleanup;
 					}
 					haRequest->expectedRespCount--;
@@ -814,7 +820,7 @@ static int responseHandler(KSI_HighAvailabilityService *has, KSI_Config_Callback
 						goto cleanup;
 					}
 					if (haRequest == NULL) {
-						KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA missing request context.");
+						KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 						goto cleanup;
 					}
 					haRequest->expectedRespCount--;
@@ -887,7 +893,7 @@ static int KSI_HighAvailabilityService_run(KSI_HighAvailabilityService *has,
 	KSI_ERR_clearErrors(has->ctx);
 
 	if (KSI_AsyncServiceList_length(has->services) == 0) {
-		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA service is not properly initialized.");
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 		goto cleanup;
 	}
 
@@ -936,7 +942,7 @@ static int KSI_HighAvailabilityService_setOption(KSI_HighAvailabilityService *ha
 	KSI_ERR_clearErrors(has->ctx);
 
 	if (KSI_AsyncServiceList_length(has->services) == 0) {
-		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA service is not properly initialized.");
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 		goto cleanup;
 	}
 
@@ -988,7 +994,7 @@ static int KSI_HighAvailabilityService_getOption(const KSI_HighAvailabilityServi
 	KSI_ERR_clearErrors(has->ctx);
 
 	if (KSI_AsyncServiceList_length(has->services) == 0) {
-		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA service is not properly initialized.");
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 		goto cleanup;
 	}
 
@@ -1021,7 +1027,7 @@ static int KSI_HighAvailabilityService_getOption(const KSI_HighAvailabilityServi
 				/* Just in case verify that the subservices share the same option value. */
 				if (i > 0 && tmp != srvOpt) {
 					/* Only happens if the setting the option has failed. */
-					KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "HA subservice option value mismatch.");
+					KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 					goto cleanup;
 				}
 				tmp = srvOpt;

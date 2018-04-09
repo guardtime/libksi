@@ -20,7 +20,6 @@
 #ifndef NET_ASYNC_IMPL_H_
 #define NET_ASYNC_IMPL_H_
 
-#include "../net.h"
 #include "../net_async.h"
 #include "../internal.h"
 
@@ -28,6 +27,9 @@
 extern "C" {
 #endif
 
+	/**
+	 * Async request wrapper object.
+	 */
 	struct KSI_AsyncHandle_st {
 		KSI_CTX *ctx;
 		size_t ref;
@@ -40,6 +42,7 @@ extern "C" {
 		KSI_AggregationReq *aggrReq;
 		/* Extend request. */
 		KSI_ExtendReq *extReq;
+		/* Helper fields for constructing extended signature. */
 		const KSI_Signature *signature;
 		const KSI_PublicationRecord *pubRec;
 
@@ -68,10 +71,15 @@ extern "C" {
 		time_t reqTime;
 		/** Time when the query has been sent out. */
 		time_t sndTime;
-		/** Time when the response has been reeived. */
+		/** Time when the response has been received. */
 		time_t rcvTime;
 	};
 
+	/**
+	 * Enum defining private async service options.
+	 * Pay attention to the used parameter type.
+	 * \see #KSI_AsyncOption
+	 */
 	enum KSI_AsyncPrivateOption_en {
 		__KSI_ASYNC_PRIVOPT_OFFSET = __KSI_ASYNC_OPT_COUNT,
 
@@ -91,39 +99,62 @@ extern "C" {
 		__NOF_KSI_ASYNC_OPT
 	};
 
+	/**
+	 * Async service presentation layer context object.
+	 */
 	struct KSI_AsyncClient_st {
 		KSI_CTX *ctx;
 
+		/** Implementation for transport layer. */
 		void *clientImpl;
+		/** Cleanup for implementation. */
 		void (*clientImpl_free)(void*);
 
+		/** Private helper methods. */
 		int (*addRequest)(void *, KSI_AsyncHandle *);
 		int (*getResponse)(void *, KSI_OctetString **, size_t *);
 		int (*getCredentials)(void *, const char **, const char **);
 		int (*dispatch)(void *);
 
+		/** PDU header field values: */
+		/** Client instanse id. Is set to current unix time when the #KSI_AsyncClient is constructed. */
 		KSI_uint64_t instanceId;
+		/** Message sequesce number. */
 		KSI_uint64_t messageId;
 
-		size_t requestCountOffset; /**< A circular counter for increasing the request id entropy. */
-		size_t requestCount; /**< Request cache position of the last allocated handle. */
+		/** A circular counter for increasing the request id entropy. */
+		size_t requestCountOffset;
+		/** Request cache position of the last allocated handle. */
+		size_t requestCount;
 
-		KSI_AsyncHandle **reqCache; /**< Request cache. */
-		size_t tail; /**< Request cache position of the last handle that was returned to the used. */
-		size_t pending; /**< Nof pending requests (including in error state). */
-		size_t received; /**< Nof received valid responses. */
+		/** Request cache. */
+		KSI_AsyncHandle **reqCache;
+		/** Request cache position of the last handle that was returned to the used. */
+		size_t tail;
+		/** Nof pending requests (including in error state). */
+		size_t pending;
+		/** Nof received valid responses. */
+		size_t received;
 
-		KSI_AsyncHandle *serverConf; /**< Push config is not part of the request cache, as it can not be assigned to a particular request. */
+		/** Push config is not part of the request cache, as it can not be assigned to a particular request handle. */
+		KSI_AsyncHandle *serverConf;
 
+		/** Array of configuration options. */
 		size_t options[__NOF_KSI_ASYNC_OPT];
 	};
 
+	/**
+	 * Async service application layer context object.
+	 */
 	struct KSI_AsyncService_st {
 		KSI_CTX *ctx;
 
+		/** Implementation context. */
 		void *impl;
+		/** Implementation cleanup method. */
 		void (*impl_free)(void*);
 
+		/** Private helper methods. */
 		int (*addRequest)(void *, KSI_AsyncHandle *);
 		int (*responseHandler)(void *);
 
@@ -141,29 +172,42 @@ extern "C" {
 		int (*getClientByUriScheme)(const char *scheme, const char **replaceScheme);
 	};
 
+	/**
+	 * A wrapper object for KSI_AsyncHandle. Used by #KSI_HighAvailabilityService for keeping track of expected responses.
+	 */
 	struct KSI_HighAvailabilityRequest_st {
 		KSI_CTX *ctx;
 		size_t ref;
 
-		/* A refrence to the original async request handle. */
+		/** A refrence to the original async request handle. */
 		KSI_AsyncHandle *asyncHandle;
-		/* Number of expected responses. */
+		/** Number of expected responses. */
 		size_t expectedRespCount;
 
-		/* Request components. */
+		/** Request components. */
 		bool hasReq;
 		bool hasCnf;
 	};
 
+	/**
+	 * High availability application layer constext object. #KSI_HighAvailabilityService functions incorporates
+	 * logic for handling communication to and from multiple sub-services.
+	 * \note It is not returned to the user directly, but is set as #KSI_AsyncService implementetion context.
+	 */
 	struct KSI_HighAvailabilityService_st {
 		KSI_CTX *ctx;
 
+		/** The list of high availability sub services. */
 		KSI_LIST(KSI_AsyncService) *services;
+		/** Response cache. */
 		KSI_LIST(KSI_AsyncHandle) *respQueue;
 
+		/** Intercepted #KSI_ASYNC_OPT_PUSH_CONF_CALLBACK configuration. */
 		KSI_Config_Callback confCallback;
+		/** Consolidated configuration based on the responses from individual subservices. */
 		KSI_Config *consolidatedConfig;
 
+		/** Private helper method for subservice construction. */
 		int (*subservice_new)(KSI_CTX *, KSI_AsyncService **);
 	};
 

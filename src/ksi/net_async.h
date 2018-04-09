@@ -48,6 +48,12 @@ extern "C" {
 	 */
 	void KSI_AsyncHandle_free(KSI_AsyncHandle *o);
 
+	/**
+	 * Constructor for the abstract async handle.
+	 * \param[in]		ctx		KSI context.
+	 * \param[out]		client	Abstract async handle.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
 	int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o);
 
 	/**
