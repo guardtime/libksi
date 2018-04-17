@@ -533,31 +533,6 @@ static int getCredentials(HttpAsyncCtx *asyncCtx, const char **user, const char 
 	return KSI_OK;
 }
 
-extern size_t curlGlobal_initCount;
-
-static int curlGlobal_init(void) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (curlGlobal_initCount++ > 0) {
-		/* Nothing to do. */
-		return KSI_OK;
-	}
-
-	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK) goto cleanup;
-
-	res = KSI_OK;
-cleanup:
-	return res;
-}
-
-static void curlGlobal_cleanup(void) {
-	if (--curlGlobal_initCount > 0) {
-		/* Nothing to do. */
-		return;
-	}
-	curl_global_cleanup();
-}
-
 static CurlMulti *_curlMulti = NULL;
 
 static void CurlMulti_free(CurlMulti *o) {
@@ -617,7 +592,6 @@ static void curlMulti_cleanup(void) {
 static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
 	if (o != NULL) {
 		curlMulti_cleanup();
-		curlGlobal_cleanup();
 
 		/* Cleanup queues. */
 		KSI_AsyncHandleList_free(o->reqQueue);
@@ -667,6 +641,12 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 	tmp->ksi_pass = NULL;
 	tmp->url = NULL;
 
+	res = KSI_Http_init(ctx);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
 	tmp->curl = curlMulti_init();
 	if (tmp->curl == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, "Curl: Unable to init multi handle.");
@@ -688,8 +668,6 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 
 	*clientCtx = tmp;
 	tmp = NULL;
-
-	curlGlobal_init();
 
 	res = KSI_OK;
 cleanup:

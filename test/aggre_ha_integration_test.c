@@ -1104,7 +1104,7 @@ void Test_HaSign_requestConfigOnlyUseCallback_http(CuTest* tc) {
 static void asyncSigning_verifySubserviceCallbacksDisabled(CuTest* tc, const char *scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
-	int i;
+	size_t i;
 	KSI_AsyncServiceList *list = NULL;
 
 	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);

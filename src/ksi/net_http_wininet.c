@@ -401,4 +401,9 @@ cleanup:
 	return res;
 }
 
+int KSI_Http_init(KSI_CTX *ctx) {
+	if (ctx);
+	return KSI_OK;
+}
+
 #endif
