@@ -279,9 +279,9 @@ EXPORTS
 	KSI_AsyncService_setOption
 	KSI_AsyncService_getOption
 	KSI_AsyncService_run
-	KSI_AsyncService_setEndpoint
 	KSI_AsyncService_addRequest
 	KSI_AsyncService_setEndpoint
+	KSI_AsyncService_addEndpoint
 
 ;net_ha.h
 EXPORTS
