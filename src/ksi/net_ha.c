@@ -232,7 +232,7 @@ static bool isMaxLevelValid(KSI_uint64_t val) {
 
 static bool isAggrAlgoValid(KSI_uint64_t val) {
 	/* Unknown values are discarded. */
-	return !!KSI_isHashAlgorithmSupported((KSI_HashAlgorithm)val);
+	return !!KSI_isHashAlgorithmTrusted((KSI_HashAlgorithm)val);
 }
 
 static bool isAggrPeriodValid(KSI_uint64_t val) {
@@ -644,6 +644,212 @@ cleanup:
 	return res;
 }
 
+static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandle *respHndl, KSI_Config_Callback confCallback) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HighAvailabilityRequest *haRequest = NULL;
+	KSI_Config *pushConf = NULL;
+	bool updated = false;
+
+	if (has == NULL || respHndl == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(has->ctx);
+
+	res = KSI_AsyncHandle_getRequestCtx(respHndl, (const void **)&haRequest);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (haRequest != NULL) {
+		KSI_AsyncHandle *reqHndl = NULL;
+		int reqState = KSI_ASYNC_STATE_UNDEFINED;
+
+		haRequest->expectedRespCount--;
+		reqHndl = haRequest->asyncHandle;
+
+		res = KSI_AsyncHandle_getState(reqHndl, &reqState);
+		if (res != KSI_OK) {
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		/* Clear error response, if it has been received from any subservice. */
+		if (haRequest->hasReq == false && reqState == KSI_ASYNC_STATE_ERROR) {
+			reqHndl->err = KSI_OK;
+			reqHndl->errExt = 0L;
+			KSI_Utf8String_free(reqHndl->errMsg);
+			reqHndl->errMsg = NULL;
+		}
+	}
+
+	res = KSI_AsyncHandle_getConfig(respHndl, &pushConf);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HighAvailabilityService_consolidateConfig(has, pushConf, &updated);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (updated == false) goto cleanup;
+
+	if (confCallback) {
+		res = confCallback(has->ctx, has->consolidatedConfig);
+		if (res != KSI_OK) {
+			KSI_pushError(has->ctx, res, "KSI conf callback returned error.");
+			goto cleanup;
+		}
+	} else {
+		KSI_AsyncHandle *hndlRef = NULL;
+
+		/* Renew the config. */
+		respHndl->respCtx_free(respHndl->respCtx);
+		respHndl->respCtx = (void*)KSI_Config_ref(has->consolidatedConfig);
+		respHndl->respCtx_free = (void (*)(void*))KSI_Config_free;
+
+		res = KSI_AsyncHandleList_append(has->respQueue, (hndlRef = KSI_AsyncHandle_ref(respHndl)));
+		if (res != KSI_OK) {
+			KSI_AsyncHandle_free(hndlRef);
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+static int handleReqResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandle *respHndl) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HighAvailabilityRequest *haRequest = NULL;
+	KSI_AsyncHandle *reqHndl = NULL;
+	int reqState = KSI_ASYNC_STATE_UNDEFINED;
+
+	if (has == NULL || respHndl == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(has->ctx);
+
+	res = KSI_AsyncHandle_getRequestCtx(respHndl, (const void **)&haRequest);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (haRequest == NULL) {
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
+		goto cleanup;
+	}
+	haRequest->expectedRespCount--;
+	reqHndl = haRequest->asyncHandle;
+
+	res = KSI_AsyncHandle_getState(reqHndl, &reqState);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Update request handle. */
+	if (reqState == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE || reqState == KSI_ASYNC_STATE_ERROR) {
+		KSI_AsyncHandle *hndlRef = NULL;
+
+		/* Clear error response, if it has been received from any subservice. */
+		if (reqState == KSI_ASYNC_STATE_ERROR) {
+			reqHndl->err = KSI_OK;
+			reqHndl->errExt = 0L;
+			KSI_Utf8String_free(reqHndl->errMsg);
+			reqHndl->errMsg = NULL;
+		}
+
+		/* Update handle state. */
+		reqHndl->state = KSI_ASYNC_STATE_RESPONSE_RECEIVED;
+
+		/* Update transfer times. */
+		reqHndl->rcvTime = respHndl->rcvTime;
+		reqHndl->reqTime = respHndl->reqTime;
+		reqHndl->sndTime = respHndl->sndTime;
+
+		/* Set response context. */
+		reqHndl->respCtx = respHndl->respCtx;
+		respHndl->respCtx = NULL;
+		reqHndl->respCtx_free = respHndl->respCtx_free;
+		respHndl->respCtx_free = NULL;
+
+		res = KSI_AsyncHandleList_append(has->respQueue, (hndlRef = KSI_AsyncHandle_ref(reqHndl)));
+		if (res != KSI_OK) {
+			KSI_AsyncHandle_free(hndlRef);
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+static int handleErrorResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandle *respHndl) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HighAvailabilityRequest *haRequest = NULL;
+	KSI_AsyncHandle *reqHndl = NULL;
+	int reqState = KSI_ASYNC_STATE_UNDEFINED;
+
+	if (has == NULL || respHndl == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(has->ctx);
+
+	res = KSI_AsyncHandle_getRequestCtx(respHndl, (const void **)&haRequest);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (haRequest == NULL) {
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
+		goto cleanup;
+	}
+	haRequest->expectedRespCount--;
+	reqHndl = haRequest->asyncHandle;
+
+	res = KSI_AsyncHandle_getState(reqHndl, &reqState);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	/* Only set the error in case there have been no responses received yet. */
+	if (reqState == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
+
+		reqHndl->state = KSI_ASYNC_STATE_ERROR;
+
+		reqHndl->err = respHndl->err;
+		reqHndl->errExt = respHndl->errExt;
+		reqHndl->errMsg = KSI_Utf8String_ref(respHndl->errMsg);
+	}
+
+	/* In case all of the relevant subservices have returned an error,
+	 * move the request to the response queue. */
+	if (reqState == KSI_ASYNC_STATE_ERROR && haRequest->expectedRespCount == 0) {
+		KSI_AsyncHandle *hndlRef = NULL;
+
+		res = KSI_AsyncHandleList_append(has->respQueue, (hndlRef = KSI_AsyncHandle_ref(reqHndl)));
+		if (res != KSI_OK) {
+			KSI_AsyncHandle_free(hndlRef);
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 static int responseHandler(KSI_HighAvailabilityService *has, KSI_Config_Callback confCallback) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle *respHndl = NULL;
@@ -681,180 +887,16 @@ static int responseHandler(KSI_HighAvailabilityService *has, KSI_Config_Callback
 		}
 
 		switch (respState) {
-			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED: {
-					KSI_HighAvailabilityRequest *haRequest = NULL;
-					KSI_Config *pushConf = NULL;
-					bool updated = false;
-
-					res = KSI_AsyncHandle_getRequestCtx(respHndl, (const void **)&haRequest);
-					if (res != KSI_OK) {
-						KSI_pushError(has->ctx, res, NULL);
-						goto cleanup;
-					}
-					if (haRequest != NULL) {
-						KSI_AsyncHandle *reqHndl = NULL;
-						int reqState = KSI_ASYNC_STATE_UNDEFINED;
-
-						haRequest->expectedRespCount--;
-						reqHndl = haRequest->asyncHandle;
-
-						res = KSI_AsyncHandle_getState(reqHndl, &reqState);
-						if (res != KSI_OK) {
-							KSI_pushError(has->ctx, res, NULL);
-							goto cleanup;
-						}
-
-						/* Clear error response, if it has been received from any subservice. */
-						if (haRequest->hasReq == false && reqState == KSI_ASYNC_STATE_ERROR) {
-							reqHndl->err = KSI_OK;
-							reqHndl->errExt = 0L;
-							KSI_Utf8String_free(reqHndl->errMsg);
-							reqHndl->errMsg = NULL;
-						}
-					}
-
-					res = KSI_AsyncHandle_getConfig(respHndl, &pushConf);
-					if (res != KSI_OK) {
-						KSI_pushError(has->ctx, res, NULL);
-						goto cleanup;
-					}
-
-					res = KSI_HighAvailabilityService_consolidateConfig(has, pushConf, &updated);
-					if (res != KSI_OK) {
-						KSI_pushError(has->ctx, res, NULL);
-						goto cleanup;
-					}
-					if (updated == false) break;
-
-					if (confCallback) {
-						res = confCallback(has->ctx, has->consolidatedConfig);
-						if (res != KSI_OK) {
-							KSI_pushError(has->ctx, res, "KSI conf callback returned error.");
-							goto cleanup;
-						}
-					} else {
-						KSI_AsyncHandle *hndlRef = NULL;
-
-						/* Renew the config. */
-						respHndl->respCtx_free(respHndl->respCtx);
-						respHndl->respCtx = (void*)KSI_Config_ref(has->consolidatedConfig);
-						respHndl->respCtx_free = (void (*)(void*))KSI_Config_free;
-
-						res = KSI_AsyncHandleList_append(has->respQueue, (hndlRef = KSI_AsyncHandle_ref(respHndl)));
-						if (res != KSI_OK) {
-							KSI_AsyncHandle_free(hndlRef);
-							KSI_pushError(has->ctx, res, NULL);
-							goto cleanup;
-						}
-					}
-				}
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				handleConfigResponse(has, respHndl, confCallback);
 				break;
 
-			case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
-					KSI_HighAvailabilityRequest *haRequest = NULL;
-					KSI_AsyncHandle *reqHndl = NULL;
-					int reqState = KSI_ASYNC_STATE_UNDEFINED;
-
-					res = KSI_AsyncHandle_getRequestCtx(respHndl, (const void **)&haRequest);
-					if (res != KSI_OK) {
-						KSI_pushError(has->ctx, res, NULL);
-						goto cleanup;
-					}
-					if (haRequest == NULL) {
-						KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
-						goto cleanup;
-					}
-					haRequest->expectedRespCount--;
-					reqHndl = haRequest->asyncHandle;
-
-					res = KSI_AsyncHandle_getState(reqHndl, &reqState);
-					if (res != KSI_OK) {
-						KSI_pushError(has->ctx, res, NULL);
-						goto cleanup;
-					}
-
-					/* Update request handle. */
-					if (reqState == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE || reqState == KSI_ASYNC_STATE_ERROR) {
-						KSI_AsyncHandle *hndlRef = NULL;
-
-						/* Clear error response, if it has been received from any subservice. */
-						if (reqState == KSI_ASYNC_STATE_ERROR) {
-							reqHndl->err = KSI_OK;
-							reqHndl->errExt = 0L;
-							KSI_Utf8String_free(reqHndl->errMsg);
-							reqHndl->errMsg = NULL;
-						}
-
-						/* Update handle state. */
-						reqHndl->state = KSI_ASYNC_STATE_RESPONSE_RECEIVED;
-
-						/* Update transfer times. */
-						reqHndl->rcvTime = respHndl->rcvTime;
-						reqHndl->reqTime = respHndl->reqTime;
-						reqHndl->sndTime = respHndl->sndTime;
-
-						/* Set response context. */
-						reqHndl->respCtx = respHndl->respCtx;
-						respHndl->respCtx = NULL;
-						reqHndl->respCtx_free = respHndl->respCtx_free;
-						respHndl->respCtx_free = NULL;
-
-						res = KSI_AsyncHandleList_append(has->respQueue, (hndlRef = KSI_AsyncHandle_ref(reqHndl)));
-						if (res != KSI_OK) {
-							KSI_AsyncHandle_free(hndlRef);
-							KSI_pushError(has->ctx, res, NULL);
-							goto cleanup;
-						}
-					}
-				}
+			case KSI_ASYNC_STATE_RESPONSE_RECEIVED:
+				handleReqResponse(has, respHndl);
 				break;
 
-			case KSI_ASYNC_STATE_ERROR: {
-					KSI_HighAvailabilityRequest *haRequest = NULL;
-					KSI_AsyncHandle *reqHndl = NULL;
-					int reqState = KSI_ASYNC_STATE_UNDEFINED;
-
-					res = KSI_AsyncHandle_getRequestCtx(respHndl, (const void **)&haRequest);
-					if (res != KSI_OK) {
-						KSI_pushError(has->ctx, res, NULL);
-						goto cleanup;
-					}
-					if (haRequest == NULL) {
-						KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
-						goto cleanup;
-					}
-					haRequest->expectedRespCount--;
-					reqHndl = haRequest->asyncHandle;
-
-					res = KSI_AsyncHandle_getState(reqHndl, &reqState);
-					if (res != KSI_OK) {
-						KSI_pushError(has->ctx, res, NULL);
-						goto cleanup;
-					}
-
-					/* Only set the error in case there have been no responses received yet. */
-					if (reqState == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
-
-						reqHndl->state = KSI_ASYNC_STATE_ERROR;
-
-						reqHndl->err = respHndl->err;
-						reqHndl->errExt = respHndl->errExt;
-						reqHndl->errMsg = KSI_Utf8String_ref(respHndl->errMsg);
-					}
-
-					/* In case all of the relevant subservices have returned an error,
-					 * move the request to the response queue. */
-					if (reqState == KSI_ASYNC_STATE_ERROR && haRequest->expectedRespCount == 0) {
-						KSI_AsyncHandle *hndlRef = NULL;
-
-						res = KSI_AsyncHandleList_append(has->respQueue, (hndlRef = KSI_AsyncHandle_ref(reqHndl)));
-						if (res != KSI_OK) {
-							KSI_AsyncHandle_free(hndlRef);
-							KSI_pushError(has->ctx, res, NULL);
-							goto cleanup;
-						}
-					}
-				}
+			case KSI_ASYNC_STATE_ERROR:
+				handleErrorResponse(has, respHndl);
 				break;
 
 			default:
