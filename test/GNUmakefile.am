@@ -19,7 +19,7 @@
 
 AM_CFLAGS=-g -Wall -I$(top_builddir)/src/
 AM_LDFLAGS=-L$(top_builddir)/src/ksi -no-install -lksi
-check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner integration-tests async-signer ha-signer
+check_PROGRAMS=runner parse-benchmark serialize-benchmark resigner integration-tests async-signer
 
 runner_SOURCES= \
 	all_tests.c \
@@ -77,15 +77,6 @@ resigner_SOURCES=resigner.c
 
 async_signer_SOURCES= \
 	test_async_signer.c \
-	cutest/CuTest.c \
-	cutest/CuTest.h \
-	support_tests.c \
-	support_tests.h \
-	test_conf.c \
-	test_conf.h
-
-ha_signer_SOURCES= \
-	test_ha_signer.c \
 	cutest/CuTest.c \
 	cutest/CuTest.h \
 	support_tests.c \
