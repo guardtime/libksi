@@ -467,15 +467,24 @@ extern "C" {
 	 * \param[in]	key			HMAC shared secret.
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_SigningAsyncService_new or #KSI_ExtendingAsyncService_new for constucting async service.
+	 * \see #KSI_AsyncService_free
+	 * \note When used on a high availability #KSI_AsyncService will reset its state.
+	 */
+	int KSI_AsyncService_setEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key);
+
+	/**
+	 * Subservice endpoint adder.
+	 * \param[in]	service		Pointer to the async service.
+	 * \param[in]	uri			Host name.
+	 * \param[in]	loginId		User name.
+	 * \param[in]	key			HMAC shared secret.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new for constucting
 	 * high availability async service.
 	 * \see #KSI_AsyncService_free
 	 * \see #KSI_OPT_HA_SAFEGUARD for the number of high availability subservices.
-	 * \note In order to setup several subservices on a high availability #KSI_AsyncService returned from
-	 * #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new, the method should
-	 * be called multiple times.
 	 */
-	int KSI_AsyncService_setEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key);
+	int KSI_AsyncService_addEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key);
 
 	/**
 	 * @}

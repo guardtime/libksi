@@ -1752,7 +1752,31 @@ int KSI_AsyncService_setEndpoint(KSI_AsyncService *service, const char *uri, con
 	res = KSI_OK;
 cleanup:
 	return res;
+}
 
+int KSI_AsyncService_addEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (service == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(service->ctx);
+
+	if (service->addEndpoint == NULL) {
+		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = service->addEndpoint(service, uri, loginId, key);
+	if (res != KSI_OK) {
+		KSI_pushError(service->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
 }
 
 void KSI_AsyncService_free(KSI_AsyncService *service) {
@@ -1789,6 +1813,7 @@ int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->getOption = (int (*)(void *, int, void *))asyncClient_getOption;
 
 	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))asyncService_setupAsyncClient;
+	tmp->addEndpoint = (int (*)(void *, const char *, const char *, const char *))asyncService_setupAsyncClient;
 
 	*service = tmp;
 	tmp = NULL;

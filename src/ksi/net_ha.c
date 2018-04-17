@@ -1150,6 +1150,10 @@ static int KSI_HighAvailabilityService_addEndpoint(KSI_AsyncService *service, co
 	KSI_ERR_clearErrors(service->ctx);
 
 	has = (KSI_HighAvailabilityService *)service->impl;
+	if (has == NULL) {
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
+		goto cleanup;
+	}
 
 	if (KSI_AsyncServiceList_length(has->services) >= has->ctx->options[KSI_OPT_HA_SAFEGUARD]) {
 		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "Exceed maximum nof HA subservices.");
@@ -1186,6 +1190,45 @@ static int KSI_HighAvailabilityService_addEndpoint(KSI_AsyncService *service, co
 cleanup:
 	KSI_AsyncService_free(tmp);
 
+	return res;
+}
+
+static int KSI_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HighAvailabilityService *has = NULL;
+
+	if (service == NULL || uri == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(service->ctx);
+
+	has = (KSI_HighAvailabilityService *)service->impl;
+	if (has == NULL) {
+		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
+		goto cleanup;
+	}
+
+	/* Reset subservices. */
+	while (KSI_AsyncServiceList_length(has->services)) {
+		KSI_AsyncServiceList_remove(has->services, KSI_AsyncServiceList_length(has->services) - 1, NULL);
+	}
+	KSI_Config_free(has->consolidatedConfig);
+	has->consolidatedConfig = NULL;
+
+	/* Reset response queue. */
+	while (KSI_AsyncServiceList_length(has->respQueue)) {
+		KSI_AsyncServiceList_remove(has->respQueue, KSI_AsyncServiceList_length(has->respQueue) - 1, NULL);
+	}
+
+	res = KSI_HighAvailabilityService_addEndpoint(service, uri, loginId, key);
+	if (res != KSI_OK) {
+		KSI_pushError(service->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
 	return res;
 }
 
@@ -1227,7 +1270,8 @@ int KSI_SigningHighAvailabilityService_new(KSI_CTX *ctx, KSI_AsyncService **serv
 	tmp->setOption = (int (*)(void *, int, void *))KSI_HighAvailabilityService_setOption;
 	tmp->getOption = (int (*)(void *, int, void *))KSI_HighAvailabilityService_getOption;
 
-	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))KSI_HighAvailabilityService_addEndpoint;
+	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))KSI_HighAvailabilityService_setEndpoint;
+	tmp->addEndpoint = (int (*)(void *, const char *, const char *, const char *))KSI_HighAvailabilityService_addEndpoint;
 
 	*service = tmp;
 	tmp = NULL;

@@ -166,6 +166,7 @@ extern "C" {
 		int (*getOption)(void *, int, void *);
 
 		int (*setEndpoint)(void *, const char *, const char *, const char *);
+		int (*addEndpoint)(void *, const char *, const char *, const char *);
 
 		int (*uriSplit)(const char *uri, char **scheme, char **user, char **pass, char **host, unsigned *port, char **path, char **query, char **fragment);
 		int (*uriCompose)(const char *scheme, const char *user, const char *pass, const char *host, unsigned port, const char *path, const char *query, const char *fragment, char *buf, size_t len);

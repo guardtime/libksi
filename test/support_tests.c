@@ -294,14 +294,14 @@ int KSITest_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const
 	}
 
 	if (haConf == NULL || strlen(haConf[0].host) == 0) {
-		res = KSI_AsyncService_setEndpoint(service,
+		res = KSI_AsyncService_addEndpoint(service,
 				KSITest_composeUri(scheme, srvConf),
 				srvConf->user, srvConf->pass);
 		if (res != KSI_OK) goto cleanup;
 	} else {
 		for (i = 0; i < CONF_MAX_HA_SERVICES; i++) {
 			if (strlen(haConf[i].host)) {
-				res = KSI_AsyncService_setEndpoint(service,
+				res = KSI_AsyncService_addEndpoint(service,
 						KSITest_composeUri(scheme, &haConf[i]),
 						haConf[i].user, haConf[i].pass);
 				if (res != KSI_OK) goto cleanup;
