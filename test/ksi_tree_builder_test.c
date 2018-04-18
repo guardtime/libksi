@@ -123,6 +123,30 @@ static void testGetAggregationChain(CuTest* tc) {
 	KSI_TreeBuilder_free(builder);
 }
 
+static void testMaxTreeHeight1(CuTest *tc) {
+	int res;
+	KSI_TreeBuilder *builder = NULL;
+	KSI_DataHash *hsh = NULL;
+
+	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
+	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
+
+	builder->maxHeight = 1;
+	/* Should succeed. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
+	CuAssert(tc, "Unable to add data 1st hash.", res == KSI_OK);
+
+	/* Should succeed. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
+	CuAssert(tc, "Unable to add data 2nd hash.", res == KSI_OK);
+
+	/* Should fail. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
+	CuAssert(tc, "Adding 3rd hash should fail.", res != KSI_OK);
+
+	KSI_TreeBuilder_free(builder);
+	KSI_DataHash_free(hsh);
+}
 
 
 CuSuite* KSITest_TreeBuilder_getSuite(void)
@@ -132,6 +156,7 @@ CuSuite* KSITest_TreeBuilder_getSuite(void)
 	SUITE_ADD_TEST(suite, testCreateTreeBuilder);
 	SUITE_ADD_TEST(suite, testTreeBuilderAddLeafs);
 	SUITE_ADD_TEST(suite, testGetAggregationChain);
+	SUITE_ADD_TEST(suite, testMaxTreeHeight1);
 
 	return suite;
 }

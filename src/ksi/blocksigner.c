@@ -177,6 +177,9 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 			goto cleanup;
 		}
 
+		KSI_LOG_logDataHash(signer->ctx, KSI_LOG_DEBUG, "cb: Previous leaf", signer->prevLeaf);
+		KSI_LOG_logDataHash(signer->ctx, KSI_LOG_DEBUG, "cb: Mask", mask);
+
 		/* Add the mask as left link of the calculation. */
 		res = KSI_TreeNode_new(signer->ctx, mask, NULL, in->level, &tmp);
 		if (res != KSI_OK) {
@@ -278,9 +281,11 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 
 	tmp->metaDataProcessor.c = tmp;
 	tmp->metaDataProcessor.fn = metaDataProcessor;
+	tmp->metaDataProcessor.levelOverhead = 1;
 
 	tmp->maskingProcessor.c = tmp;
 	tmp->maskingProcessor.fn = maskingProcessor;
+	tmp->maskingProcessor.levelOverhead = 1;
 
 	res = KSI_DataHasher_open(ctx, algoId, &tmp->hsr);
 	if (res != KSI_OK) goto cleanup;
