@@ -137,6 +137,17 @@ extern "C" {
 	int KSI_TlvElement_getElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvElement **el);
 
 	/**
+	 * Removes a child element with the specified TLV tag. The process will fail if there is
+	 * already more than one element or no elements with the same tag. If output variable \c el
+	 * is not \c NULL, the the caller is responsible of freeing the removed element.
+	 * \param[in]	parent		The parent element.
+	 * \param[in]	tag			Tag value of the element being removed.
+	 * \param[out]	el			Pointer to the receiving pointer.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_TlvElement_removeElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvElement **el);
+
+	/**
 	 * Access method for a nested #KSI_Utf8String value  by the given tag. If there is no value with the
 	 * specified tag, the output is evaluated to \c NULL.
 	 * \param[in]	parent		Pointer to the parent element.
