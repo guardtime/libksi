@@ -574,31 +574,27 @@ int KSI_TlvElement_removeElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvEl
 	res = KSI_TlvElementList_foldl(parent->subList, &fc, filter_tags);
 	if (res != KSI_OK) goto cleanup;
 
-	switch (KSI_TlvElementList_length(fc.result)) {
-		case 1: /* Remove the existing value. */
-			res = KSI_TlvElementList_elementAt(fc.result, 0, &ptr);
-			if (res != KSI_OK) goto cleanup;
+	if (KSI_TlvElementList_length(fc.result) == 1) {
+		/* Found one element, remove it. */
+		res = KSI_TlvElementList_elementAt(fc.result, 0, &ptr);
+		if (res != KSI_OK) goto cleanup;
 
-			res = KSI_TlvElementList_indexOf(parent->subList, ptr, &pos);
-			if (res != KSI_OK) goto cleanup;
+		res = KSI_TlvElementList_indexOf(parent->subList, ptr, &pos);
+		if (res != KSI_OK) goto cleanup;
 
-			if (pos == NULL) {
-				res = KSI_INVALID_STATE;
-				goto cleanup;
-			}
-
-			{
-				res = KSI_TlvElementList_remove(parent->subList, *pos, el);
-				if (res != KSI_OK) {
-					goto cleanup;
-				}
-				parent->ftlv.dat_len -= ptr->ftlv.hdr_len + ptr->ftlv.dat_len;
-			}
-			break;
-		default:
-			/* Less or more than one result, we have no idea what to do. */
+		if (pos == NULL) {
 			res = KSI_INVALID_STATE;
 			goto cleanup;
+		}
+
+		res = KSI_TlvElementList_remove(parent->subList, *pos, el);
+		if (res != KSI_OK) goto cleanup;
+
+		parent->ftlv.dat_len -= ptr->ftlv.hdr_len + ptr->ftlv.dat_len;
+	} else {
+		/* Didn't find anything or found more than one element. We have no idea what to do. */
+		res = KSI_INVALID_STATE;
+		goto cleanup;
 	}
 
 	res = KSI_OK;
