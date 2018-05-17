@@ -11,6 +11,9 @@
 extern "C" {
 #endif
 
+#define KSITEST_ASYNC_SLEEP_TIME_MS 100
+#define KSITEST_ASYNC_NO_RESP_TIMEOUT_MS (100 * 10 * 5)
+
 void addSuite(CuSuite *suite, CuSuite* (*fn)(void));
 
 void printStats(CuSuite *suite, const char *heding);
