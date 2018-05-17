@@ -1,5 +1,8 @@
 Version 3.17
 
+* IMPROVEMENT: Added calendar hash chain consistency verification.
+
+
 2018-02-12 release(3.17.2693)
 * IMPROVEMENT: Added KSI_ATTRIB and KSI_UNUSED to annotate functions.
 * FEATURE: Added CommonCrypto for hashing as an alternative to OpenSSL.

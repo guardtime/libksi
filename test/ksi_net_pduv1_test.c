@@ -556,13 +556,7 @@ static void testExtendInvalidSignature(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Extended signature should not verify.", res == KSI_VERIFICATION_FAILURE && ext == NULL);
-
-	res = KSI_CTX_getLastFailedSignature(ctx, &ext);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && ext != NULL);
-
-	CuAssert(tc, "Unexpected verification result.", ext->policyVerificationResult->finalResult.resultCode == KSI_VER_RES_FAIL);
-	CuAssert(tc, "Unexpected verification error code.", ext->policyVerificationResult->finalResult.errorCode == KSI_VER_ERR_INT_3);
+	CuAssert(tc, "Extended signature should not verify.", res == KSI_INCOMPATIBLE_HASH_CHAIN && ext == NULL);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
@@ -1042,8 +1036,7 @@ static void testExtendingBackgroundVerification(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Wrong answer from extender should not be tolerated.", res == KSI_VERIFICATION_FAILURE && ext == NULL);
-	CuAssert(tc, "Unexpected verification error code.", ctx->lastFailedSignature->policyVerificationResult->finalResult.errorCode == KSI_VER_ERR_INT_3);
+	CuAssert(tc, "Wrong answer from extender should not be tolerated.", res == KSI_INCOMPATIBLE_HASH_CHAIN && ext == NULL);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
@@ -1073,11 +1066,6 @@ static void testSigningBackgroundVerification(CuTest* tc) {
 
 	res = KSI_Signature_signWithPolicy(ctx, hsh, KSI_VERIFICATION_POLICY_CALENDAR_BASED, NULL, &sig);
 	CuAssert(tc, "Unable to sign hash.", res == KSI_VERIFICATION_FAILURE && sig == NULL);
-
-	res = KSI_CTX_getLastFailedSignature(ctx, &sig);
-	CuAssert(tc, "Unable to get last failed signature.", res == KSI_OK && sig != NULL);
-	CuAssert(tc, "Unexpected verification result.", sig->policyVerificationResult->finalResult.resultCode == KSI_VER_RES_FAIL);
-	CuAssert(tc, "Unexpected verification error code.", sig->policyVerificationResult->finalResult.errorCode == KSI_VER_ERR_CAL_4);
 
 	KSI_Signature_free(sig);
 	KSI_DataHash_free(hsh);

@@ -1230,3 +1230,76 @@ void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
 	}
 }
 
+int KSI_CalendarHashChain_compatibleTo(const KSI_CalendarHashChain *a, const KSI_CalendarHashChain *b) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t ai;
+	size_t bi;
+
+	/* To mitigate false positives, return false for invalid input. */
+	if (a == NULL || b == NULL) return 0;
+
+	/* Make sure the input hashes are equal.*/
+	res = KSI_DataHash_equals(a->inputHash, b->inputHash);
+	if (!res) return 0;
+
+	/* Make sure the aggregation times are the same. Note, the publication times
+	 * must not be equal. */
+	if (!KSI_Integer_equals(a->aggregationTime, b->aggregationTime)) return 0;
+
+	bi = 0;
+	/* Loop over all of the right links of the calendar hash chain a. */
+	for (ai = 0; ai < KSI_HashChainLinkList_length(a->hashChain); ++ai) {
+		KSI_HashChainLink *aLink = NULL;
+		KSI_HashChainLink *bLink = NULL;
+
+		res = KSI_HashChainLinkList_elementAt(a->hashChain, ai, &aLink);
+		if (res != KSI_OK) return 0;
+
+		if (aLink->isLeft) continue;
+
+		/* Find the next right link of the calendar hash chain. */
+		for (; bi < KSI_HashChainLinkList_length(b->hashChain); ++bi) {
+			res = KSI_HashChainLinkList_elementAt(b->hashChain, bi, &bLink);
+			if (res != KSI_OK) return 0;
+
+			if (!bLink->isLeft) {
+				/* We need to increment it here to be able to continue with the next link here
+				 * and afterwards below. */
+				++bi;
+				break;
+			}
+		}
+
+		/* If the second list did not contain any more right links, return an error. */
+		if (bLink == NULL) {
+			KSI_LOG_debug(a->ctx, "Incompatible calendar hash chain - an missing right link in the second chain.");
+			return 0;
+		}
+
+		if (!KSI_DataHash_equals(aLink->imprint, bLink->imprint)) {
+			KSI_LOG_logDataHash(a->ctx, KSI_LOG_DEBUG, "a.imprint", aLink->imprint);
+			KSI_LOG_logDataHash(a->ctx, KSI_LOG_DEBUG, "b.imprint", bLink->imprint);
+
+			KSI_LOG_debug(a->ctx, "Incompatible calendar hash chain - right link values mismatch.");
+			return 0;
+		}
+	}
+
+	/* Make sure the calendar hash chain b does not contain any more right links. */
+	for (; bi < KSI_HashChainLinkList_length(b->hashChain); ++bi) {
+		KSI_HashChainLink *bLink = NULL;
+
+		res = KSI_HashChainLinkList_elementAt(b->hashChain, bi, &bLink);
+		if (res != KSI_OK) return 0;
+
+		if (!bLink->isLeft) {
+			KSI_LOG_debug(a->ctx, "Incompatible calendar hash chain - an extra right link in the second chain.");
+			/* There are more right links, thus the calendar chains are incompatible. */
+			return 0;
+		}
+	}
+
+	/* If the checks did not fail, the calendar hash chains are compatible. */
+	return 1;
+}
+

@@ -120,6 +120,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Verification failed.";
 		case KSI_INVALID_PUBLICATION:
 			return "Invalid publication.";
+		case KSI_INCOMPATIBLE_HASH_CHAIN:
+			return "Incompatible calendar hash chain.";
 		case KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI:
 			return "The publications file is not signed.";
 		case KSI_CRYPTO_FAILURE:
