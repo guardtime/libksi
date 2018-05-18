@@ -177,9 +177,6 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 			goto cleanup;
 		}
 
-		KSI_LOG_logDataHash(signer->ctx, KSI_LOG_DEBUG, "cb: Previous leaf", signer->prevLeaf);
-		KSI_LOG_logDataHash(signer->ctx, KSI_LOG_DEBUG, "cb: Mask", mask);
-
 		/* Add the mask as left link of the calculation. */
 		res = KSI_TreeNode_new(signer->ctx, mask, NULL, in->level, &tmp);
 		if (res != KSI_OK) {
