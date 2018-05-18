@@ -250,6 +250,7 @@ extern "C" {
 	 * \param[out]		service			Pointer to the receiving pointer.
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_free
+	 * \see #KSI_AsyncService_setEndpoint for setting up an endpoint.
 	 */
 	int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
@@ -259,6 +260,7 @@ extern "C" {
 	 * \param[out]		service			Pointer to the receiving pointer.
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \see #KSI_AsyncService_free
+	 * \see #KSI_AsyncService_setEndpoint for setting up an endpoint.
 	 */
 	int KSI_ExtendingAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
@@ -428,7 +430,7 @@ extern "C" {
 		 * \note Only functioning as option getter on a high availability service.
 		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
 		 * and casted to #KSI_AsyncServiceList before use.
-		 * \see #KSI_AsyncService_setEndpoint for adding a subservice to the high availability service.
+		 * \see #KSI_AsyncService_addEndpoint for adding a subservice to the high availability service.
 		 */
 		KSI_ASYNC_OPT_HA_SUBSERVICE_LIST,
 
@@ -466,14 +468,17 @@ extern "C" {
 	 * \param[in]	loginId		User name.
 	 * \param[in]	key			HMAC shared secret.
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \return On repetitive invocation #KSI_INVALID_STATE error is returned.
 	 * \see #KSI_SigningAsyncService_new or #KSI_ExtendingAsyncService_new for constucting async service.
 	 * \see #KSI_AsyncService_free
-	 * \note When used on a high availability #KSI_AsyncService will reset its state.
+	 * \see #KSI_AsyncService_addEndpoint for adding subservices to high availability service.
+	 * \note As a special case when used with high availability #KSI_AsyncService, the invocation of endpoint setter
+	 * will reset already configured endpoints (also invalidate provided requests) and call #KSI_AsyncService_addEndpoint.
 	 */
 	int KSI_AsyncService_setEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key);
 
 	/**
-	 * Subservice endpoint adder.
+	 * Subservice endpoint adder. In order to setup multiple subservices, the method has to be called repeteadly.
 	 * \param[in]	service		Pointer to the async service.
 	 * \param[in]	uri			Host name.
 	 * \param[in]	loginId		User name.
@@ -482,7 +487,9 @@ extern "C" {
 	 * \see #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new for constucting
 	 * high availability async service.
 	 * \see #KSI_AsyncService_free
-	 * \see #KSI_OPT_HA_SAFEGUARD for the number of high availability subservices.
+	 * \see #KSI_OPT_HA_SAFEGUARD for the maximum number of high availability subservices.
+	 * \note Acts as #KSI_AsyncService_setEndpoint if used with a \c service constructed via #KSI_SigningAsyncService_new
+	 * or #KSI_ExtendingAsyncService_new.
 	 */
 	int KSI_AsyncService_addEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key);
 

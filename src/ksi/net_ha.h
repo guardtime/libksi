@@ -36,7 +36,7 @@ extern "C" {
  * \param[in]		ctx				KSI context.
  * \param[out]		service			Pointer to the receiving pointer.
  * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_AsyncService_setEndpoint
+ * \see #KSI_AsyncService_addEndpoint for adding subservices.
  * \see #KSI_AsyncService_free
  */
 int KSI_SigningHighAvailabilityService_new(KSI_CTX *ctx, KSI_AsyncService **service);
@@ -46,7 +46,7 @@ int KSI_SigningHighAvailabilityService_new(KSI_CTX *ctx, KSI_AsyncService **serv
  * \param[in]		ctx				KSI context.
  * \param[out]		service			Pointer to the receiving pointer.
  * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
- * \see #KSI_AsyncService_setEndpoint
+ * \see #KSI_AsyncService_addEndpoint for adding subservices.
  * \see #KSI_AsyncService_free
  */
 int KSI_ExtendingHighAvailabilityService_new(KSI_CTX *ctx, KSI_AsyncService **service);

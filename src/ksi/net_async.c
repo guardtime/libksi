@@ -1851,6 +1851,7 @@ int KSI_ExtendingAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->getOption = (int (*)(void *, int, void *))asyncClient_getOption;
 
 	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))asyncService_setupAsyncClient;
+	tmp->addEndpoint = (int (*)(void *, const char *, const char *, const char *))asyncService_setupAsyncClient;
 
 	*service = tmp;
 	tmp = NULL;
