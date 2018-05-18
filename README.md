@@ -127,25 +127,58 @@ In order to get trial access to the KSI platform, go to [https://guardtime.com/b
 A simple example how to sign a document and verify the signature:
 ```C
 
+
 	#include <ksi/ksi.h>
+
+	/* Return values of libksi function calls. */
+	int res;
+
 	/* Set up KSI context and aggregator for signing. */
-	KSI_CTX *ksi = NULL;		/* Must be freed at the end. */
-	KSI_CTX_new(&ksi);			/* Must be initialized only once per thread. */
+	KSI_CTX *ksi = NULL;            /* Must be freed at the end. */
+	KSI_CTX_new(&ksi);              /* Must be initialized only once per thread. */
 	KSI_CTX_setAggregator(ksi, "http://signingservice.somehost:1234", "user", "key");
 
-	/* Set up extender and publications file for verification. */
-	KSI_PublicationsFile *pubFile = NULL;	/* Must be freed. */
+	/* Set up the extender. */
 	KSI_CTX_setExtender(ksi, "http://signingservice.somehost:1234", "user", "key");
+
+	/* Publications file object (only needed, when using a local file.) */
+	KSI_PublicationsFile *pubFile = NULL;   /* Must be freed. */
+            
+	/* Read the publications file from a file. */
 	KSI_PublicationsFile_fromFile(ksi, KSI_PUBLICATIONS_FILE, &pubFile);
+
+	/* Publications file siging cert verification constraints. */
+	KSI_CertConstraint certConstr[] = {
+		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
+		{ NULL, NULL}
+	};
+
+	/* Set the verification criteria. */
+	KSI_PublicationsFile_setCertConstraints(pubFile, certConstr);
+
+	/* Verify the publications file. */
+	res = KSI_PublicationsFile_verify(pubFile, ksi);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to verify publications file. Exiting.\n");
+		exit(1);
+	}
+	/* Set the publications file. */
 	KSI_CTX_setPublicationsFile(ksi, pubFile);
 
 	/* Calculate hash of document, sign the hash and verify the signature. */
-	int res;
-	KSI_DataHash *hsh = NULL;	/* Must be freed. */
-	KSI_Signature *sig = NULL;	/* Must be freed. */
-	KSI_DataHash_create(ksi, data, data_len, &hsh);
+	KSI_DataHash *hsh = NULL;       /* Must be freed. */
+	KSI_Signature *sig = NULL;      /* Must be freed. */
+	char *data = "Hello KSI!";
+	size_t data_len = strlen(data);
+	KSI_DataHash_create(ksi, data, data_len, KSI_HASHALG_SHA2_256, &hsh);
 	KSI_createSignature(ksi, hsh, &sig);
-	res = KSI_verifySignature(ksi, sig);
+
+	res = KSI_verifyDataHash(ksi, sig, hsh);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to verify the signature.\n");
+	} else {
+		printf("Verified!");
+	}
 
 ```
 The API full reference is available here [http://guardtime.github.io/libksi/](http://guardtime.github.io/libksi/).
