@@ -661,6 +661,63 @@ void testTlvElementDetachment(CuTest *tc) {
 	KSI_TlvElement_free(tlv);
 }
 
+void testTlvElementRemove(CuTest *tc) {
+	int res;
+	size_t len = 0;
+	KSI_TlvElement *subTlv = NULL;
+	KSI_TlvElement *tlv = NULL;
+	/* # TLV to be parsed.
+		TLV[1f00]:
+			TLV[08]:
+				TLV[01]: abcd
+				TLV[02]: 1234
+			TLV[1600]:
+				TLV[03]: 1a2b
+				TLV[04]: 11aa
+	 */
+	unsigned char tmp[0xffff + 4];
+	unsigned char buf[] = {0x9f, 0x00, 0x00, 0x16, 0x08, 0x08, 0x01, 0x02, 0xab, 0xcd, 0x02, 0x02, 0x12, 0x34, 0x96, 0x00, 0x00, 0x08, 0x03, 0x02, 0x1a, 0x2b, 0x04, 0x02, 0x11, 0xaa};
+	unsigned char exp1[] = {0x9f, 0x00, 0x00, 0x0a, 0x08, 0x08, 0x01, 0x02, 0xab, 0xcd, 0x02, 0x02, 0x12, 0x34};
+	unsigned char exp2[] = {0x9f, 0x00, 0x00, 0x00};
+	unsigned char exp3[] = {0x08, 0x08, 0x01, 0x02, 0xab, 0xcd, 0x02, 0x02, 0x12, 0x34};
+	unsigned char exp4[] = {0x08, 0x04, 0x02, 0x02, 0x12, 0x34};
+
+	res = KSI_TlvElement_parse(buf, sizeof(buf), &tlv);
+	CuAssert(tc, "Unable to parse TLV.", res == KSI_OK && tlv != NULL);
+
+	res = KSI_TlvElement_removeElement(tlv, 0x1600, NULL);
+	CuAssert(tc, "Unable to remove child TLV from parent TLV.", res == KSI_OK);
+
+	/* Serialize the remaining TLV. */
+	res = KSI_TlvElement_serialize(tlv, tmp, sizeof(tmp), &len, 0);
+	CuAssert(tc, "Unable to serialize TLV.", res == KSI_OK);
+	CuAssert(tc, "Unexpected TLV contents.", len == sizeof(exp1) && !memcmp(tmp, exp1, sizeof(exp1)));
+
+	res = KSI_TlvElement_removeElement(tlv, 0x08, &subTlv);
+	CuAssert(tc, "Unable to remove child TLV from parent TLV.", res == KSI_OK && subTlv != NULL);
+
+	/* Serialize the remaining TLV. */
+	res = KSI_TlvElement_serialize(tlv, tmp, sizeof(tmp), &len, 0);
+	CuAssert(tc, "Unable to serialize TLV.", res == KSI_OK);
+	CuAssert(tc, "Unexpected TLV contents.", len == sizeof(exp2) && !memcmp(tmp, exp2, sizeof(exp2)));
+
+	/* Serialize the removed child TLV. */
+	res = KSI_TlvElement_serialize(subTlv, tmp, sizeof(tmp), &len, 0);
+	CuAssert(tc, "Unable to serialize TLV.", res == KSI_OK);
+	CuAssert(tc, "Unexpected TLV contents.", len == sizeof(exp3) && !memcmp(tmp, exp3, sizeof(exp3)));
+
+	res = KSI_TlvElement_removeElement(subTlv, 0x01, NULL);
+	CuAssert(tc, "Unable to remove child TLV from parent TLV.", res == KSI_OK);
+
+	/* Serialize the remaining TLV. */
+	res = KSI_TlvElement_serialize(subTlv, tmp, sizeof(tmp), &len, 0);
+	CuAssert(tc, "Unable to serialize TLV.", res == KSI_OK);
+	CuAssert(tc, "Unexpected TLV contents.", len == sizeof(exp4) && !memcmp(tmp, exp4, sizeof(exp4)));
+
+	KSI_TlvElement_free(subTlv);
+	KSI_TlvElement_free(tlv);
+}
+
 CuSuite* KSITest_TLV_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -687,6 +744,7 @@ CuSuite* KSITest_TLV_getSuite(void)
 	SUITE_ADD_TEST(suite, testTlvElementIntegers);
 	SUITE_ADD_TEST(suite, testTlvElementNested);
 	SUITE_ADD_TEST(suite, testTlvElementDetachment);
+	SUITE_ADD_TEST(suite, testTlvElementRemove);
 
 	return suite;
 }
