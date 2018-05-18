@@ -29,6 +29,15 @@ extern "C" {
 #define CONF_FIELD_SIZE 1024
 #define CONF_MAX_CONSTRAINTS 32
 
+typedef struct KSITest_AsyncTimeout_st{
+	unsigned sleep;
+	unsigned cumulative;
+} KSITest_AsyncTimeout;
+
+typedef struct KSITest_Async_st {
+	KSITest_AsyncTimeout timeout;
+} KSITest_Async;
+
 typedef struct KSITest_ServiceConf_st {
 	char host[CONF_FIELD_SIZE];
 	unsigned port;
@@ -51,6 +60,8 @@ typedef struct KSITest_Conf_st {
 	KSITest_ServiceConf aggregator;
 
 	KSITest_PubfileConf pubfile;
+
+	KSITest_Async async;
 } KSITest_Conf;
 
 
