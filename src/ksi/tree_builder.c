@@ -497,6 +497,9 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder) {
 				tmp = NULL;
 			}
 		}
+	} else {
+		KSI_pushError(builder->ctx, res = KSI_INVALID_STATE, "The tree has already been closed.");
+		goto cleanup;
 	}
 
 	/* Check if all is well. */

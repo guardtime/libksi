@@ -456,6 +456,7 @@ EXPORTS
 	KSI_TlvElement_appendElement
 	KSI_TlvElement_setElement
 	KSI_TlvElement_getElement
+	KSI_TlvElement_removeElement
 	KSI_TlvElement_getUtf8String
 	KSI_TlvElement_getOctetString
 	KSI_TlvElement_getInteger

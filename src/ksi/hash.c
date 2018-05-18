@@ -88,16 +88,18 @@ void KSI_DataHash_free(KSI_DataHash *hsh) {
 	 * in the object cache. In case of a user double free, this might become an issue. */
 	if (hsh->ref == 0) {
 		KSI_free(hsh);
-	} else if (--hsh->ref == 0) {
-		if (KSI_DataHashList_length(hsh->ctx->dataHashRecycle) < (size_t)hsh->ctx->options[KSI_OPT_DATAHASH_CACHE_SIZE]) {
-			res = KSI_DataHashList_append(hsh->ctx->dataHashRecycle, hsh);
+	} else {
+		if (--hsh->ref == 0) {
+			if (hsh->ctx != NULL && KSI_DataHashList_length(hsh->ctx->dataHashRecycle) < (size_t)hsh->ctx->options[KSI_OPT_DATAHASH_CACHE_SIZE]) {
+				res = KSI_DataHashList_append(hsh->ctx->dataHashRecycle, hsh);
 
-			/* Return if all went well. */
-			if (res == KSI_OK) return;
+				/* Return if all went well. */
+				if (res == KSI_OK) return;
+			}
+
+			/* Free the element if the recycle bin was full or the KSI context was not set. */
+			KSI_free(hsh);
 		}
-
-		/* Free the element if the recycle bin was full, or something happened. */
-		KSI_free(hsh);
 	}
 }
 
@@ -187,12 +189,12 @@ static int alloc_dataHash(KSI_CTX *ctx, KSI_DataHash **out) {
 	KSI_DataHash *tmp = NULL;
 	size_t len;
 
-	if (ctx == NULL || out == NULL) {
+	if (out == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	if ((len = KSI_DataHashList_length(ctx->dataHashRecycle)) > 0) {
+	if (ctx != NULL && (len = KSI_DataHashList_length(ctx->dataHashRecycle)) > 0) {
 		res = KSI_DataHashList_remove(ctx->dataHashRecycle, len - 1, &tmp);
 		if (res != KSI_OK) goto cleanup;
 	} else {
@@ -219,7 +221,7 @@ int KSI_DataHash_fromDigest(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const unsig
 	KSI_DataHash *tmp_hash = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || digest == NULL || digest_length == 0 || hash == NULL) {
+	if (digest == NULL || digest_length == 0 || hash == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
@@ -360,7 +362,7 @@ int KSI_DataHash_create(KSI_CTX *ctx, const void *data, size_t data_length, KSI_
 	KSI_DataHasher *hsr = NULL;
 
 	KSI_ERR_clearErrors(ctx);
-	if (ctx == NULL || hash == NULL) {
+	if (hash == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
 		goto cleanup;
 	}
@@ -722,7 +724,7 @@ int KSI_DataHash_createZero(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, KSI_DataHas
 	KSI_DataHash *tmp = NULL;
 	unsigned char buf[KSI_MAX_IMPRINT_LEN];
 
-	if (ctx == NULL || hsh == NULL) {
+	if (hsh == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

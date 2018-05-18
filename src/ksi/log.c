@@ -40,7 +40,12 @@ static int writeLog(KSI_CTX *ctx, int logLevel, char *format, va_list va) {
 	int res = KSI_UNKNOWN_ERROR;
 	char msg[0xffff + 1024];
 
-	if (ctx == NULL || format == NULL) {
+	if (ctx == NULL) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	if (format == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

@@ -255,8 +255,7 @@ static void reqQueue_clearWithError(KSI_AsyncHandleList *reqQueue, int err, long
 static int dispatch(HttpAsyncCtx *clientCtx) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *resp = NULL;
-	int stillRunning = -1;
-	int msgQueue;
+	int queueSize = -1;
 	CURLMcode curlmCode;
 	CURLMsg *curlMsg = NULL;
 	CurlAsyncRequest *curlRequest = NULL;
@@ -359,7 +358,14 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_URL, clientCtx->url);
 
 				/* Add easy handle to the multi handle. */
-				curl_multi_add_handle(clientCtx->curl->handle, curlRequest->easyHandle);
+				curlmCode = curl_multi_add_handle(clientCtx->curl->handle, curlRequest->easyHandle);
+				if (curlmCode != CURLM_OK) {
+					KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP returned error. Error: %d (%s).", curlmCode, curl_multi_strerror(curlmCode));
+					reqQueue_clearWithError(clientCtx->reqQueue, KSI_NETWORK_ERROR, curlmCode);
+					res = KSI_OK;
+					goto cleanup;
+				}
+
 				curlRequest = NULL;
 				clientCtx->roundCount++;
 
@@ -376,7 +382,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 		}
 	}
 
-	while((curlmCode = curl_multi_perform(clientCtx->curl->handle, &stillRunning)) == CURLM_CALL_MULTI_PERFORM);
+	while((curlmCode = curl_multi_perform(clientCtx->curl->handle, &queueSize)) == CURLM_CALL_MULTI_PERFORM);
 	if (curlmCode != CURLM_OK) {
 		KSI_LOG_error(clientCtx->ctx, "Async Curl HTTP returned error. Error: %d (%s).", curlmCode, curl_multi_strerror(curlmCode));
 		reqQueue_clearWithError(clientCtx->reqQueue, KSI_NETWORK_ERROR, curlmCode);
@@ -385,13 +391,13 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 	}
 
 	/* Sanity check. */
-	if (stillRunning < 0) {
+	if (queueSize < 0) {
 		KSI_pushError(clientCtx->ctx, res = KSI_UNKNOWN_ERROR, "Curl returned a negative count of still running queries.");
 		goto cleanup;
 	}
 
 	/* Check if any transfer has completed. */
-	while ((curlMsg = curl_multi_info_read(clientCtx->curl->handle, &msgQueue)) &&
+	while ((curlMsg = curl_multi_info_read(clientCtx->curl->handle, &queueSize)) &&
 			(curlMsg->msg == CURLMSG_DONE)) {
 		CURLcode curlCode;
 

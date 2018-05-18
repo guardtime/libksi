@@ -2614,6 +2614,7 @@ int KSI_ExtendReq_toTlv(KSI_CTX *ctx, const KSI_ExtendReq *data, unsigned tag, i
 		}
 	} else {
 		res = KSI_INVALID_FORMAT;
+		goto cleanup;
 	}
 
 

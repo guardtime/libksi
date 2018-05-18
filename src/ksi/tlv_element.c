@@ -549,6 +549,64 @@ cleanup:
 	return res;
 }
 
+int KSI_TlvElement_removeElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvElement **el) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t *pos = NULL;
+	struct filter_st fc;
+	KSI_TlvElement *ptr = NULL;
+
+	fc.filters = NULL;
+	fc.filters_len = 0;
+	fc.result = NULL;
+
+	if (parent == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = convertToNested(parent);
+	if (res != KSI_OK) goto cleanup;
+
+	fc.filters = &tag;
+	fc.filters_len = 1;
+
+
+	res = KSI_TlvElementList_foldl(parent->subList, &fc, filter_tags);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_TlvElementList_length(fc.result) == 1) {
+		/* Found one element, remove it. */
+		res = KSI_TlvElementList_elementAt(fc.result, 0, &ptr);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_TlvElementList_indexOf(parent->subList, ptr, &pos);
+		if (res != KSI_OK) goto cleanup;
+
+		if (pos == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
+
+		res = KSI_TlvElementList_remove(parent->subList, *pos, el);
+		if (res != KSI_OK) goto cleanup;
+
+		parent->ftlv.dat_len -= ptr->ftlv.hdr_len + ptr->ftlv.dat_len;
+	} else {
+		/* Didn't find anything or found more than one element. We have no idea what to do. */
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(pos);
+	KSI_TlvElementList_free(fc.result);
+
+	return res;
+}
+
 int KSI_TlvElement_getUtf8String(KSI_TlvElement *parent, KSI_CTX *ctx, unsigned tag, KSI_Utf8String **out) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TlvElement *el = NULL;
