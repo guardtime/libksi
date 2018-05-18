@@ -33,11 +33,10 @@
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
 
-KSI_CTX *ctx = NULL;
-
 #define KSITEST_ASYNC_SLEEP_TIME_MS 100
 #define KSITEST_ASYNC_NO_RESP_TIMEOUT_MS (100 * 10 * 5)
 
+KSI_CTX *ctx = NULL;
 
 /**
  * Configuration object for integration tests.

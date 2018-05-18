@@ -199,13 +199,13 @@ static void asyncSigning_loop_getResponse(CuTest* tc, const char *url, const cha
 
 		if (respHandle == NULL) {
 			if (*p_req == NULL) {
-				CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+				CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
 
 				/* There is nothing to be sent. */
 				/* Wait for a while to avoid busy loop. */
 				KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-				sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
-				slept += KSITEST_ASYNC_SLEEP_TIME_MS;
+				sleep_ms(conf.async.timeout.sleep);
+				slept += conf.async.timeout.sleep;
 			}
 			continue;
 		}
@@ -386,13 +386,13 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *url, const 
 		CuAssert(tc, "Unable to get received count.", res == KSI_OK);
 
 		if (receivedCount == prevCount) {
-			CuAssert(tc, "Responses not received within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+			CuAssert(tc, "Responses not received within timeout.", slept < conf.async.timeout.cumulative);
 
 			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
-			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
 		}
 	} while (receivedCount != added);
 
@@ -497,13 +497,13 @@ static void asyncSigning_getError(CuTest* tc, const char *url, const char *user,
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle == NULL) {
-			CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+			CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
 
 			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
-			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
 
 			continue;
 		}
@@ -767,13 +767,13 @@ static void asyncSigning_requestConfigOnly(CuTest* tc, const char *url, const ch
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle == NULL) {
-			CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+			CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
 
 			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
-			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
 
 			continue;
 		}
@@ -870,13 +870,13 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *url, c
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (respHandle == NULL) {
-			CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+			CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
 
 			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
-			slept += KSITEST_ASYNC_SLEEP_TIME_MS;
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
 
 			continue;
 		}
@@ -1027,13 +1027,13 @@ static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char
 
 		if (respHandle == NULL) {
 			if (*p_req == NULL) {
-				CuAssert(tc, "No response within timeout.", slept < KSITEST_ASYNC_NO_RESP_TIMEOUT_MS);
+				CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
 
 				/* There is nothing to be sent. */
 				/* Wait for a while to avoid busy loop. */
 				KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-				sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);
-				slept += KSITEST_ASYNC_SLEEP_TIME_MS;
+				sleep_ms(conf.async.timeout.sleep);
+				slept += conf.async.timeout.sleep;
 			}
 			continue;
 		}
