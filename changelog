@@ -1,3 +1,5 @@
+* IMPROVEMENT: Function KSI_CTX_getLastFailedSignature is deprecated. See KSI_VERIFICATION_POLICY_EMPTY for replacement.
+
 Version 3.18
 
 * IMPROVEMENT: KSI_DataHash and KSI_DataHasher accept NULL as KSI context.
