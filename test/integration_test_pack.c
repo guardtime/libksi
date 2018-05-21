@@ -152,6 +152,7 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 		KSI_Signature *sig = NULL;
 		KSI_DataHash *documentHash = NULL;
 		KSI_PublicationData *userPublication = NULL;
+		KSI_PolicyVerificationResult *result = NULL;
 		KSI_VerificationContext context;
 		const KSI_Policy *policy = NULL;
 		unsigned char verState = TEST_VS_UNKNOWN;
@@ -259,60 +260,55 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to set publications file url.", KSI_getErrorString(res)), res == KSI_OK);
 		}
 
-		res = KSI_Signature_fromFileWithPolicy(ctx, getPath(rootPath, csvData[TEST_CF_SIGNATURE_URI]),
-				(policy != NULL ? policy : KSI_VERIFICATION_POLICY_GENERAL), &context, &sig);
+		res = KSI_Signature_fromFileWithPolicy(ctx, getPath(rootPath, csvData[TEST_CF_SIGNATURE_URI]), KSI_VERIFICATION_POLICY_EMPTY, NULL, &sig);
 		if (res != KSI_OK) {
-			if (verState == TEST_VS_POLICY) {
-				/* Check if the failure is expected. */
-				if (errCode != KSI_VER_ERR_NONE) {
-					KSI_Signature *lastFailed = NULL;
-					KSI_RuleVerificationResult *verResult = NULL;
-
-					CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature did not fail with policy based verification.", KSI_getErrorString(res)),
-							policy != NULL && res == KSI_VERIFICATION_FAILURE);
-
-					res = KSI_CTX_getLastFailedSignature(ctx, &lastFailed);
-					CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get last failed signature.", NULL), res == KSI_OK && lastFailed != NULL);
-
-					res = KSI_RuleVerificationResultList_elementAt(lastFailed->policyVerificationResult->ruleResults,
-							KSI_RuleVerificationResultList_length(lastFailed->policyVerificationResult->ruleResults) - 1, &verResult);
-					CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get last failed verification result.", NULL), res == KSI_OK && verResult != NULL);
-
-					if (errCode != verResult->errorCode) {
-						KSI_LOG_debug(ctx, "Verification error code mismatch: ");
-						KSI_LOG_debug(ctx, "...extpected: %s", KSI_VerificationErrorCode_toString(errCode));
-						KSI_LOG_debug(ctx, "...result   : %s", KSI_VerificationErrorCode_toString(verResult->errorCode));
-
-						CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error code mismatch.", NULL));
-					}
-
-					if (csvData[TEST_CF_ERROR_MESSAGE]) {
-						if (strcmp(KSI_Policy_getErrorString(errCode), csvData[TEST_CF_ERROR_MESSAGE]) != 0) {
-							KSI_LOG_debug(ctx, "Verification error message mismatch: ");
-							KSI_LOG_debug(ctx, "...extpected: %s", csvData[TEST_CF_ERROR_MESSAGE]);
-							KSI_LOG_debug(ctx, "...result   : %s", KSI_Policy_getErrorString(errCode));
-
-							CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error message mismatch.", NULL));
-						}
-					}
-
-					KSI_Signature_free(lastFailed);
-					goto test_cleanup;
-				} else {
-					CuFail(tc, failMsg(testCsvFile, lineCount, "Unexpected error during signature verification.", NULL));
-				}
-			} else if (verState == TEST_VS_PARSER_FAILURE) {
+			if (verState == TEST_VS_PARSER_FAILURE) {
 				/* Signature is expected to fail. */
 				goto test_cleanup;
 			} else {
+				CuFail(tc, failMsg(testCsvFile, lineCount, "Unable to read signature from file.", NULL));
+			}
+		} else if (verState == TEST_VS_PARSER_FAILURE) {
+			CuFail(tc, failMsg(testCsvFile, lineCount, "Signature should have failed during parsing state.", NULL));
+		}
+		context.signature = sig;
+
+		res = KSI_SignatureVerifier_verify((policy != NULL ? policy : KSI_VERIFICATION_POLICY_GENERAL), &context, &result);
+		CuAssert(tc, failMsg(testCsvFile, lineCount, "Policy verification failed.", KSI_getErrorString(res)), res == KSI_OK);
+		if (result->finalResult.resultCode != KSI_VER_RES_OK) {
+			KSI_RuleVerificationResult *verResult = NULL;
+
+			if (verState != TEST_VS_POLICY) {
 				CuFail(tc, failMsg(testCsvFile, lineCount, "Failed because of an unexpected error.", NULL));
 			}
+
+			res = KSI_RuleVerificationResultList_elementAt(result->ruleResults,
+					KSI_RuleVerificationResultList_length(result->ruleResults) - 1, &verResult);
+			CuAssert(tc, failMsg(testCsvFile, lineCount, "Unable to get last failed verification result.", NULL), res == KSI_OK && verResult != NULL);
+
+			if (errCode != verResult->errorCode) {
+				KSI_LOG_debug(ctx, "Verification error code mismatch: ");
+				KSI_LOG_debug(ctx, "...extpected: %s", KSI_VerificationErrorCode_toString(errCode));
+				KSI_LOG_debug(ctx, "...result   : %s", KSI_VerificationErrorCode_toString(verResult->errorCode));
+
+				CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error code mismatch.", NULL));
+			}
+
+			if (csvData[TEST_CF_ERROR_MESSAGE]) {
+				if (strcmp(KSI_Policy_getErrorString(errCode), csvData[TEST_CF_ERROR_MESSAGE]) != 0) {
+					KSI_LOG_debug(ctx, "Verification error message mismatch: ");
+					KSI_LOG_debug(ctx, "...extpected: %s", csvData[TEST_CF_ERROR_MESSAGE]);
+					KSI_LOG_debug(ctx, "...result   : %s", KSI_Policy_getErrorString(errCode));
+
+					CuFail(tc, failMsg(testCsvFile, lineCount, "Verification error message mismatch.", NULL));
+				}
+			}
+
+			goto test_cleanup;
 		} else {
 			/* Verify if the signature should have been failed during the verification state. */
 			if (verState == TEST_VS_POLICY) {
 				CuAssert(tc, failMsg(testCsvFile, lineCount, "Signature should have failed during policy verification state.", NULL),  errCode == KSI_VER_ERR_NONE);
-			} else if (verState == TEST_VS_PARSER_FAILURE) {
-				CuFail(tc, failMsg(testCsvFile, lineCount, "Signature should have failed during parsing state.", NULL));
 			}
 		}
 
@@ -374,6 +370,7 @@ static void runTests(CuTest* tc, const char *testCsvFile, const char *rootPath) 
 		}
 
 test_cleanup:
+		KSI_PolicyVerificationResult_free(result);
 		KSI_VerificationContext_clean(&context);
 		KSI_Signature_free(sig);
 		KSI_DataHash_free(documentHash);
