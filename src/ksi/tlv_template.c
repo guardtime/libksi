@@ -88,6 +88,7 @@ KSI_DEFINE_TLV_TEMPLATE(KSI_PublicationRecord)
 KSI_END_TLV_TEMPLATE
 
 KSI_DEFINE_TLV_TEMPLATE(KSI_MetaDataElement)
+	KSI_TLV_OCTET_STRING(0x1E, KSI_TLV_TMPL_FLG_FIRST, KSI_MetaDataElement_getPadding, KSI_MetaDataElement_setPadding, "padding")
 	KSI_TLV_UTF8_STRING(0x01, KSI_TLV_TMPL_FLG_MANDATORY, KSI_MetaDataElement_getClientId, KSI_MetaDataElement_setClientId, "client_id")
 	KSI_TLV_UTF8_STRING(0x02, KSI_TLV_TMPL_FLG_NONE, KSI_MetaDataElement_getMachineId, KSI_MetaDataElement_setMachineId, "machine_id")
 	KSI_TLV_INTEGER(0x03, KSI_TLV_TMPL_FLG_NONE, KSI_MetaDataElement_getSequenceNr, KSI_MetaDataElement_setSequenceNr, "seq_nr")
