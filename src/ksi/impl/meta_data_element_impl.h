@@ -31,11 +31,6 @@ extern "C" {
 		KSI_CTX *ctx;
 		size_t ref;
 
-		KSI_Utf8String *DEPRECATED_clientId;
-		KSI_Utf8String *DEPRECATED_machineId;
-		KSI_Integer *DEPRECATED_sequenceNr;
-		KSI_Integer *DEPRECATED_reqTimeInMicros;
-
 		KSI_TlvElement *impl;
 	};
 

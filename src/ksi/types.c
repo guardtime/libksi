@@ -207,10 +207,7 @@ KSI_IMPLEMENT_REF(KSI_MetaData);
 void KSI_MetaDataElement_free(KSI_MetaDataElement *t) {
 	if (t != NULL && --t->ref == 0) {
 		KSI_TlvElement_free(t->impl);
-		KSI_Utf8String_free(t->DEPRECATED_clientId);
-		KSI_Utf8String_free(t->DEPRECATED_machineId);
-		KSI_Integer_free(t->DEPRECATED_reqTimeInMicros);
-		KSI_Integer_free(t->DEPRECATED_sequenceNr);
+
 		KSI_free(t);
 	}
 }
@@ -228,11 +225,6 @@ int KSI_MetaDataElement_new(KSI_CTX *ctx, KSI_MetaDataElement **t) {
 	tmp->ref = 1;
 	tmp->impl = NULL;
 
-	tmp->DEPRECATED_clientId = NULL;
-	tmp->DEPRECATED_machineId = NULL;
-	tmp->DEPRECATED_reqTimeInMicros = NULL;
-	tmp->DEPRECATED_sequenceNr = NULL;
-
 	res = KSI_TlvElement_new(&tmp->impl);
 	if (res != KSI_OK) goto cleanup;
 
@@ -248,149 +240,41 @@ cleanup:
 	return res;
 }
 
-int KSI_MetaDataElement_getClientId(KSI_MetaDataElement *o, KSI_Utf8String** clientId) {
-	int res = KSI_UNKNOWN_ERROR;
+#define KSI_IMPLEMENT_SETTER_WITH_TAG(baseType, tag, implType, valueType, typeAlias, valueName, alias) \
+KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
+	int res = KSI_UNKNOWN_ERROR;											\
+	if (o == NULL) {														\
+		res = KSI_INVALID_ARGUMENT;											\
+		goto cleanup;														\
+	}																		\
+	res  = implType##_set##typeAlias(o->impl, tag, valueName);				\
+cleanup:																	\
+	return res;																\
+}																			\
 
-	if (o == NULL || clientId == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
+#define KSI_IMPLEMENT_GETTER_WITH_TAG(baseType, tag, implType, valueType, typeAlias, valueName, alias) \
+KSI_DEFINE_GETTER(baseType, valueType, valueName, alias) {					\
+	int res = KSI_UNKNOWN_ERROR;											\
+	if (o == NULL || valueName == NULL) {									\
+		res = KSI_INVALID_ARGUMENT;											\
+		goto cleanup;														\
+	}																		\
+	res = implType##_get##typeAlias(o->impl, o->ctx, tag, valueName);		\
+cleanup:																	\
+	return res;																\
+}																			\
 
-	if (o->DEPRECATED_clientId == NULL) {
-		res = KSI_TlvElement_getUtf8String(o->impl, o->ctx, 0x01, &o->DEPRECATED_clientId);
-		if (res != KSI_OK) goto cleanup;
-	}
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x1E, KSI_TlvElement, KSI_OctetString*, OctetString, padding, Padding);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x01, KSI_TlvElement, KSI_Utf8String*, Utf8String, clientId, ClientId);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x02, KSI_TlvElement, KSI_Utf8String*, Utf8String, machineId, MachineId);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x03, KSI_TlvElement, KSI_Integer*, Integer, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x04, KSI_TlvElement, KSI_Integer*, Integer, reqTimeInMicros, RequestTimeInMicros);
 
-	*clientId = o->DEPRECATED_clientId;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_MetaDataElement_getMachineId(KSI_MetaDataElement *o, KSI_Utf8String** machineId) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (o == NULL || machineId == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (o->DEPRECATED_machineId == NULL) {
-		res = KSI_TlvElement_getUtf8String(o->impl, o->ctx, 0x02, &o->DEPRECATED_machineId);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	*machineId = o->DEPRECATED_machineId;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_MetaDataElement_getSequenceNr(KSI_MetaDataElement *o, KSI_Integer** sequenceNr) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (o == NULL || sequenceNr == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (o->DEPRECATED_sequenceNr == NULL) {
-		res = KSI_TlvElement_getInteger(o->impl, o->ctx, 0x03, &o->DEPRECATED_sequenceNr);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	*sequenceNr = o->DEPRECATED_sequenceNr;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_MetaDataElement_getRequestTimeInMicros(KSI_MetaDataElement *o, KSI_Integer** reqTimeInMicros) {
-	int res = KSI_UNKNOWN_ERROR;
-
-	if (o == NULL || reqTimeInMicros == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (o->DEPRECATED_reqTimeInMicros == NULL) {
-		res = KSI_TlvElement_getInteger(o->impl, o->ctx, 0x04, &o->DEPRECATED_reqTimeInMicros);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	*reqTimeInMicros = o->DEPRECATED_reqTimeInMicros;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_MetaDataElement_setClientId(KSI_MetaDataElement *o, KSI_Utf8String*  clientId) {
-	int res = KSI_UNKNOWN_ERROR;
-	res = KSI_TlvElement_setUtf8String(o->impl, 0x01, clientId);
-	if (res != KSI_OK) goto cleanup;
-
-	o->DEPRECATED_clientId = clientId;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_MetaDataElement_setMachineId(KSI_MetaDataElement *o, KSI_Utf8String*  machineId) {
-	int res = KSI_UNKNOWN_ERROR;
-	res =  KSI_TlvElement_setUtf8String(o->impl, 0x02, machineId);
-	if (res != KSI_OK) goto cleanup;
-
-	o->DEPRECATED_machineId = machineId;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_MetaDataElement_setSequenceNr(KSI_MetaDataElement *o, KSI_Integer*  sequenceNr) {
-	int res = KSI_UNKNOWN_ERROR;
-	res = KSI_TlvElement_setInteger(o->impl, 0x03, sequenceNr);
-	if (res != KSI_OK) goto cleanup;
-
-	o->DEPRECATED_sequenceNr = sequenceNr;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
-
-int KSI_MetaDataElement_setRequestTimeInMicros(KSI_MetaDataElement *o, KSI_Integer*  reqTimeInMicros) {
-	int res = KSI_UNKNOWN_ERROR;
-	res =  KSI_TlvElement_setInteger(o->impl, 0x04, reqTimeInMicros);
-	if (res != KSI_OK) goto cleanup;
-
-	o->DEPRECATED_reqTimeInMicros = reqTimeInMicros;
-
-	res = KSI_OK;
-
-cleanup:
-
-	return res;
-}
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x1E, KSI_TlvElement, KSI_OctetString*, OctetString, padding, Padding);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x01, KSI_TlvElement, KSI_Utf8String*, Utf8String, clientId, ClientId);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x02, KSI_TlvElement, KSI_Utf8String*, Utf8String, machineId, MachineId);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x03, KSI_TlvElement, KSI_Integer*, Integer, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x04, KSI_TlvElement, KSI_Integer*, Integer, reqTimeInMicros, RequestTimeInMicros);
 
 int KSI_MetaDataElement_toTlv(KSI_CTX *ctx, const KSI_MetaDataElement *data, unsigned KSI_UNUSED(tag), int KSI_UNUSED(isNonCritical), int KSI_UNUSED(isForward), KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -434,6 +318,29 @@ cleanup:
 	return res;
 }
 
+KSI_IMPORT_TLV_TEMPLATE(KSI_MetaDataElement);
+
+static int metaDataElementTlv_verify(KSI_TLV *tlv) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_MetaDataElement *tmp = NULL;
+
+	if (tlv == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_MetaDataElement_new(KSI_TLV_getCtx(tlv), &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_TlvTemplate_extract(KSI_TLV_getCtx(tlv), tmp, tlv, KSI_TLV_TEMPLATE(KSI_MetaDataElement));
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+cleanup:
+	KSI_MetaDataElement_free(tmp);
+	return res;
+}
+
 int KSI_MetaDataElement_fromTlv(KSI_TLV *tlv, KSI_MetaDataElement **metaData) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_MetaDataElement *tmp = NULL;
@@ -445,6 +352,10 @@ int KSI_MetaDataElement_fromTlv(KSI_TLV *tlv, KSI_MetaDataElement **metaData) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
+	/* Make sure the content is valid. */
+	res = metaDataElementTlv_verify(tlv);
+	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_MetaDataElement_new(KSI_TLV_getCtx(tlv), &tmp);
 	if (res != KSI_OK) goto cleanup;
@@ -463,13 +374,6 @@ int KSI_MetaDataElement_fromTlv(KSI_TLV *tlv, KSI_MetaDataElement **metaData) {
 	/* Detach the element. */
 	res = KSI_TlvElement_detach(tmp->impl);
 	if (res != KSI_OK) goto cleanup;
-
-	/* Make sure the required elements are present. */
-	res = KSI_TlvElement_getElement(tmp->impl, 0x01, &el);
-	if (res != KSI_OK || el == NULL) {
-		res = KSI_INVALID_FORMAT;
-		goto cleanup;
-	}
 
 	*metaData = tmp;
 	tmp = NULL;
