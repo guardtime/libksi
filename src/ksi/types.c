@@ -208,6 +208,12 @@ void KSI_MetaDataElement_free(KSI_MetaDataElement *t) {
 	if (t != NULL && --t->ref == 0) {
 		KSI_TlvElement_free(t->impl);
 
+		KSI_OctetString_free(t->padding);
+		KSI_Utf8String_free(t->clientId);
+		KSI_Utf8String_free(t->machineId);
+		KSI_Integer_free(t->sequenceNr);
+		KSI_Integer_free(t->reqTimeInMicros);
+
 		KSI_free(t);
 	}
 }
@@ -225,6 +231,12 @@ int KSI_MetaDataElement_new(KSI_CTX *ctx, KSI_MetaDataElement **t) {
 	tmp->ref = 1;
 	tmp->impl = NULL;
 
+	tmp->padding = NULL;
+	tmp->clientId = NULL;
+	tmp->machineId = NULL;
+	tmp->sequenceNr = NULL;
+	tmp->reqTimeInMicros = NULL;
+
 	res = KSI_TlvElement_new(&tmp->impl);
 	if (res != KSI_OK) goto cleanup;
 
@@ -240,41 +252,52 @@ cleanup:
 	return res;
 }
 
-#define KSI_IMPLEMENT_SETTER_WITH_TAG(baseType, tag, implType, valueType, typeAlias, valueName, alias) \
-KSI_DEFINE_SETTER(baseType, valueType, valueName, alias) {					\
+#define KSI_IMPLEMENT_SETTER_WITH_TAG(baseType, tag, implType, valueTypeAlias, valueName, alias) \
+KSI_DEFINE_SETTER(baseType, KSI_##valueTypeAlias*, valueName, alias) {			\
 	int res = KSI_UNKNOWN_ERROR;											\
 	if (o == NULL) {														\
 		res = KSI_INVALID_ARGUMENT;											\
 		goto cleanup;														\
 	}																		\
-	res  = implType##_set##typeAlias(o->impl, tag, valueName);				\
+	res = implType##_set##valueTypeAlias(o->impl, tag, valueName);			\
+	if (res != KSI_OK) goto cleanup;										\
+	KSI_##valueTypeAlias##_free(valueName);									\
+	res = KSI_OK;															\
 cleanup:																	\
 	return res;																\
 }																			\
 
-#define KSI_IMPLEMENT_GETTER_WITH_TAG(baseType, tag, implType, valueType, typeAlias, valueName, alias) \
-KSI_DEFINE_GETTER(baseType, valueType, valueName, alias) {					\
+#define KSI_DEFINE_GETTER_BASE(baseType, valueType, valueName, alias) int baseType##_get##alias(baseType *o, valueType* valueName)
+
+#define KSI_IMPLEMENT_GETTER_WITH_TAG(baseType, tag, implType, valueTypeAlias, valueName, alias) \
+KSI_DEFINE_GETTER_BASE(baseType, KSI_##valueTypeAlias*, valueName, alias) {		\
 	int res = KSI_UNKNOWN_ERROR;											\
 	if (o == NULL || valueName == NULL) {									\
 		res = KSI_INVALID_ARGUMENT;											\
 		goto cleanup;														\
 	}																		\
-	res = implType##_get##typeAlias(o->impl, o->ctx, tag, valueName);		\
+	res = implType##_get##valueTypeAlias(o->impl, o->ctx, tag, valueName);	\
+	if (res != KSI_OK) goto cleanup;										\
+	if (o->valueName != NULL) {												\
+		KSI_##valueTypeAlias##_free(o->valueName);							\
+	}																		\
+	o->valueName = *valueName;												\
+	res = KSI_OK;															\
 cleanup:																	\
 	return res;																\
 }																			\
 
-KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x1E, KSI_TlvElement, KSI_OctetString*, OctetString, padding, Padding);
-KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x01, KSI_TlvElement, KSI_Utf8String*, Utf8String, clientId, ClientId);
-KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x02, KSI_TlvElement, KSI_Utf8String*, Utf8String, machineId, MachineId);
-KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x03, KSI_TlvElement, KSI_Integer*, Integer, sequenceNr, SequenceNr);
-KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x04, KSI_TlvElement, KSI_Integer*, Integer, reqTimeInMicros, RequestTimeInMicros);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x1E, KSI_TlvElement, OctetString, padding, Padding);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x01, KSI_TlvElement, Utf8String, clientId, ClientId);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x02, KSI_TlvElement, Utf8String, machineId, MachineId);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x03, KSI_TlvElement, Integer, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_GETTER_WITH_TAG(KSI_MetaDataElement, 0x04, KSI_TlvElement, Integer, reqTimeInMicros, RequestTimeInMicros);
 
-KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x1E, KSI_TlvElement, KSI_OctetString*, OctetString, padding, Padding);
-KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x01, KSI_TlvElement, KSI_Utf8String*, Utf8String, clientId, ClientId);
-KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x02, KSI_TlvElement, KSI_Utf8String*, Utf8String, machineId, MachineId);
-KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x03, KSI_TlvElement, KSI_Integer*, Integer, sequenceNr, SequenceNr);
-KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x04, KSI_TlvElement, KSI_Integer*, Integer, reqTimeInMicros, RequestTimeInMicros);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x1E, KSI_TlvElement, OctetString, padding, Padding);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x01, KSI_TlvElement, Utf8String, clientId, ClientId);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x02, KSI_TlvElement, Utf8String, machineId, MachineId);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x03, KSI_TlvElement, Integer, sequenceNr, SequenceNr);
+KSI_IMPLEMENT_SETTER_WITH_TAG(KSI_MetaDataElement, 0x04, KSI_TlvElement, Integer, reqTimeInMicros, RequestTimeInMicros);
 
 int KSI_MetaDataElement_toTlv(KSI_CTX *ctx, const KSI_MetaDataElement *data, unsigned KSI_UNUSED(tag), int KSI_UNUSED(isNonCritical), int KSI_UNUSED(isForward), KSI_TLV **tlv) {
 	int res = KSI_UNKNOWN_ERROR;

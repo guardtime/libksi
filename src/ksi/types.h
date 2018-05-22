@@ -502,11 +502,11 @@ KSI_DEFINE_LIST(KSI_AsyncHandle);
  */
 void KSI_MetaDataElement_free(KSI_MetaDataElement *t);
 int KSI_MetaDataElement_new(KSI_CTX *ctx, KSI_MetaDataElement **t);
-int KSI_MetaDataElement_getPadding(const KSI_MetaDataElement *o, KSI_OctetString **padding);
-int KSI_MetaDataElement_getClientId(const KSI_MetaDataElement *t, KSI_Utf8String **clientId);
-int KSI_MetaDataElement_getMachineId(const KSI_MetaDataElement *t, KSI_Utf8String **machineId);
-int KSI_MetaDataElement_getSequenceNr(const KSI_MetaDataElement *t, KSI_Integer **sequenceNr);
-int KSI_MetaDataElement_getRequestTimeInMicros(const KSI_MetaDataElement *t, KSI_Integer **reqTime);
+int KSI_MetaDataElement_getPadding(KSI_MetaDataElement *o, KSI_OctetString **padding);
+int KSI_MetaDataElement_getClientId(KSI_MetaDataElement *t, KSI_Utf8String **clientId);
+int KSI_MetaDataElement_getMachineId(KSI_MetaDataElement *t, KSI_Utf8String **machineId);
+int KSI_MetaDataElement_getSequenceNr(KSI_MetaDataElement *t, KSI_Integer **sequenceNr);
+int KSI_MetaDataElement_getRequestTimeInMicros(KSI_MetaDataElement *t, KSI_Integer **reqTime);
 int KSI_MetaDataElement_setPadding(KSI_MetaDataElement *o, KSI_OctetString*  padding);
 int KSI_MetaDataElement_setClientId(KSI_MetaDataElement *t, KSI_Utf8String *clientId);
 int KSI_MetaDataElement_setMachineId(KSI_MetaDataElement *t, KSI_Utf8String *machineId);
