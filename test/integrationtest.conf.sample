@@ -70,3 +70,15 @@ aggregator.pass=<pass>
 
 pubfile.url=<scheme>://<user>:<pass>@<host>
 pubfile.cnstr=1.2.840.113549.1.9.1=publications@guardtime.com
+
+
+### Async timeout
+
+# Defines the sleep timeout in milliseconds for avoiding busy loops
+# while waiting for server responses.
+# Uncomment to specify a value that meets your needs.
+#async.timeout.sleep = 100
+
+# Cululative sleep timeout in milliseconds for a test case.
+# Uncomment to specify a value that meets your needs.
+#async.timeout.cumulative = 5000

@@ -162,6 +162,9 @@ static void conf_append(KSITest_Conf *conf, const char *param, const char *value
 	CONF_str_cpy(pubfile.url, param, value);
 	CONF_arr_str_cpy(pubfile.cnstr, conf->pubfile.cnstrCount, CONF_MAX_CONSTRAINTS, param, value);
 
+	CONF_int_set(async.timeout.sleep, param, value);
+	CONF_int_set(async.timeout.cumulative, param, value);
+
 	if (isParam(param, "pubfile.cnstr") && conf->pubfile.cnstr[conf->pubfile.cnstrCount] != NULL) {
 		parseConstraint(&conf->pubfile, conf->pubfile.cnstrCount, value);
 		conf->pubfile.cnstrCount++;
@@ -212,8 +215,13 @@ static int conf_control(KSITest_Conf *conf) {
 	 */
 
 	CONF_CONTROL_STR(conf, pubfile.url, res);
-
 	CONF_CONTROL_CNT(conf, pubfile.cnstrCount, res, 0, "Error: At least 1 publications file certificate constraint must be defined in conf file.\n");
+
+	/* Optional values: */
+	/*
+	CONF_CONTROL_INT(conf, async.timeout.sleep, res, 0);
+	CONF_CONTROL_INT(conf, async.timeout.cumulative, res, 0);
+	*/
 
 	return res;
 }

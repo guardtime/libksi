@@ -33,6 +33,9 @@
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
 
+#define KSITEST_ASYNC_SLEEP_TIME_MS 100
+#define KSITEST_ASYNC_NO_RESP_TIMEOUT_MS (100 * 10 * 5)
+
 KSI_CTX *ctx = NULL;
 
 /**
@@ -83,6 +86,10 @@ static int RunAllTests() {
 		}
 		KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id);
 	}
+
+	/* Set default timeout values. */
+	if (conf.async.timeout.sleep == 0) conf.async.timeout.sleep = KSITEST_ASYNC_SLEEP_TIME_MS;
+	if (conf.async.timeout.cumulative == 0) conf.async.timeout.cumulative = KSITEST_ASYNC_NO_RESP_TIMEOUT_MS;
 
 	res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 	if (res != KSI_OK) {
