@@ -215,12 +215,13 @@ extern "C" {
 	 *
 	 *  \param[in]	a	The first calendar hash chain.
 	 *  \param[in]	b	The second calendar hash chain.
-	 *  \return Returns non-zero if the two aggregation hash chains are compatible.
+	 *  \return Returns #KSI_OK on success; #KSI_INCOMPATIBLE_HASH_CHAIN if the calendar hash chains are
+	 *          incompatible or an error otherwise.
 	 *  \note If at least one of the arguments is NULL, the result is considered to be incompatible.
 	 *  \note The publication time from the two aggregation hash chains and also the left-links from
-	 *  		both of the chains can differ.
+	 *        both of the chains can differ.
 	 */
-	int KSI_CalendarHashChain_compatibleTo(const KSI_CalendarHashChain *a, const KSI_CalendarHashChain *b);
+	int KSI_CalendarHashChain_verifyCompatibilityTo(const KSI_CalendarHashChain *a, const KSI_CalendarHashChain *b);
 
 	KSI_DEFINE_REF(KSI_CalendarHashChain);
 	KSI_DEFINE_WRITE_BYTES(KSI_CalendarHashChain);
