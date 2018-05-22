@@ -113,6 +113,12 @@ int KSI_HttpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c);
  */
 int KSI_HttpAsyncClient_setService(KSI_AsyncClient *c, const char *url, const char *user, const char *pass);
 
+/**
+ * Initialize HTTP implementation globals.
+ * \param[in]	ctx			KSI context.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_Http_init(KSI_CTX *ctx);
 
 #ifdef __cplusplus
 }

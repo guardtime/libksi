@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -49,6 +49,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, IntegrationTestPack_getSuite);
 	addSuite(suite, AsyncAggrIntegrationTests_getSuite);
 	addSuite(suite, AsyncExtIntegrationTests_getSuite);
+	addSuite(suite, HaAggrIntegrationTests_getSuite);
 
 	return suite;
 }

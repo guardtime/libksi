@@ -275,6 +275,9 @@ static void asyncExtend_loop_getResponse(CuTest* tc, const char *url, const char
 					KSI_Signature_free(ext);
 				}
 				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
+				break;
 
 			case KSI_ASYNC_STATE_ERROR:
 				CuFail(tc, "Requests must succeed.");
@@ -763,8 +766,6 @@ static void asyncExtend_signature(CuTest* tc, const char *url, const char *user,
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
-	KSI_ExtendReq *request = NULL;
-	KSI_Integer *signTime = NULL;
 	time_t startTime;
 	size_t onHold = 0;
 	char respReceived = 0;
@@ -834,6 +835,9 @@ static void asyncExtend_signature(CuTest* tc, const char *url, const char *user,
 					KSI_Signature_free(ext);
 					respReceived = 1;
 				}
+				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
 				break;
 
 			default:

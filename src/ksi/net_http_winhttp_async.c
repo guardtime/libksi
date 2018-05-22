@@ -28,7 +28,7 @@
 #include "fast_tlv.h"
 
 #include "impl/net_http_impl.h"
-#include "impl/net_impl.h"
+#include "impl/net_async_impl.h"
 
 typedef struct WinHTTPAsyncReq_st  WinHTTPAsyncReq;
 
@@ -353,7 +353,7 @@ static void reqQueue_clearWithError(KSI_AsyncHandleList *reqQueue, int err, long
 		int res;
 		KSI_AsyncHandle *req = NULL;
 
-		res = KSI_AsyncHandleList_elementAt(reqQueue, size - 1, &req);
+		res = KSI_AsyncHandleList_remove(reqQueue, size - 1, &req);
 		if (res != KSI_OK || req == NULL) return;
 
 		/* Update request state. */

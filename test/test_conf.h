@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -28,6 +28,7 @@ extern "C" {
 
 #define CONF_FIELD_SIZE 1024
 #define CONF_MAX_CONSTRAINTS 32
+#define CONF_MAX_HA_SERVICES 3
 
 typedef struct KSITest_ServiceConf_st {
 	char host[CONF_FIELD_SIZE];
@@ -46,9 +47,16 @@ typedef struct KSITest_PubfileConf_st {
 	KSI_CertConstraint certConstraints[CONF_MAX_CONSTRAINTS + 1];
 } KSITest_PubfileConf;
 
+typedef struct KSITestHAConf_st {
+	KSITest_ServiceConf extender[CONF_MAX_HA_SERVICES];
+	KSITest_ServiceConf aggregator[CONF_MAX_HA_SERVICES];
+} KSITestHAConf;
+
 typedef struct KSITest_Conf_st {
 	KSITest_ServiceConf extender;
 	KSITest_ServiceConf aggregator;
+
+	KSITestHAConf ha;
 
 	KSITest_PubfileConf pubfile;
 } KSITest_Conf;

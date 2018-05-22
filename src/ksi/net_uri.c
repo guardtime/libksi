@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2017 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -24,14 +24,11 @@
 #include "net_http.h"
 #include "net_file.h"
 #include "http_parser.h"
-#include "net_async.h"
 
 #include "internal.h"
 
 #include "impl/net_uri_impl.h"
 #include "impl/net_impl.h"
-
-static int getClientByUriScheme(const char *scheme, const char **replaceScheme);
 
 static int prepareExtendRequest(KSI_NetworkClient *client, KSI_ExtendReq *req, KSI_RequestHandle **handle) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -184,7 +181,7 @@ int KSI_UriClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) 
 	uriClient = client->impl;
 
 	KSI_UriSplitBasic(val, &schm, &host, &port, &path);
-	c = getClientByUriScheme(schm, &replace);
+	c = client->getClientByUriScheme(schm, &replace);
 
 	switch (c) {
 		case URI_HTTP:
@@ -233,41 +230,6 @@ cleanup:
 	return res;
 }
 
-static int getClientByUriScheme(const char *scheme, const char **replaceScheme) {
-	int netClient = -1;
-
-	static const struct {
-		const char *scheme;
-		const char *replace;
-		enum client_e client;
-	} schemeMap[] = {
-			{"ksi", "http", URI_HTTP },
-			{"ksi+http", "http",URI_HTTP},
-			{"ksi+https", "https", URI_HTTP},
-			{"ksi+tcp", NULL, URI_TCP},
-			{"file", NULL, URI_FILE},
-			{NULL, NULL, -1}
-	};
-
-	if (scheme != NULL) {
-		int i = 0;
-		while (schemeMap[i].scheme != NULL) {
-			if (strcmp(schemeMap[i].scheme, scheme) == 0) {
-				netClient = schemeMap[i].client;
-				*replaceScheme = schemeMap[i].replace;
-				break;
-			}
-			i++;
-		}
-	}
-
-	if (netClient == -1) {
-		netClient = URI_UNKNOWN;
-	}
-
-	return netClient;
-}
-
 static int uriClient_setService(KSI_NetworkClient *client, const char *uri, const char *loginId, const char *key,
 		int (*HttpClient_setService)(KSI_NetworkClient *client, const char *url, const char *user, const char *pass),
 		int (*TcpClient_setService)(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *pass),
@@ -300,7 +262,7 @@ static int uriClient_setService(KSI_NetworkClient *client, const char *uri, cons
 	res = client->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
 	if (res != KSI_OK) unableToParse = 1;
 
-	c = getClientByUriScheme(schm, &replace);
+	c = client->getClientByUriScheme(schm, &replace);
 	scheme = (replace != NULL) ? replace : schm;
 
 
@@ -468,97 +430,3 @@ cleanup:
 	return res;
 }
 
-static int uri_setAsyncService(KSI_AsyncService *s, const char *uri, const char *loginId, const char *key) {
-	int res = KSI_UNKNOWN_ERROR;
-	char *schm = NULL;
-	char *ksi_user = NULL;
-	char *ksi_pass = NULL;
-	char *host = NULL;
-	unsigned port = 0;
-	char *path = NULL;
-	char *query = NULL;
-	char *fragment = NULL;
-	const char *scheme = NULL;
-	const char *replace = NULL;
-	int unableToParse = 0;
-	char addr[0xffff];
-	int c;
-
-	if (s == NULL || uri == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	if (s->impl != NULL) {
-		res = KSI_INVALID_STATE;
-		goto cleanup;
-	}
-
-	res = s->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
-	if (res != KSI_OK) unableToParse = 1;
-
-	c = getClientByUriScheme(schm, &replace);
-	scheme = (replace != NULL) ? replace : schm;
-
-	switch (c) {
-		case URI_TCP:
-			if (host == NULL || port == 0) {
-				res = KSI_INVALID_ARGUMENT;
-				goto cleanup;
-			}
-
-			s->impl_free = (void (*)(void*))KSI_AsyncClient_free;
-			res = KSI_TcpAsyncClient_new(s->ctx, (KSI_AsyncClient **)&s->impl);
-			if (res != KSI_OK) goto cleanup;
-
-			res = KSI_TcpAsyncClient_setService(s->impl,
-					host, port,
-					loginId != NULL ? loginId : ksi_user,
-					key != NULL ? key : ksi_pass);
-			if (res != KSI_OK) goto cleanup;
-			break;
-
-		case URI_HTTP:
-			if (unableToParse == 0 || replace) {
-				/* Create a new URL where the scheme is replaced with the correct one and KSI user and pass is removed. */
-				res = s->uriCompose(scheme, NULL, NULL, host, port, path, query, fragment, addr, sizeof(addr));
-				if (res != KSI_OK) goto cleanup;
-			}
-
-			s->impl_free = (void (*)(void*))KSI_AsyncClient_free;
-			res = KSI_HttpAsyncClient_new(s->ctx, (KSI_AsyncClient **)&s->impl);
-			if (res != KSI_OK) goto cleanup;
-
-			res = KSI_HttpAsyncClient_setService(s->impl,
-					strlen(addr) ? addr : uri,
-					loginId != NULL ? loginId : ksi_user,
-					key != NULL ? key : ksi_pass);
-			if (res != KSI_OK) goto cleanup;
-			break;
-
-		case URI_FILE:
-		case URI_UNKNOWN:
-		default:
-			res = KSI_INVALID_FORMAT;
-			goto cleanup;
-	}
-
-	res = KSI_OK;
-
-cleanup:
-
-	KSI_free(schm);
-	KSI_free(ksi_user);
-	KSI_free(ksi_pass);
-	KSI_free(host);
-	KSI_free(path);
-	KSI_free(query);
-	KSI_free(fragment);
-
-	return res;
-}
-
-int KSI_AsyncService_setEndpoint(KSI_AsyncService *s, const char *uri, const char *loginId, const char *key) {
-	if (s == NULL || uri == NULL) return KSI_INVALID_ARGUMENT;
-	return uri_setAsyncService(s, uri, loginId, key);
-}

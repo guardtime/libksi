@@ -29,8 +29,7 @@
 #include "net_async.h"
 
 #include "impl/ctx_impl.h"
-#include "impl/net_http_impl.h"
-#include "impl/net_tcp_impl.h"
+#include "impl/net_async_impl.h"
 #include "impl/net_sock_impl.h"
 
 #define TCP_INVALID_SOCKET_FD (-1)
@@ -168,7 +167,7 @@ static void reqQueue_clearWithError(KSI_LIST(KSI_AsyncHandle) *reqQueue, int err
 		int res;
 		KSI_AsyncHandle *req = NULL;
 
-		res = KSI_AsyncHandleList_elementAt(reqQueue, size - 1, &req);
+		res = KSI_AsyncHandleList_remove(reqQueue, size - 1, &req);
 		if (res != KSI_OK || req == NULL) return;
 
 		/* Update request state. */

@@ -120,6 +120,7 @@ extern "C" {
 	 */
 	typedef struct KSI_NetworkClient_st KSI_NetworkClient;
 
+	typedef struct KSI_HighAvailabilityService_st KSI_HighAvailabilityService;
 	typedef struct KSI_AsyncService_st KSI_AsyncService;
 	typedef struct KSI_AsyncClient_st KSI_AsyncClient;
 	typedef struct KSI_AsyncHandle_st KSI_AsyncHandle;
@@ -496,6 +497,18 @@ KSI_DEFINE_LIST(KSI_AsyncHandle);
 #define KSI_AsyncHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AsyncHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 
+KSI_DEFINE_LIST(KSI_AsyncService);
+#define KSI_AsyncServiceList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define KSI_AsyncServiceList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define KSI_AsyncServiceList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define KSI_AsyncServiceList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define KSI_AsyncServiceList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define KSI_AsyncServiceList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define KSI_AsyncServiceList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_AsyncServiceList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define KSI_AsyncServiceList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+
+
 
 /*
  * KSI_MetaDataElement.
@@ -672,7 +685,10 @@ int KSI_Config_setMaxRequests(KSI_Config *t, KSI_Integer *maxRequests);
 int KSI_Config_setParentUri(KSI_Config *t, KSI_LIST(KSI_Utf8String) *parentUri);
 int KSI_Config_setCalendarFirstTime(KSI_Config *t, KSI_Integer *calendarFirstTime);
 int KSI_Config_setCalendarLastTime(KSI_Config *t, KSI_Integer *calendarLastTime);
+int KSI_Config_clone(const KSI_Config *from, KSI_Config **to);
+
 KSI_DEFINE_REF(KSI_Config);
+KSI_DEFINE_GET_CTX(KSI_Config);
 
 /*
  * KSI_AggregationConf
@@ -701,6 +717,7 @@ int KSI_AggregationReq_setRequestLevel(KSI_AggregationReq *t, KSI_Integer *reque
 int KSI_AggregationReq_setConfig(KSI_AggregationReq *t, KSI_Config *config);
 int KSI_AggregationReq_fromTlv (KSI_TLV *tlv, KSI_AggregationReq **data);
 int KSI_AggregationReq_toTlv (KSI_CTX *ctx, const KSI_AggregationReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_AggregationReq_clone(const KSI_AggregationReq *from, KSI_AggregationReq **to);
 
 KSI_DEFINE_REF(KSI_AggregationReq);
 
@@ -790,6 +807,7 @@ int KSI_ExtendReq_setPublicationTime(KSI_ExtendReq *t, KSI_Integer *publicationT
 int KSI_ExtendReq_setConfig(KSI_ExtendReq *t, KSI_Config *config);
 int KSI_ExtendReq_fromTlv (KSI_TLV *tlv, KSI_ExtendReq **data);
 int KSI_ExtendReq_toTlv (KSI_CTX *ctx, const KSI_ExtendReq *data, unsigned tag, int isNonCritical, int isForward, KSI_TLV **tlv);
+int KSI_ExtendReq_clone(const KSI_ExtendReq *from, KSI_ExtendReq **to);
 
 KSI_DEFINE_REF(KSI_ExtendReq);
 

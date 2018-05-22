@@ -33,6 +33,7 @@
 #include <ksi/ksi.h>
 #include <ksi/net.h>
 #include <ksi/net_async.h>
+#include <ksi/net_ha.h>
 #include <ksi/net_uri.h>
 #include <ksi/signature_builder.h>
 #include <ksi/compatibility.h>
@@ -50,8 +51,14 @@ enum {
 	AGRV_NOF_TEST_REQUESTS,
 	ARGV_REQUEST_CACHE_SIZE,
 	ARGV_MAX_REQUEST_COUNT,
-	NOF_ARGS,
+	_NOF_MANDATORY_ARGS,
+
+	ARGV_SIGNER_TYPE = _NOF_MANDATORY_ARGS,
+
+	_NOF_ARGS
 };
+
+#define SIGNER_TYPE_HA "HA"
 
 static int createHash(KSI_CTX *ksi, const size_t num, KSI_DataHash **hsh) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -143,13 +150,14 @@ int main(int argc, char **argv) {
 	KSITest_Conf conf;
 	KSI_Signature *signature = NULL;
 	time_t start;
+	size_t i;
 
 	time(&start);
 
 	/* Handle command line parameters. */
-	if (argc < NOF_ARGS) {
+	if (argc < _NOF_MANDATORY_ARGS) {
 		fprintf(stderr, "Usage:\n"
-				"  %s <test-root> <protocol> <log-level> <nof-requests> <request-cache-size> <requests-per-round>\n",
+				"  %s <test-root> <protocol> <log-level> <nof-requests> <request-cache-size> <requests-per-round> [signer-type]\n",
 				argv[ARGV_COMMAND]);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
@@ -173,7 +181,7 @@ int main(int argc, char **argv) {
 	{
 		int level = atoi(argv[ARGV_LOG_LEVEL]);
 		if (level) {
-			logFile = fopen("test_sign_async.log", "w");
+			logFile = fopen("async-signer.log", "w");
 			if (logFile == NULL) {
 				fprintf(stderr, "Unable to open log file.\n");
 				exit(EXIT_FAILURE);
@@ -186,21 +194,57 @@ int main(int argc, char **argv) {
 	KSI_LOG_info(ksi, "Using KSI version: '%s'", KSI_getVersion());
 
 	/* Create new async service provider. */
-	res = KSI_SigningAsyncService_new(ksi, &as);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to create new async service object.\n");
-		goto cleanup;
-	}
+	if (argc > _NOF_MANDATORY_ARGS) {
+		int nofHaSs = 0;
 
-	res = KSI_AsyncService_setEndpoint(as, KSITest_composeUri(argv[ARGV_PROTOCOL], &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
-	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to setup aggregator endpoint.\n");
-		goto cleanup;
+		if (strcmp(argv[ARGV_SIGNER_TYPE], SIGNER_TYPE_HA)) {
+			fprintf(stderr, "Unknown signer type: %s\n", argv[ARGV_SIGNER_TYPE]);
+			res = KSI_INVALID_ARGUMENT;
+			goto cleanup;
+		}
+
+		res = KSI_SigningHighAvailabilityService_new(ksi, &as);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Unable to create new async service object.\n");
+			goto cleanup;
+		}
+
+		for (i = 0; i < CONF_MAX_HA_SERVICES; i++) {
+			if (strlen(conf.ha.aggregator[i].host)) {
+				res = KSI_AsyncService_addEndpoint(as, KSITest_composeUri(argv[ARGV_PROTOCOL],
+						&conf.ha.aggregator[i]), conf.ha.aggregator[i].user, conf.ha.aggregator[i].pass);
+				if (res != KSI_OK) {
+					fprintf(stderr, "Unable to setup aggregator endpoint.\n");
+					goto cleanup;
+				}
+				KSI_LOG_info(ksi, "Async service endpoint initialized:");
+				KSI_LOG_info(ksi, "  URI:  %s", KSITest_composeUri(argv[ARGV_PROTOCOL], &conf.ha.aggregator[i]));
+				KSI_LOG_info(ksi, "  user: %s", conf.ha.aggregator[i].user);
+				KSI_LOG_info(ksi, "  pass: %s", conf.ha.aggregator[i].pass);
+				nofHaSs++;
+			}
+		}
+		if (!nofHaSs) {
+			fprintf(stderr, "No subservices defined.\n");
+			goto cleanup;
+		}
+	} else {
+		res = KSI_SigningAsyncService_new(ksi, &as);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Unable to create new async service object.\n");
+			goto cleanup;
+		}
+
+		res = KSI_AsyncService_setEndpoint(as, KSITest_composeUri(argv[ARGV_PROTOCOL], &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Unable to setup aggregator endpoint.\n");
+			goto cleanup;
+		}
+		KSI_LOG_info(ksi, "Async service endpoint initialized:");
+		KSI_LOG_info(ksi, "  URI:  %s", KSITest_composeUri(argv[ARGV_PROTOCOL], &conf.aggregator));
+		KSI_LOG_info(ksi, "  user: %s", conf.aggregator.user);
+		KSI_LOG_info(ksi, "  pass: %s", conf.aggregator.pass);
 	}
-	KSI_LOG_info(ksi, "Async service endpoint initialized:");
-	KSI_LOG_info(ksi, "  URI:  %s", KSITest_composeUri(argv[ARGV_PROTOCOL], &conf.aggregator));
-	KSI_LOG_info(ksi, "  user: %s", conf.aggregator.user);
-	KSI_LOG_info(ksi, "  pass: %s", conf.aggregator.pass);
 
 	{
 		size_t count = atoi(argv[ARGV_MAX_REQUEST_COUNT]);

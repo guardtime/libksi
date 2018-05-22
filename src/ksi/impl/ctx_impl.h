@@ -22,6 +22,7 @@
 
 #include "../types.h"
 #include "../hash.h"
+#include "../ksi.h"
 
 #ifdef __cplusplus
 extern "C" {
