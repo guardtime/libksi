@@ -1230,3 +1230,199 @@ void KSI_AggregationHashChain_free(KSI_AggregationHashChain *aggr) {
 	}
 }
 
+/**
+ * Extracts the aggregation time of the calendar hash chain.
+ * \return #KSI_OK on success, an error code otherwise.
+ */
+static int extractAggregationTime(const KSI_CalendarHashChain *hc, const KSI_Integer **aggrTime) {
+	int res = KSI_UNKNOWN_ERROR;
+	const KSI_Integer *tm = NULL;
+
+	if (hc == NULL || aggrTime == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Use the aggragation time value. */
+	tm = hc->aggregationTime;
+
+	/* Default to publication time. */
+	if (tm == NULL) {
+		/* Make sure the publication time is set. */
+		if (hc->publicationTime == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
+
+		tm = hc->publicationTime;
+	}
+
+	*aggrTime = tm;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static int ksi_CalendarHashChain_verifyInputHashCompatibility(const KSI_CalendarHashChain* a, const KSI_CalendarHashChain* b) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	/* To mitigate false positives, return false for invalid input. */
+	if (a == NULL || b == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Make sure the input hashes are equal.*/
+	if (!KSI_DataHash_equals(a->inputHash, b->inputHash)) {
+		KSI_LOG_debug(a->ctx, "Incompatible calendar hash chain - input hashes mismatch.");
+		res = KSI_INCOMPATIBLE_HASH_CHAIN;
+		goto cleanup;
+	}
+
+	/* No inconsistencies found. */
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+
+static int ksi_CalendarHashChain_verifyAggregationtimeCompatibility(const KSI_CalendarHashChain* a, const KSI_CalendarHashChain* b) {
+	int res = KSI_UNKNOWN_ERROR;
+	const KSI_Integer *aAggrTime = NULL;
+	const KSI_Integer *bAggrTime = NULL;
+
+	/* To mitigate false positives, return false for invalid input. */
+	if (a == NULL || b == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	/* Extract the aggregation times. */
+	res = extractAggregationTime(a, &aAggrTime);
+	if (res != KSI_OK)
+		goto cleanup;
+
+	res = extractAggregationTime(b, &bAggrTime);
+	if (res != KSI_OK)
+		goto cleanup;
+
+	/* Make sure the aggregation times are the same. Note, the publication times
+	 * must not be equal. */
+	if (!KSI_Integer_equals(aAggrTime, bAggrTime)) {
+		KSI_LOG_debug(a->ctx,
+		        "Incompatible calendar hash chain - aggregation times mismatch.");
+		res = KSI_INCOMPATIBLE_HASH_CHAIN;
+		goto cleanup;
+	}
+
+	/* No inconsistencies found. */
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+static int ksi_CalendarHashChain_verifyRightLinkCompatibility(const KSI_CalendarHashChain* a, const KSI_CalendarHashChain* b) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t ai;
+	size_t bi;
+
+	/* To mitigate false positives, return false for invalid input. */
+	if (a == NULL || b == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+
+	bi = 0;
+	/* Loop over all of the right links of the calendar hash chain a. */
+	for (ai = 0; ai < KSI_HashChainLinkList_length(a->hashChain); ++ai) {
+		KSI_HashChainLink *aLink = NULL;
+		KSI_HashChainLink *bLink = NULL;
+
+		res = KSI_HashChainLinkList_elementAt(a->hashChain, ai, &aLink);
+		if (res != KSI_OK) goto cleanup;
+
+		if (aLink->isLeft) continue;
+
+		/* Find the next right link of the calendar hash chain. */
+		for (; bi < KSI_HashChainLinkList_length(b->hashChain); ++bi) {
+			res = KSI_HashChainLinkList_elementAt(b->hashChain, bi, &bLink);
+			if (res != KSI_OK) goto cleanup;
+
+			if (!bLink->isLeft) {
+				/* We need to increment it here to be able to continue with the next link here
+				 * and afterwards below. */
+				++bi;
+				break;
+			}
+		}
+
+		/* If the second list did not contain any more right links, return an error. */
+		if (bLink == NULL) {
+			KSI_LOG_debug(a->ctx, "Incompatible calendar hash chain - an missing right link in the second chain.");
+			res = KSI_INCOMPATIBLE_HASH_CHAIN;
+			goto cleanup;
+		}
+
+		if (!KSI_DataHash_equals(aLink->imprint, bLink->imprint)) {
+			KSI_LOG_debug(a->ctx, "Incompatible calendar hash chain - right link values mismatch.");
+			res = KSI_INCOMPATIBLE_HASH_CHAIN;
+			goto cleanup;
+		}
+	}
+
+	/* Make sure the calendar hash chain b does not contain any more right links. */
+	for (; bi < KSI_HashChainLinkList_length(b->hashChain); ++bi) {
+		KSI_HashChainLink *bLink = NULL;
+
+		res = KSI_HashChainLinkList_elementAt(b->hashChain, bi, &bLink);
+		if (res != KSI_OK) goto cleanup;
+
+		if (!bLink->isLeft) {
+			KSI_LOG_debug(a->ctx, "Incompatible calendar hash chain - an extra right link in the second chain.");
+			/* There are more right links, thus the calendar chains are incompatible. */
+			res = KSI_INCOMPATIBLE_HASH_CHAIN;
+			goto cleanup;
+		}
+	}
+
+	/* No inconsistencies found. */
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_CalendarHashChain_verifyCompatibilityTo(const KSI_CalendarHashChain *a, const KSI_CalendarHashChain *b) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	/* To mitigate false positives, return false for invalid input. */
+	if (a == NULL || b == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = ksi_CalendarHashChain_verifyAggregationtimeCompatibility(a, b);
+	if (res != KSI_OK) goto cleanup;
+
+	res = ksi_CalendarHashChain_verifyInputHashCompatibility(a, b);
+	if (res != KSI_OK) goto cleanup;
+
+	res = ksi_CalendarHashChain_verifyRightLinkCompatibility(a, b);
+	if (res != KSI_OK) goto cleanup;
+
+	/* If the checks did not fail, the calendar hash chains are compatible. */
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+

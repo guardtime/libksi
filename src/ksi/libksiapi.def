@@ -134,6 +134,7 @@ EXPORTS
 	KSI_CalendarHashChain_setHashChain
 	KSI_CalendarHashChain_writeBytes
 	KSI_CalendarHashChain_ref
+	KSI_CalendarHashChain_verifyCompatibilityTo
 
 ;hmac.h
 EXPORTS

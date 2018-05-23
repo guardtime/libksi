@@ -210,6 +210,11 @@ enum KSI_StatusCode {
 	 */
 	KSI_UNSUPPORTED_PDU_VERSION = 0x212,
 
+	/**
+	 * Incompatible calendar hash chain.
+	 */
+	KSI_INCOMPATIBLE_HASH_CHAIN = 0x213,
+
 	/* Generic service errors. */
 
 	/**
