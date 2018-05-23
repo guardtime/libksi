@@ -1151,7 +1151,7 @@ static int KSI_HighAvailabilityService_addEndpoint(KSI_AsyncService *service, co
 
 	has = (KSI_HighAvailabilityService *)service->impl;
 	if (has == NULL) {
-		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
+		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 		goto cleanup;
 	}
 
@@ -1205,7 +1205,7 @@ static int KSI_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, co
 
 	has = (KSI_HighAvailabilityService *)service->impl;
 	if (has == NULL) {
-		KSI_pushError(has->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
+		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "High availability service is not properly initialized.");
 		goto cleanup;
 	}
 
