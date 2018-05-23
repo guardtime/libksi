@@ -278,9 +278,11 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 
 	tmp->metaDataProcessor.c = tmp;
 	tmp->metaDataProcessor.fn = metaDataProcessor;
+	tmp->metaDataProcessor.levelOverhead = 1;
 
 	tmp->maskingProcessor.c = tmp;
 	tmp->maskingProcessor.fn = maskingProcessor;
+	tmp->maskingProcessor.levelOverhead = 1;
 
 	res = KSI_DataHasher_open(ctx, algoId, &tmp->hsr);
 	if (res != KSI_OK) goto cleanup;

@@ -2,6 +2,7 @@
 * BUGFIX: Corrected possible crash in list removeElement when configured without object free method.
 Version 3.18
 
+* FEATURE: Added max tree height to tree builder.
 * IMPROVEMENT: KSI_DataHash and KSI_DataHasher accept NULL as KSI context.
 * IMPROVEMENT: Updated example code in README.md.
 * IMPROVEMENT: Added KSI_TlvElement_removeElement function.
