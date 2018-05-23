@@ -450,7 +450,7 @@ static unsigned short calculateHeight(KSI_TreeBuilder *builder, int level) {
 
 	if (builder == NULL) return 0;
 
-	for (i = 0; i < 255; ++i) {
+	for (i = 0; i < KSI_TREE_BUILDER_STACK_LEN; ++i) {
 		if (builder->stack[i] != NULL) {
 			height = i + carry;
 			carry = 1;
