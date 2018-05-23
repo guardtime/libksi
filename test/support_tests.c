@@ -269,7 +269,7 @@ const char *KSITest_composeUri(const char *scheme, const KSITest_ServiceConf *se
 	c = KSI_snprintf(buf, sizeof(buf), "%s://", scheme);
 	if (c == 0) return NULL; else len += c;
 	/* Set credentials. */
-	if (service->user != NULL && service->pass != NULL) {
+	if (strlen(service->user) != 0 && strlen(service->pass) != 0) {
 		c = KSI_snprintf(buf + len, sizeof(buf) - len, "%s:%s@", service->user, service->pass);
 		if (c == 0) return NULL; else len += c;
 	}
