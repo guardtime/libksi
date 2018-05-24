@@ -162,8 +162,8 @@ extern "C" {
 		int (*getPendingCount)(void *, size_t *);
 		int (*getReceivedCount)(void *, size_t *);
 
-		int (*setOption)(void *, int, void *);
-		int (*getOption)(void *, int, void *);
+		int (*setOption)(void *, const int, void *);
+		int (*getOption)(void *, const int, void *);
 
 		int (*setEndpoint)(void *, const char *, const char *, const char *);
 		int (*addEndpoint)(void *, const char *, const char *, const char *);

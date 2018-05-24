@@ -448,7 +448,7 @@ extern "C" {
 	 * \see #KSI_AsyncService_getOption for extracting option values.
 	 * \note Before appling any options the service endpoint has to be configured.
 	 */
-	int KSI_AsyncService_setOption(KSI_AsyncService *s, const KSI_AsyncOption option, void *value);
+	int KSI_AsyncService_setOption(KSI_AsyncService *s, const int option, void *value);
 
 	/**
 	 * Async service option getter.
@@ -459,7 +459,7 @@ extern "C" {
 	 * \see #KSI_AsyncOption defines supported options and parameter types.
 	 * \see #KSI_AsyncService_setOption for applying option values.
 	 */
-	int KSI_AsyncService_getOption(const KSI_AsyncService *s, const KSI_AsyncOption option, void *value);
+	int KSI_AsyncService_getOption(const KSI_AsyncService *s, const int option, void *value);
 
 	/**
 	 * Setter for the service endpoint.
