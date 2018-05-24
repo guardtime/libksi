@@ -973,7 +973,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_HighAvailabilityService_setOption(KSI_HighAvailabilityService *has, const KSI_AsyncOption option, void *value) {
+static int KSI_HighAvailabilityService_setOption(KSI_HighAvailabilityService *has, const int option, void *value) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i = 0;
 
@@ -1024,7 +1024,7 @@ cleanup:
 	return res;
 }
 
-static int KSI_HighAvailabilityService_getOption(const KSI_HighAvailabilityService *has, const KSI_AsyncOption option, void *value) {
+static int KSI_HighAvailabilityService_getOption(const KSI_HighAvailabilityService *has, const int option, void *value) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t i = 0;
 	size_t tmp = 0;

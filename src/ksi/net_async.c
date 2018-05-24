@@ -1395,7 +1395,7 @@ cleanup:
 	return res;
 }
 
-static int asyncClient_setOption(KSI_AsyncClient *c, int opt, void *param) {
+static int asyncClient_setOption(KSI_AsyncClient *c, const int opt, void *param) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle **tmpCache = NULL;
 
@@ -1465,7 +1465,7 @@ cleanup:
 	return res;
 }
 
-static int asyncClient_getOption(KSI_AsyncClient *c, int opt, void *param) {
+static int asyncClient_getOption(KSI_AsyncClient *c, const int opt, void *param) {
 	int res = KSI_UNKNOWN_ERROR;
 
 	KSI_ERR_clearErrors(c->ctx);
@@ -1872,12 +1872,12 @@ int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count) {
 	return s->getReceivedCount(s->impl, count);
 }
 
-int KSI_AsyncService_setOption(KSI_AsyncService *s, const KSI_AsyncOption option, void *value) {
+int KSI_AsyncService_setOption(KSI_AsyncService *s, const int option, void *value) {
 	if ((s == NULL || s->impl == NULL || s->setOption == NULL) || (size_t)option >= __NOF_KSI_ASYNC_OPT) return KSI_INVALID_ARGUMENT;
 	return s->setOption(s->impl, option, value);
 }
 
-int KSI_AsyncService_getOption(const KSI_AsyncService *s, const KSI_AsyncOption option, void *value) {
+int KSI_AsyncService_getOption(const KSI_AsyncService *s, const int option, void *value) {
 	if ((s == NULL || s->impl == NULL || s->getOption == NULL) || (size_t)option >= __NOF_KSI_ASYNC_OPT) return KSI_INVALID_ARGUMENT;
 	return s->getOption(s->impl, option, value);
 }
