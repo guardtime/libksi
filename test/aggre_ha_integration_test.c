@@ -1047,9 +1047,7 @@ void Test_HaSign_requestConfigOnly_http(CuTest* tc) {
 }
 
 static size_t callbackCount = 0;
-static int dummyCallback(KSI_CTX *ctx, KSI_Config *cnf) {
-	if (ctx);
-	if (cnf);
+static int dummyCallback(KSI_CTX KSI_UNUSED(*ctx), KSI_Config KSI_UNUSED(*cnf)) {
 	callbackCount++;
 	return KSI_OK;
 }
