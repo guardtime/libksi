@@ -162,10 +162,11 @@ static int curlReceive(KSI_RequestHandle *handle) {
 
 	if (curl_easy_getinfo(implCtx->curl, CURLINFO_HTTP_CODE, &httpCode) == CURLE_OK) {
 		updateStatus(handle);
-		KSI_LOG_debug(handle->ctx, "Received HTTP error code %ld. Curl error '%s'.", httpCode, implCtx->curlErr);
+		KSI_LOG_debug(handle->ctx, "Received HTTP code %ld.", httpCode);
 	}
 
 	if (res != CURLE_OK) {
+		KSI_LOG_debug(handle->ctx, "Curl error: httpCode=%ld, code=%d, message='%s'.", httpCode, res, implCtx->curlErr);
 		KSI_pushError(handle->ctx, res = KSI_NETWORK_ERROR, implCtx->curlErr);
 		goto cleanup;
 	}

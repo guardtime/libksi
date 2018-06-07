@@ -1,3 +1,4 @@
+* IMPROVEMENT: Changed the curl HTTP debug messages for return codes and internal error messages.
 * FEATURE: High Availability add-on to the non-blocking network interface.
 * BUGFIX: Corrected possible crash in list removeElement when configured without object free method.
 Version 3.18
