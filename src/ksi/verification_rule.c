@@ -2731,7 +2731,7 @@ static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Inte
 		goto cleanup;
 	}
 	if (status != NULL && !KSI_Integer_equalsUInt(status, 0)) {
-		char *errorMsg = NULL;
+		KSI_Utf8String *errorMsg = NULL;
 		res = KSI_ExtendResp_getErrorMsg(resp, &errorMsg);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
