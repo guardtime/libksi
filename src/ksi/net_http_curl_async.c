@@ -427,7 +427,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 
 				if (httpCode >= 400 && httpCode < 600) {
 					size_t len = strlen(curlResponse->errMsg);
-					KSI_LOG_debug(clientCtx->ctx, "Async Curl HTTP: received HTTP code %ld. Curl error '%s'.", httpCode, curlResponse->errMsg);
+					KSI_LOG_debug(clientCtx->ctx, "Async Curl HTTP: received HTTP code %ld.", httpCode);
 					handle->state = KSI_ASYNC_STATE_ERROR;
 					handle->err = KSI_HTTP_ERROR;
 					handle->errExt = httpCode;
