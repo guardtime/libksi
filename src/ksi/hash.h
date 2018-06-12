@@ -69,8 +69,8 @@ extern "C" {
 		KSI_HASHALG_SHA2_384 = 0x04,
 		/** The SHA-512 algorithm. */
 		KSI_HASHALG_SHA2_512 = 0x05,
-		/** The SHA3-244 algorithm. */
-		KSI_HASHALG_SHA3_244 = 0x07,
+		/** The SHA3-224 algorithm. */
+		KSI_HASHALG_SHA3_224 = 0x07,
 		/** The SHA3-256 algorithm. */
 		KSI_HASHALG_SHA3_256 = 0x08,
 		/** The SHA3-384 algorithm. */
@@ -84,6 +84,7 @@ extern "C" {
 		KSI_NUMBER_OF_KNOWN_HASHALGS,
 	} KSI_HashAlgorithm;
 
+	KSI_VAR_DEPRECATED(extern const int KSI_HASHALG_SHA3_244, This is a typo - use #KSI_HASHALG_SHA3_224 instead!);
 
 	/**
 	 * The maximum length of an imprint.
