@@ -450,17 +450,29 @@ static unsigned short calculateHeight(KSI_TreeBuilder *builder, int level) {
 
 	if (builder == NULL) return 0;
 
-	for (i = 0; i < KSI_TREE_BUILDER_STACK_LEN; ++i) {
-		if (builder->stack[i] != NULL) {
-			height = i + carry;
-			carry = 1;
-		}
-		if (level == i) {
-			++carry;
+
+	for (i = 0; i < KSI_TREE_BUILDER_STACK_LEN; i++) {
+		if (i < level) {
+			if (builder->stack[i] != NULL) {
+				/* If there's at least one sub-tree, this will increase the overall tree height by one. */
+				carry = 1;
+			}
+		} else {
+			if (i == level) {
+				/* Calculate the height just in case if the forest is empty. */
+				height = level + carry;
+				++carry;
+			}
+
+			if (builder->stack[i] != NULL) {
+				height = i + carry;
+			} else {
+				carry = 1;
+			}
 		}
 	}
 
-	return height;
+	return height + 1;
 }
 
 static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
@@ -478,6 +490,12 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 
 	if (builder->maxHeight > 0) {
 		unsigned short actualInputHeight;
+
+		/* Let's not waste time and effort. */
+		if (level > builder->maxHeight) {
+			KSI_pushError(builder->ctx, res = KSI_BUFFER_OVERFLOW, "Input level greater than maximum tree height.");
+			goto cleanup;
+		}
 
 		res = levelWithOverhead(builder, level, &actualInputHeight);
 		if (res != KSI_OK) goto cleanup;

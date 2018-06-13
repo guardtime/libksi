@@ -131,7 +131,7 @@ static void testMaxTreeHeight1(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 
-	builder->maxHeight = 1;
+	builder->maxHeight = 2;
 	/* Should succeed. */
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
 	CuAssert(tc, "Unable to add data 1st hash.", res == KSI_OK);
@@ -148,6 +148,102 @@ static void testMaxTreeHeight1(CuTest *tc) {
 	KSI_DataHash_free(hsh);
 }
 
+static void testMaxTreeHeightWithLevel(CuTest *tc) {
+	int res;
+	KSI_TreeBuilder *builder = NULL;
+	KSI_DataHash *hsh = NULL;
+
+	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
+	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
+
+	builder->maxHeight = 3;
+	/* Should succeed. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
+	CuAssert(tc, "Unable to add data 1st hash.", res == KSI_OK);
+
+	/* Should succeed. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 1, NULL);
+	CuAssert(tc, "Unable to add data 2nd hash.", res == KSI_OK);
+
+	/* Should fail. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 3, NULL);
+	CuAssert(tc, "Adding 3rd hash should not succeed.", res == KSI_BUFFER_OVERFLOW);
+
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
+	CuAssert(tc, "Adding 4th leaf should not fail.", res == KSI_OK);
+
+	res = KSI_TreeBuilder_close(builder);
+	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
+
+	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level < builder->maxHeight);
+
+	KSI_TreeBuilder_free(builder);
+	KSI_DataHash_free(hsh);
+}
+
+static void testMaxTreeHeightWithFullTree(CuTest *tc) {
+	int res;
+	KSI_TreeBuilder *builder = NULL;
+	KSI_DataHash *hsh = NULL;
+	int i;
+
+	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
+	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
+
+	builder->maxHeight = 4;
+	for (i = 0; i < 8; i++) {
+		/* Should succeed. */
+		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
+		CuAssert(tc, "Unable to add data 1st hash.", res == KSI_OK);
+	}
+
+	/* Should fail. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
+	CuAssert(tc, "Adding yet another hash should not succeed.", res == KSI_BUFFER_OVERFLOW);
+
+	/* Should fail. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 3, NULL);
+	CuAssert(tc, "Adding yet another hash with max level should not succeed.", res == KSI_BUFFER_OVERFLOW);
+
+	res = KSI_TreeBuilder_close(builder);
+	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
+
+	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level < builder->maxHeight);
+
+
+	KSI_TreeBuilder_free(builder);
+	KSI_DataHash_free(hsh);
+}
+
+static void testMaxTreeHeighDoubleHighestLevel(CuTest *tc) {
+	int res;
+	KSI_TreeBuilder *builder = NULL;
+	KSI_DataHash *hsh = NULL;
+	int i;
+
+	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
+	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
+
+	builder->maxHeight = 4;
+
+	/* Should not fail. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 3, NULL);
+	CuAssert(tc, "Adding a hash with max level should succeed.", res == KSI_OK);
+
+	/* Should fail. */
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 3, NULL);
+	CuAssert(tc, "Adding yet another hash with max level should not succeed.", res == KSI_BUFFER_OVERFLOW);
+
+	res = KSI_TreeBuilder_close(builder);
+	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
+
+	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level < builder->maxHeight);
+
+
+	KSI_TreeBuilder_free(builder);
+	KSI_DataHash_free(hsh);
+}
+
 
 CuSuite* KSITest_TreeBuilder_getSuite(void)
 {
@@ -157,6 +253,9 @@ CuSuite* KSITest_TreeBuilder_getSuite(void)
 	SUITE_ADD_TEST(suite, testTreeBuilderAddLeafs);
 	SUITE_ADD_TEST(suite, testGetAggregationChain);
 	SUITE_ADD_TEST(suite, testMaxTreeHeight1);
+	SUITE_ADD_TEST(suite, testMaxTreeHeightWithLevel);
+	SUITE_ADD_TEST(suite, testMaxTreeHeightWithFullTree);
+	SUITE_ADD_TEST(suite, testMaxTreeHeighDoubleHighestLevel);
 
 	return suite;
 }
