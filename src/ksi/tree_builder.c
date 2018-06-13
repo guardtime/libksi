@@ -260,7 +260,7 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 	tmp->hsr = NULL;
 	memset(tmp->stack, 0, sizeof(tmp->stack));
 
-	tmp->maxHeight = 0;
+	tmp->maxTreeLevel = 0;
 
 	res = KSI_DataHasher_open(ctx, algo, &tmp->hsr);
 	if (res != KSI_OK) {
@@ -438,12 +438,12 @@ cleanup:
 	return res;
 }
 
-/** Calculates the tree height if a node with the given level is added.
+/** Calculates the level of the root node if a new node with a level is added.
  * \param[in] builder The tree builder.
  * \param[in] level   The level from the next input hash. If 0, the height of the current tree is calculated.
- * \return Returns the height of the tree.
+ * \return Returns the level of the root hash.
  */
-static unsigned short calculateHeight(KSI_TreeBuilder *builder, int level) {
+static unsigned short calculateHighestLevel(KSI_TreeBuilder *builder, int level) {
 	unsigned int height = 0;
 	int carry = 0;
 	int i;
@@ -472,7 +472,7 @@ static unsigned short calculateHeight(KSI_TreeBuilder *builder, int level) {
 		}
 	}
 
-	return height + 1;
+	return height;
 }
 
 static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
@@ -488,11 +488,11 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 	KSI_ERR_clearErrors(builder->ctx);
 
 
-	if (builder->maxHeight > 0) {
+	if (builder->maxTreeLevel > 0) {
 		unsigned short actualInputHeight;
 
 		/* Let's not waste time and effort. */
-		if (level > builder->maxHeight) {
+		if (level > builder->maxTreeLevel) {
 			KSI_pushError(builder->ctx, res = KSI_BUFFER_OVERFLOW, "Input level greater than maximum tree height.");
 			goto cleanup;
 		}
@@ -500,7 +500,7 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 		res = levelWithOverhead(builder, level, &actualInputHeight);
 		if (res != KSI_OK) goto cleanup;
 
-		if (calculateHeight(builder, actualInputHeight) > builder->maxHeight) {
+		if (calculateHighestLevel(builder, actualInputHeight) > builder->maxTreeLevel) {
 			KSI_pushError(builder->ctx, res = KSI_BUFFER_OVERFLOW, "The maximum height passed.");
 			goto cleanup;
 		}

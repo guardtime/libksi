@@ -131,7 +131,7 @@ static void testMaxTreeHeight1(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 
-	builder->maxHeight = 2;
+	builder->maxTreeLevel = 1;
 	/* Should succeed. */
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
 	CuAssert(tc, "Unable to add data 1st hash.", res == KSI_OK);
@@ -156,7 +156,7 @@ static void testMaxTreeHeightWithLevel(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 
-	builder->maxHeight = 3;
+	builder->maxTreeLevel = 2;
 	/* Should succeed. */
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
 	CuAssert(tc, "Unable to add data 1st hash.", res == KSI_OK);
@@ -166,7 +166,7 @@ static void testMaxTreeHeightWithLevel(CuTest *tc) {
 	CuAssert(tc, "Unable to add data 2nd hash.", res == KSI_OK);
 
 	/* Should fail. */
-	res = KSI_TreeBuilder_addDataHash(builder, hsh, 3, NULL);
+	res = KSI_TreeBuilder_addDataHash(builder, hsh, 2, NULL);
 	CuAssert(tc, "Adding 3rd hash should not succeed.", res == KSI_BUFFER_OVERFLOW);
 
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
@@ -174,7 +174,7 @@ static void testMaxTreeHeightWithLevel(CuTest *tc) {
 
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
-	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level < builder->maxHeight);
+	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level <= builder->maxTreeLevel);
 
 	KSI_TreeBuilder_free(builder);
 	KSI_DataHash_free(hsh);
@@ -189,7 +189,7 @@ static void testMaxTreeHeightWithFullTree(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 
-	builder->maxHeight = 4;
+	builder->maxTreeLevel = 3;
 	for (i = 0; i < 8; i++) {
 		/* Should succeed. */
 		res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
@@ -207,7 +207,7 @@ static void testMaxTreeHeightWithFullTree(CuTest *tc) {
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
 
-	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level < builder->maxHeight);
+	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level <= builder->maxTreeLevel);
 
 
 	KSI_TreeBuilder_free(builder);
@@ -223,7 +223,7 @@ static void testMaxTreeHeighDoubleHighestLevel(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 
-	builder->maxHeight = 4;
+	builder->maxTreeLevel = 3;
 
 	/* Should not fail. */
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 3, NULL);
@@ -236,7 +236,7 @@ static void testMaxTreeHeighDoubleHighestLevel(CuTest *tc) {
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
 
-	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level < builder->maxHeight);
+	CuAssert(tc, "The root hash node must have a lower level value than the max height.", builder->rootNode->level <= builder->maxTreeLevel);
 	KSI_TreeBuilder_free(builder);
 	KSI_DataHash_free(hsh);
 }
@@ -264,7 +264,6 @@ static void testEmptyTreeBuilderWithMaxLevelClosing(CuTest *tc) {
 
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 	CuAssert(tc, "Unable to create new treebuilder.", res == KSI_OK);
-	builder->maxHeight = 3;
 
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Close on empty tree should not succeed.", res == KSI_INVALID_STATE);
@@ -285,7 +284,6 @@ static void testTreeBuilderDoubleClose(CuTest *tc) {
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 	CuAssert(tc, "Unable to create new treebuilder.", res == KSI_OK);
 
-	builder->maxHeight = 3;
 	/* Should succeed. */
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
 	CuAssert(tc, "Unable to add data 1st hash.", res == KSI_OK);
