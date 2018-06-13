@@ -718,6 +718,66 @@ void testTlvElementRemove(CuTest *tc) {
 	KSI_TlvElement_free(tlv);
 }
 
+void testTlvElementRemoveNotExisting(CuTest *tc) {
+	int res;
+	size_t len = 0;
+	KSI_TlvElement *tlv = NULL;
+	/* # TLV to be parsed.
+		TLV[1f00]:
+			TLV[08]:
+				TLV[01]: abcd
+				TLV[02]: 1234
+			TLV[1600]:
+				TLV[03]: 1a2b
+				TLV[04]: 11aa
+	 */
+	unsigned char tmp[0xffff + 4];
+	unsigned char buf[] = {0x9f, 0x00, 0x00, 0x16, 0x08, 0x08, 0x01, 0x02, 0xab, 0xcd, 0x02, 0x02, 0x12, 0x34, 0x96, 0x00, 0x00, 0x08, 0x03, 0x02, 0x1a, 0x2b, 0x04, 0x02, 0x11, 0xaa};
+
+	res = KSI_TlvElement_parse(buf, sizeof(buf), &tlv);
+	CuAssert(tc, "Unable to parse TLV.", res == KSI_OK && tlv != NULL);
+
+	res = KSI_TlvElement_removeElement(tlv, 0x1601, NULL);
+	CuAssert(tc, "Removal of not existing child TLV must not be possible.", res == KSI_INVALID_STATE);
+
+	/* Serialize the remaining TLV. */
+	res = KSI_TlvElement_serialize(tlv, tmp, sizeof(tmp), &len, 0);
+	CuAssert(tc, "Unable to serialize TLV.", res == KSI_OK);
+	CuAssert(tc, "Unexpected TLV contents.", len == sizeof(buf) && !memcmp(tmp, buf, sizeof(buf)));
+
+	KSI_TlvElement_free(tlv);
+}
+
+void testTlvElementRemoveMultipleSameId(CuTest *tc) {
+	int res;
+	size_t len = 0;
+	KSI_TlvElement *tlv = NULL;
+	/* # TLV to be parsed.
+		TLV[1f00]:
+			TLV[08]:
+				TLV[01]: abcd
+				TLV[02]: 1234
+			TLV[08]:
+				TLV[03]: 1a2b
+				TLV[04]: 11aa
+	 */
+	unsigned char tmp[0xffff + 4];
+	unsigned char buf[] = {0x9f, 0x00, 0x00, 0x15, 0x08, 0x08, 0x01, 0x02, 0xab, 0xcd, 0x02, 0x02, 0x12, 0x34, 0x08, 0x00, 0x08, 0x03, 0x02, 0x1a, 0x2b, 0x04, 0x02, 0x11, 0xaa};
+
+	res = KSI_TlvElement_parse(buf, sizeof(buf), &tlv);
+	CuAssert(tc, "Unable to parse TLV.", res == KSI_OK && tlv != NULL);
+
+	res = KSI_TlvElement_removeElement(tlv, 0x08, NULL);
+	CuAssert(tc, "Removal must fail if there is more than one element with same id.", res == KSI_INVALID_STATE);
+
+	/* Serialize the remaining TLV. */
+	res = KSI_TlvElement_serialize(tlv, tmp, sizeof(tmp), &len, 0);
+	CuAssert(tc, "Unable to serialize TLV.", res == KSI_OK);
+	CuAssert(tc, "Unexpected TLV contents.", len == sizeof(buf) && !memcmp(tmp, buf, sizeof(buf)));
+
+	KSI_TlvElement_free(tlv);
+}
+
 CuSuite* KSITest_TLV_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -745,6 +805,8 @@ CuSuite* KSITest_TLV_getSuite(void)
 	SUITE_ADD_TEST(suite, testTlvElementNested);
 	SUITE_ADD_TEST(suite, testTlvElementDetachment);
 	SUITE_ADD_TEST(suite, testTlvElementRemove);
+	SUITE_ADD_TEST(suite, testTlvElementRemoveNotExisting);
+	SUITE_ADD_TEST(suite, testTlvElementRemoveMultipleSameId);
 
 	return suite;
 }

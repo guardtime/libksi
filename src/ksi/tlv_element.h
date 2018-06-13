@@ -138,8 +138,8 @@ extern "C" {
 
 	/**
 	 * Removes a child element with the specified TLV tag. The process will fail if there is
-	 * already more than one element or no elements with the same tag. If output variable \c el
-	 * is not \c NULL, the the caller is responsible of freeing the removed element.
+	 * more than one element or no elements with the same tag. If output variable \c el is
+	 * not \c NULL, the caller is responsible of freeing the removed element.
 	 * \param[in]	parent		The parent element.
 	 * \param[in]	tag			Tag value of the element being removed.
 	 * \param[out]	el			Pointer to the receiving pointer.
