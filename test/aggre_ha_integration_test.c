@@ -129,12 +129,12 @@ static void asyncSigning_verifyOptions(CuTest* tc, const char *scheme) {
 	KSI_AsyncService_free(has);
 }
 
-void Test_HaSing_verifyOptions_tcp(CuTest* tc) {
+void Test_HaSign_verifyOptions_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyOptions(tc, TEST_SCHEME_TCP);
 }
 
-void Test_HaSing_verifyOptions_http(CuTest* tc) {
+void Test_HaSign_verifyOptions_http(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyOptions(tc, TEST_SCHEME_HTTP);
 }
@@ -153,9 +153,6 @@ static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char *scheme) {
 	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)10);
 	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
 
-	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)10);
-	CuAssert(tc, "Unable to set async service option.", res == KSI_OK);
-
 	res = KSI_AsyncService_getOption(has, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)&optVal);
 	CuAssert(tc, "Async service option value mismatch.", res == KSI_OK && optVal == 10);
 
@@ -168,12 +165,12 @@ static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char *scheme) {
 	KSI_AsyncService_free(has);
 }
 
-void Test_HaSing_verifyCacheSizeOption_tcp(CuTest* tc) {
+void Test_HaSign_verifyCacheSizeOption_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyCacheSizeOption(tc, TEST_SCHEME_TCP);
 }
 
-void Test_HaSing_verifyCacheSizeOption_http(CuTest* tc) {
+void Test_HaSign_verifyCacheSizeOption_http(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyCacheSizeOption(tc, TEST_SCHEME_HTTP);
 }
@@ -801,7 +798,7 @@ static void asyncSigning_fillupCache(CuTest* tc, const char *scheme) {
 	CuAssert(tc, "Unable to create dummy request.", res == KSI_OK && hndl != NULL);
 
 	res = KSI_AsyncService_addRequest(as, hndl);
-	CuAssert(tc, "Unable to add request.", res == KSI_ASYNC_REQUEST_CACHE_FULL);
+	CuAssert(tc, "Must not be possible to add request to service that is full.", res == KSI_ASYNC_REQUEST_CACHE_FULL);
 
 	KSI_AsyncHandle_free(hndl);
 	KSI_AsyncService_free(as);
@@ -839,7 +836,7 @@ static void asyncSigning_addEmptyReq(CuTest* tc, const char *scheme) {
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
-	CuAssert(tc, "Unable to add request.", res != KSI_OK && res != KSI_ASYNC_REQUEST_CACHE_FULL);
+	CuAssert(tc, "Must not be possible to add empty request.", res != KSI_OK && res != KSI_ASYNC_REQUEST_CACHE_FULL);
 
 	KSI_AsyncHandle_free(handle);
 	KSI_AsyncService_free(as);
@@ -870,7 +867,7 @@ static void Test_HaSign_noEndpoint_addRequest(CuTest* tc) {
 	CuAssert(tc, "Unable to create dummy request.", res == KSI_OK && hndl != NULL);
 
 	res = KSI_AsyncService_addRequest(as, hndl);
-	CuAssert(tc, "Unable to add request.", res == KSI_INVALID_STATE);
+	CuAssert(tc, "Must not be possible to add request to service with no endpoint.", res == KSI_INVALID_STATE);
 
 	KSI_AsyncHandle_free(hndl);
 	KSI_AsyncService_free(as);
@@ -964,7 +961,7 @@ static void asyncSigning_requestConfigOnly(CuTest* tc, KSI_AsyncService *as) {
 	CuAssert(tc, "Unable to create config object.", res == KSI_OK && cfg != NULL);
 
 	res = KSI_AggregationReq_setConfig(req, cfg);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
+	CuAssert(tc, "Unable to set config request.", res == KSI_OK);
 
 	res = KSI_AsyncAggregationHandle_new(ctx, req, &handle);
 	CuAssert(tc, "Unable to create async request.", res == KSI_OK && handle != NULL);
@@ -1109,7 +1106,6 @@ static void asyncSigning_requestConfigOnlyUseCallback(CuTest* tc, KSI_AsyncServi
 		}
 	} while (onHold);
 	CuAssert(tc, "Callback must have been invoked.", callbackCount > 0);
-
 	KSI_LOG_debug(ctx, "%s: FINISH in %fs.", __FUNCTION__, difftime(time(NULL), startTime));
 }
 
@@ -1242,7 +1238,7 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *scheme
 	CuAssert(tc, "Unable to create config object.", res == KSI_OK && cfg != NULL);
 
 	res = KSI_AggregationReq_setConfig(req, cfg);
-	CuAssert(tc, "Unable to set request data hash.", res == KSI_OK);
+	CuAssert(tc, "Unable to set config request.", res == KSI_OK);
 
 	res = KSI_DataHash_create(ctx, p_req, strlen(p_req), KSI_HASHALG_SHA2_256, &hsh);
 	CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
@@ -1516,10 +1512,10 @@ CuSuite* HaAggrIntegrationTests_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, Test_HaSign_verifySubserviceCallbacksDisabled_tcp);
 	SUITE_ADD_TEST(suite, Test_HaSign_verifySubserviceCallbacksDisabled_http);
-	SUITE_ADD_TEST(suite, Test_HaSing_verifyOptions_tcp);
-	SUITE_ADD_TEST(suite, Test_HaSing_verifyOptions_http);
-	SUITE_ADD_TEST(suite, Test_HaSing_verifyCacheSizeOption_tcp);
-	SUITE_ADD_TEST(suite, Test_HaSing_verifyCacheSizeOption_http);
+	SUITE_ADD_TEST(suite, Test_HaSign_verifyOptions_tcp);
+	SUITE_ADD_TEST(suite, Test_HaSign_verifyOptions_http);
+	SUITE_ADD_TEST(suite, Test_HaSign_verifyCacheSizeOption_tcp);
+	SUITE_ADD_TEST(suite, Test_HaSign_verifyCacheSizeOption_http);
 	SUITE_ADD_TEST(suite, Test_HaSign_loop_tcp);
 	SUITE_ADD_TEST(suite, Test_HaSign_loop_http);
 	SUITE_ADD_TEST(suite, Test_HaSign_loopResetServiceLoop_tcp);
