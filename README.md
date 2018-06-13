@@ -147,7 +147,7 @@ A simple example how to sign a document and verify the signature:
 	/* Read the publications file from a file. */
 	KSI_PublicationsFile_fromFile(ksi, KSI_PUBLICATIONS_FILE, &pubFile);
 
-	/* Publications file siging cert verification constraints. */
+	/* Publications file signing cert verification constraints. */
 	KSI_CertConstraint certConstr[] = {
 		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{ NULL, NULL}

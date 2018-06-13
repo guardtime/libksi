@@ -25,7 +25,7 @@
 #include <stdlib.h>
 
 #include <ksi/ksi.h>
-#include <ksi/net_uri.h>
+#include <ksi/net_async.h>
 #include <ksi/compatibility.h>
 
 #include "../src/ksi/impl/ctx_impl.h"
@@ -269,7 +269,7 @@ const char *KSITest_composeUri(const char *scheme, const KSITest_ServiceConf *se
 	c = KSI_snprintf(buf, sizeof(buf), "%s://", scheme);
 	if (c == 0) return NULL; else len += c;
 	/* Set credentials. */
-	if (service->user != NULL && service->pass != NULL) {
+	if (strlen(service->user) != 0 && strlen(service->pass) != 0) {
 		c = KSI_snprintf(buf + len, sizeof(buf) - len, "%s:%s@", service->user, service->pass);
 		if (c == 0) return NULL; else len += c;
 	}
@@ -282,3 +282,35 @@ const char *KSITest_composeUri(const char *scheme, const KSITest_ServiceConf *se
 
 	return buf;
 }
+
+int KSITest_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const char *scheme,
+		KSITest_ServiceConf *srvConf, KSITest_ServiceConf *haConf) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t i;
+
+	if (service == NULL || scheme == NULL || srvConf == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (haConf == NULL || strlen(haConf[0].host) == 0) {
+		res = KSI_AsyncService_addEndpoint(service,
+				KSITest_composeUri(scheme, srvConf),
+				srvConf->user, srvConf->pass);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		for (i = 0; i < CONF_MAX_HA_SERVICES; i++) {
+			if (strlen(haConf[i].host)) {
+				res = KSI_AsyncService_addEndpoint(service,
+						KSITest_composeUri(scheme, &haConf[i]),
+						haConf[i].user, haConf[i].pass);
+				if (res != KSI_OK) goto cleanup;
+			}
+		}
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+

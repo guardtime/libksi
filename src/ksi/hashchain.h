@@ -204,6 +204,25 @@ extern "C" {
 	int KSI_CalendarHashChain_setAggregationTime(KSI_CalendarHashChain *t, KSI_Integer *aggregationTime);
 	int KSI_CalendarHashChain_setInputHash(KSI_CalendarHashChain *t, KSI_DataHash *inputHash);
 	int KSI_CalendarHashChain_setHashChain(KSI_CalendarHashChain *t, KSI_LIST(KSI_HashChainLink) *hashChain);
+
+	/**
+	 * Checks if the two calendar hash chains are compatible with each other.
+	 * The function performs the following checks:
+	 *  -# Neither of the inputs is NULL. This limits false positives due to coding errors.
+	 *  -# The input hashes match.
+	 *  -# The aggregation times match. Note, the publication times must not match.
+	 *  -# The right links from both calendar hash chains are pairwise equal.
+	 *
+	 *  \param[in]	a	The first calendar hash chain.
+	 *  \param[in]	b	The second calendar hash chain.
+	 *  \return Returns #KSI_OK on success; #KSI_INCOMPATIBLE_HASH_CHAIN if the calendar hash chains are
+	 *          incompatible or an error otherwise.
+	 *  \note If at least one of the arguments is NULL, the result is considered to be incompatible.
+	 *  \note The publication time from the two aggregation hash chains and also the left-links from
+	 *        both of the chains can differ.
+	 */
+	int KSI_CalendarHashChain_verifyCompatibilityTo(const KSI_CalendarHashChain *a, const KSI_CalendarHashChain *b);
+
 	KSI_DEFINE_REF(KSI_CalendarHashChain);
 	KSI_DEFINE_WRITE_BYTES(KSI_CalendarHashChain);
 

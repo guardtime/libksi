@@ -65,6 +65,7 @@ integration_tests_SOURCES= \
 	test_conf.h \
 	aggre_integration_test.c \
 	aggre_async_integration_test.c \
+	aggre_ha_integration_test.c \
 	ext_integration_tests.c \
 	ext_async_integration_tests.c \
 	pub_integration_tests.c \
@@ -75,7 +76,7 @@ serialize_benchmark_SOURCES=serialize_benchmark.c
 resigner_SOURCES=resigner.c
 
 async_signer_SOURCES= \
-	test_sign_async.c \
+	test_async_signer.c \
 	cutest/CuTest.c \
 	cutest/CuTest.h \
 	support_tests.c \

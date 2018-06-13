@@ -1,3 +1,6 @@
+* IMPROVEMENT: Changed the curl HTTP debug messages for return codes and internal error messages.
+* FEATURE: High Availability add-on to the non-blocking network interface.
+* BUGFIX: Corrected possible crash in list removeElement when configured without object free method.
 Version 3.18
 
 * FEATURE: Added max tree height to tree builder.
@@ -6,6 +9,9 @@ Version 3.18
 * IMPROVEMENT: Added KSI_TlvElement_removeElement function.
 
 Version 3.17
+
+* IMPROVEMENT: Added calendar hash chain consistency verification.
+
 
 2018-02-12 release(3.17.2693)
 * IMPROVEMENT: Added KSI_ATTRIB and KSI_UNUSED to annotate functions.

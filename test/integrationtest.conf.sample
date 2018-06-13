@@ -10,6 +10,28 @@ extender.pass=<pass>
 
 #extender.hmac=sha2_256
 
+# High Availability service configuration. (optional)
+# Uncomment for setting up HA service with more than one subservice
+# (by default common extender info is used).
+
+#ha.extender[0].host=<host>
+#ha.extender[0].port=<port>
+#ha.extender[0].user=<user>
+#ha.extender[0].pass=<pass>
+#ha.extender[0].hmac=sha2_256
+
+#ha.extender[1].host=<host>
+#ha.extender[1].port=<port>
+#ha.extender[1].user=<user>
+#ha.extender[1].pass=<pass>
+#ha.extender[1].hmac=sha2_256
+
+#ha.extender[2].host=<host>
+#ha.extender[2].port=<port>
+#ha.extender[2].user=<user>
+#ha.extender[2].pass=<pass>
+#ha.extender[2].hmac=sha2_256
+
 ### Aggregator info
 
 aggregator.host=<host>
@@ -22,7 +44,41 @@ aggregator.pass=<pass>
 
 #aggregator.hmac=sha2_256
 
+# High Availability service configuration. (optional)
+# Uncomment for setting up HA service with more than one subservice
+# (by default common aggregator info is used).
+
+#ha.aggregator[0].host=<host>
+#ha.aggregator[0].port=<port>
+#ha.aggregator[0].user=<user>
+#ha.aggregator[0].pass=<pass>
+#ha.aggregator[0].hmac=sha2_256
+
+#ha.aggregator[1].host=<host>
+#ha.aggregator[1].port=<port>
+#ha.aggregator[1].user=<user>
+#ha.aggregator[1].pass=<pass>
+#ha.aggregator[1].hmac=sha2_256
+
+#ha.aggregator[2].host=<host>
+#ha.aggregator[2].port=<port>
+#ha.aggregator[2].user=<user>
+#ha.aggregator[2].pass=<pass>
+#ha.aggregator[2].hmac=sha2_256
+
 ### Pubfile info
 
 pubfile.url=<scheme>://<user>:<pass>@<host>
 pubfile.cnstr=1.2.840.113549.1.9.1=publications@guardtime.com
+
+
+### Async timeout
+
+# Defines the sleep timeout in milliseconds for avoiding busy loops
+# while waiting for server responses.
+# Uncomment to specify a value that meets your needs.
+#async.timeout.sleep = 100
+
+# Cululative sleep timeout in milliseconds for a test case.
+# Uncomment to specify a value that meets your needs.
+#async.timeout.cumulative = 5000

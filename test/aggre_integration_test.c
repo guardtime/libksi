@@ -19,14 +19,7 @@
 
 #include <string.h>
 
-#ifdef _WIN32
-#  include <windows.h>
-#  define sleep_ms(x) Sleep((x))
-#else
-#  include <unistd.h>
-#  define sleep_ms(x) usleep((x)*1000)
-#endif
-
+#include <ksi/ksi.h>
 #include <ksi/net.h>
 #include <ksi/net_http.h>
 #include <ksi/net_tcp.h>
@@ -36,8 +29,6 @@
 #include "all_integration_tests.h"
 
 #include "../src/ksi/internal.h"
-
-#include "../src/ksi/impl/ctx_impl.h"
 
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;

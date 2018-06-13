@@ -120,6 +120,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Verification failed.";
 		case KSI_INVALID_PUBLICATION:
 			return "Invalid publication.";
+		case KSI_INCOMPATIBLE_HASH_CHAIN:
+			return "Incompatible calendar hash chain.";
 		case KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI:
 			return "The publications file is not signed.";
 		case KSI_CRYPTO_FAILURE:
@@ -199,6 +201,8 @@ static void initOptions(KSI_CTX *ctx) {
 	KSI_CTX_setOption(ctx, KSI_OPT_EXT_CONF_RECEIVED_CALLBACK, NULL);
 
 	KSI_CTX_setOption(ctx, KSI_OPT_PUBFILE_CACHE_TTL_SECONDS, (void*)KSI_CTX_PUBFILE_CACHE_DEFAULT_TTL);
+
+	KSI_CTX_setOption(ctx, KSI_OPT_HA_SAFEGUARD, (void*)KSI_CTX_HA_MAX_SUBSERVICES);
 }
 
 int KSI_CTX_new(KSI_CTX **context) {
