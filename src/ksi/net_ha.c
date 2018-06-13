@@ -1321,6 +1321,9 @@ int KSI_ExtendingHighAvailabilityService_new(KSI_CTX *ctx, KSI_AsyncService **se
 	tmp->setOption = (int (*)(void *, int, void *))KSI_HighAvailabilityService_setOption;
 	tmp->getOption = (int (*)(void *, int, void *))KSI_HighAvailabilityService_getOption;
 
+	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))KSI_HighAvailabilityService_setEndpoint;
+	tmp->addEndpoint = (int (*)(void *, const char *, const char *, const char *))KSI_HighAvailabilityService_addEndpoint;
+
 	*service = tmp;
 	tmp = NULL;
 

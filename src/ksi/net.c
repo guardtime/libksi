@@ -1343,6 +1343,7 @@ int KSI_AbstractAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->setOption = NULL;
 
 	tmp->setEndpoint = NULL;
+	tmp->addEndpoint = NULL;
 
 	tmp->uriSplit = uriSplit;
 	tmp->uriCompose = uriCompose;
