@@ -1394,7 +1394,7 @@ static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char
 			KSI_DataHash *hsh = NULL;
 			KSI_AggregationReq *req = NULL;
 
-			KSI_LOG_debug(ctx, "%s: REQUEST (\"%d\").", __FUNCTION__, *p_req);
+			KSI_LOG_debug(ctx, "%s: REQUEST (\"%s\").", __FUNCTION__, *p_req);
 
 			res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
 			CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);

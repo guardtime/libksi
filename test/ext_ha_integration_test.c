@@ -1365,7 +1365,7 @@ static void asyncExtending_requestConfigAndExtRequest_loop(CuTest* tc, const cha
 			const size_t reqTime = 1435740789;
 			KSI_Integer *aggrTime = NULL;
 
-			KSI_LOG_debug(ctx, "%s: REQUEST (\"%d\").", __FUNCTION__, nofRequests);
+			KSI_LOG_debug(ctx, "%s: REQUEST (\"%llu\").", __FUNCTION__, (unsigned long long)nofRequests);
 
 			res = KSI_ExtendReq_new(ctx, &req);
 			CuAssert(tc, "Unable to create extension request.", res == KSI_OK && req != NULL);
