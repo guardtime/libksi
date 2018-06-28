@@ -111,9 +111,9 @@ struct KSI_TreeBuilder_st {
 	KSI_LIST(KSI_TreeBuilderLeafProcessor) *cbList;
 	/** Common hashing object. */
 	KSI_DataHasher *hsr;
-	/** Maximum height of the tree. If adding a leaf would make the tree heigt greater than this
+	/** Maximum level of the root hash. If adding a leaf would make the level of the root hash greater than this
 	 * parameter, an error is returned. If the value is less or equal to 0 it is ignored. */
-	short maxHeight;
+	short maxTreeLevel;
 };
 
 /**
