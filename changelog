@@ -8,6 +8,7 @@ Version 3.18
 * FEATURE: Added max tree height to tree builder.
 * BUGFIX: Corrected possible crash in list removeElement when configured without object free method.
 * BUGFIX: Fixed typo in hash algorithm names.
+* BUGFIX: Fixed internal logging mechanism.
 
 Version 3.17
 
