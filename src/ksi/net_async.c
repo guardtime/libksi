@@ -1007,7 +1007,8 @@ static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config
 
 		c->serverConf->state = KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED;
 		/* Update internal state if the request has been requested. */
-		if (c->serverConf->aggrReq != NULL && c->serverConf->respCtx == NULL) {
+		if ((c->serverConf->aggrReq != NULL || c->serverConf->extReq != NULL) &&
+				c->serverConf->respCtx == NULL) {
 			c->pending--;
 			c->received++;
 		}
