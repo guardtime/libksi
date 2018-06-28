@@ -194,7 +194,7 @@ static void TestAllAlgorithms(CuTest* tc) {
 	expected[KSI_HASHALG_SHA2_384] = "0417df9e5205924edf24677bd365535827d150ba5c88e6ea769a16f4910f4b62d65ed730b2f5511c79750b8a32cee6373c";
 	expected[KSI_HASHALG_SHA2_512] = "05fb7ed4edda2e2631c53103413823b1d7613d756e43b5182550f04decbde99bd3848ff38dbc5a4210f3439754b77de10c294acdb0704fbfcd2493d48f2e65ed98";
 	expected[0x06] = NULL; /* Deprecated hash function. */
-	expected[KSI_HASHALG_SHA3_244] = "TODO!";
+	expected[KSI_HASHALG_SHA3_224] = "TODO!";
 	expected[KSI_HASHALG_SHA3_256] = "TODO!";
 	expected[KSI_HASHALG_SHA3_384] = "TODO!";
 	expected[KSI_HASHALG_SHA3_512] = "TODO!";
