@@ -174,8 +174,33 @@ extern "C" {
 	KSI_DEFINE_EXTERN(const KSI_Policy* KSI_VERIFICATION_POLICY_GENERAL);
 
 	typedef enum RuleType_en {
+		/**
+		 * Basic rule type means that the rule pointer in #KSI_Rule is a pointer to a verifying function.
+		 * If the rule type is #KSI_RULE_TYPE_BASIC, it calls the verifying function and examines the verification
+		 * result of this function. If the function returns #KSI_OK and verification result is #KSI_VER_RES_OK, it
+		 * continues with the next rule in the array and does so until it encounters the final empty rule. In this case
+		 * the verification is successful.
+		 * If at some point any of the functions does not return #KSI_OK or the verification result is not #KSI_VER_RES_OK,
+		 * the verification fails and no more rules are processed.
+		 */
 		KSI_RULE_TYPE_BASIC,
+		/**
+		 * Composite rule type means that the rule pointer in #KSI_Rule is not a function pointer (as was the case with
+		 * the basic rule type), but instead a pointer to another array of rules. The array of rules can contain both
+		 * basic and composite rules, meaning that composite rules can be nested. The composite rule is also verified
+		 * in a linear fashion until a rule fails, or until all rules including the last one are successful.
+		 * AND-type rule result must be successful for the verification to continue. If an AND-type rule fails, the
+		 * whole rule array of which it is part of, fails as well (no further rules are verified).
+		 */
 		KSI_RULE_TYPE_COMPOSITE_AND,
+		/**
+		 * Composite rule type means that the rule pointer in #KSI_Rule is not a function pointer (as was the case with
+		 * the basic rule type), but instead a pointer to another array of rules. The array of rules can contain both
+		 * basic and composite rules, meaning that composite rules can be nested. The composite rule is also verified
+		 * in a linear fashion until a rule fails, or until all rules including the last one are successful.
+		 * If an OR-type rule is successfully verified, further rules in the rule array are skipped and the whole rule
+		 * of which the OR-type rule is part of, is considered successfully verified.
+		 */
 		KSI_RULE_TYPE_COMPOSITE_OR
 	} KSI_RuleType;
 
