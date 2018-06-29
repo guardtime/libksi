@@ -514,7 +514,7 @@ static void asyncExtending_collect_getResponse(CuTest* tc, const char *scheme) {
 		res = KSI_AsyncService_addRequest(as, reqHandle);
 		CuAssert(tc, "Unable to add request", res == KSI_OK);
 
-		res = KSI_List_append(list, (void*)KSI_Integer_ref(aggrTime));
+		res = KSI_List_append(list, aggrTime);
 		CuAssert(tc, "Unable to append to list.", res == KSI_OK);
 
 		res = KSI_AsyncService_getPendingCount(as, &pendingCount);
@@ -592,6 +592,7 @@ static void asyncExtending_collect_getResponse(CuTest* tc, const char *scheme) {
 
 	KSI_LOG_debug(ctx, "%s: CLEANUP.", __FUNCTION__);
 
+	KSI_List_free(list);
 	KSI_AsyncService_free(as);
 
 	KSI_LOG_debug(ctx, "%s: FINISH in %fs.", __FUNCTION__, difftime(time(NULL), startTime));
