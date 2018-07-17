@@ -348,6 +348,8 @@ static void TestLogDataHashWithInfoLevel(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(ctx, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with info level.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithDebugLevel(CuTest *tc) {
@@ -358,6 +360,8 @@ static void TestLogDataHashWithDebugLevel(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(ctx, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with debug level.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithNoticeLevel(CuTest *tc) {
@@ -368,6 +372,8 @@ static void TestLogDataHashWithNoticeLevel(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(ctx, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with notice level.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithWarnLevel(CuTest *tc) {
@@ -378,6 +384,8 @@ static void TestLogDataHashWithWarnLevel(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(ctx, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with warn level.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithErrorLevel(CuTest *tc) {
@@ -388,6 +396,8 @@ static void TestLogDataHashWithErrorLevel(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(ctx, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with error level.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithInfoLevelAndCtxNull(CuTest *tc) {
@@ -397,6 +407,8 @@ static void TestLogDataHashWithInfoLevelAndCtxNull(CuTest *tc) {
 	KSITest_DataHash_fromStr(NULL, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(NULL, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with info level and ctx null.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithDebugLevelAndCtxNull(CuTest *tc) {
@@ -406,6 +418,8 @@ static void TestLogDataHashWithDebugLevelAndCtxNull(CuTest *tc) {
 	KSITest_DataHash_fromStr(NULL, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(NULL, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with debug level and ctx null.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithNoticeLevelAndCtxNull(CuTest *tc) {
@@ -415,6 +429,8 @@ static void TestLogDataHashWithNoticeLevelAndCtxNull(CuTest *tc) {
 	KSITest_DataHash_fromStr(NULL, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(NULL, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with notice level and ctx null.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithWarnLevelAndCtxNull(CuTest *tc) {
@@ -424,6 +440,8 @@ static void TestLogDataHashWithWarnLevelAndCtxNull(CuTest *tc) {
 	KSITest_DataHash_fromStr(NULL, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(NULL, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with warn level and ctx null.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogDataHashWithErrorLevelAndCtxNull(CuTest *tc) {
@@ -433,6 +451,8 @@ static void TestLogDataHashWithErrorLevelAndCtxNull(CuTest *tc) {
 	KSITest_DataHash_fromStr(NULL, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	res = KSI_LOG_logDataHash(NULL, KSI_LOG_INFO, "Hash", hsh);
 	CuAssert(tc, "DataHash logging should be successful with error level and ctx null.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
 }
 
 static void TestLogCtxErrorWithInfoLevel(CuTest *tc) {
