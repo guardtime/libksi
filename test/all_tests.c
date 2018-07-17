@@ -98,6 +98,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_CTX_getSuite);
 	addSuite(suite, KSITest_RDR_getSuite);
 	addSuite(suite, KSITest_TLV_getSuite);
+	addSuite(suite, KSITest_Log_getSuite);
 	addSuite(suite, KSITest_TLV_Sample_getSuite);
 	addSuite(suite, KSITest_Hash_getSuite);
 	addSuite(suite, KSITest_HMAC_getSuite);

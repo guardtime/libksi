@@ -74,6 +74,7 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_truststore_test.obj \
 	$(OBJ_DIR)\ksi_tree_builder_test.obj \
 	$(OBJ_DIR)\ksi_hmac_test.obj \
+	$(OBJ_DIR)\log_test.obj \
 	$(OBJ_DIR)\CuTest.obj \
 	$(OBJ_DIR)\compatibility_test.obj \
 	$(OBJ_DIR)\uri_client_test.obj \
