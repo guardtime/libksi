@@ -81,12 +81,12 @@ static void asyncSigning_verifyOptions(CuTest* tc, const char *url, const char *
 	KSI_AsyncService_free(as);
 }
 
-void Test_AsyncSingningService_verifyOptions_tcp(CuTest* tc) {
+void Test_AsyncSigningService_verifyOptions_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyOptions(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
-void Test_AsyncSingningService_verifyOptions_http(CuTest* tc) {
+void Test_AsyncSigningService_verifyOptions_http(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyOptions(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
@@ -120,12 +120,12 @@ static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char *url, cons
 	KSI_AsyncService_free(as);
 }
 
-void Test_AsyncSingningService_verifyCacheSizeOption_tcp(CuTest* tc) {
+void Test_AsyncSigningService_verifyCacheSizeOption_tcp(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyCacheSizeOption(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
-void Test_AsyncSingningService_verifyCacheSizeOption_http(CuTest* tc) {
+void Test_AsyncSigningService_verifyCacheSizeOption_http(CuTest* tc) {
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_verifyCacheSizeOption(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
@@ -1111,8 +1111,8 @@ CuSuite* AsyncAggrIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_noEndpoint_addRequest);
 
 	/* TCP test cases. */
-	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyOptions_tcp);
-	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyCacheSizeOption_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyOptions_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyCacheSizeOption_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_tcp);
@@ -1124,8 +1124,8 @@ CuSuite* AsyncAggrIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSign_requestConfigAndAggrRequest_loop_tcp);
 
 	/* HTTP test cases. */
-	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyOptions_http);
-	SUITE_ADD_TEST(suite, Test_AsyncSingningService_verifyCacheSizeOption_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyOptions_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyCacheSizeOption_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_http);

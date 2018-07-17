@@ -53,6 +53,7 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, AsyncAggrIntegrationTests_getSuite);
 	addSuite(suite, AsyncExtIntegrationTests_getSuite);
 	addSuite(suite, HaAggrIntegrationTests_getSuite);
+	addSuite(suite, HaExtIntegrationTests_getSuite);
 
 	return suite;
 }

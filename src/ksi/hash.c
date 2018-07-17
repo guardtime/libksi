@@ -28,13 +28,16 @@
 
 #define HASH_ALGO(id, bitcount, blocksize, deprecatedFrom, obsoleteFrom) {(id), (bitcount), (blocksize), id##_names, (deprecatedFrom), (obsoleteFrom)}
 
+/* Remove this when release > 3.20 and >= 2019! */
+const int KSI_HASHALG_SHA3_244 = KSI_HASHALG_SHA3_224;
+
 /** Hash algorithm names. The last name has to be an empty string. */
 static const char * const KSI_HASHALG_SHA1_names[] = {"SHA-1", "SHA1", ""};
 static const char * const KSI_HASHALG_SHA2_256_names[] = {"SHA-256", "SHA2-256", "SHA-2", "SHA2", "SHA256", "DEFAULT", ""};
 static const char * const KSI_HASHALG_RIPEMD160_names[] = { "RIPEMD-160", "RIPEMD160", ""};
 static const char * const KSI_HASHALG_SHA2_384_names[] = { "SHA-384", "SHA384", "SHA2-384", ""};
 static const char * const KSI_HASHALG_SHA2_512_names[] = { "SHA-512", "SHA512", "SHA2-512", ""};
-static const char * const KSI_HASHALG_SHA3_244_names[] = { "SHA3-224", ""};
+static const char * const KSI_HASHALG_SHA3_224_names[] = { "SHA3-224", ""};
 static const char * const KSI_HASHALG_SHA3_256_names[] = { "SHA3-256", ""};
 static const char * const KSI_HASHALG_SHA3_384_names[] = { "SHA3-384", ""};
 static const char * const KSI_HASHALG_SHA3_512_names[] = { "SHA3-512"};
@@ -63,7 +66,7 @@ static const struct KSI_hashAlgorithmInfo_st {
 		HASH_ALGO(KSI_HASHALG_SHA2_384,		384, 1024, 0, 0),
 		HASH_ALGO(KSI_HASHALG_SHA2_512,		512, 1024, 0, 0),
 		{0x06, 0, 0, NULL, 1, 1}, /* Deprecated algorithm - do not reuse. */
-		HASH_ALGO(KSI_HASHALG_SHA3_244,		224, 1152, 0, 0),
+		HASH_ALGO(KSI_HASHALG_SHA3_224,		224, 1152, 0, 0),
 		HASH_ALGO(KSI_HASHALG_SHA3_256,		256, 1088, 0, 0),
 		HASH_ALGO(KSI_HASHALG_SHA3_384,		384, 832, 0, 0),
 		HASH_ALGO(KSI_HASHALG_SHA3_512,		512, 576, 0, 0),
