@@ -175,7 +175,7 @@ static void testMaxTreeLevelWithAbove0Level(CuTest *tc) {
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
 
-	CuAssert(tc, "The root hash node must have a lower level value than the max level.", (short)builder->rootNode->level <= builder->maxTreeLevel);
+	CuAssert(tc, "The root hash node must have a lower level value than the max level.", (short)builder->rootNode->level == builder->maxTreeLevel);
 
 	KSI_TreeBuilder_free(builder);
 	KSI_DataHash_free(hsh);
@@ -208,7 +208,7 @@ static void testMaxTreeLevelWithFullTree(CuTest *tc) {
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
 
-	CuAssert(tc, "The root hash node must have a lower level value than the max level.", (short)builder->rootNode->level <= builder->maxTreeLevel);
+	CuAssert(tc, "The root hash node must have a level value equal to the max level.", (short)builder->rootNode->level == builder->maxTreeLevel);
 
 	KSI_TreeBuilder_free(builder);
 	KSI_DataHash_free(hsh);
@@ -235,7 +235,7 @@ static void testMaxTreeLevelDoubleHighestLevel(CuTest *tc) {
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
 
-	CuAssert(tc, "The root hash node must have a lower level value than the max level.", (short)builder->rootNode->level <= builder->maxTreeLevel);
+	CuAssert(tc, "The root hash node must have a lower level value than the max level.", (short)builder->rootNode->level == builder->maxTreeLevel);
 
 	KSI_TreeBuilder_free(builder);
 	KSI_DataHash_free(hsh);
