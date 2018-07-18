@@ -44,6 +44,7 @@ runner_SOURCES= \
 	ksi_tlv_test.c \
 	ksi_tree_builder_test.c \
 	ksi_truststore_test.c \
+	log_test.c \
 	compatibility_test.c \
 	uri_client_test.c \
 	verification_rule_tests.c \
