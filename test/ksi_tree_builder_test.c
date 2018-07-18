@@ -123,7 +123,7 @@ static void testGetAggregationChain(CuTest* tc) {
 	KSI_TreeBuilder_free(builder);
 }
 
-static void testMaxTreeHeight1(CuTest *tc) {
+static void testMaxTreeLevelt1(CuTest *tc) {
 	int res;
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -148,7 +148,7 @@ static void testMaxTreeHeight1(CuTest *tc) {
 	KSI_DataHash_free(hsh);
 }
 
-static void testMaxTreeHeightWithLevel(CuTest *tc) {
+static void testMaxTreeLevelWithAbove0Level(CuTest *tc) {
 	int res;
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -174,13 +174,14 @@ static void testMaxTreeHeightWithLevel(CuTest *tc) {
 
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
-	CuAssert(tc, "The root hash node must have a lower level value than the max height.", (short)builder->rootNode->level <= builder->maxTreeLevel);
+
+	CuAssert(tc, "The root hash node must have a lower level value than the max level.", (short)builder->rootNode->level == builder->maxTreeLevel);
 
 	KSI_TreeBuilder_free(builder);
 	KSI_DataHash_free(hsh);
 }
 
-static void testMaxTreeHeightWithFullTree(CuTest *tc) {
+static void testMaxTreeLevelWithFullTree(CuTest *tc) {
 	int res;
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -207,14 +208,13 @@ static void testMaxTreeHeightWithFullTree(CuTest *tc) {
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
 
-	CuAssert(tc, "The root hash node must have a lower level value than the max height.", (short)builder->rootNode->level <= builder->maxTreeLevel);
-
+	CuAssert(tc, "The root hash node must have a level value equal to the max level.", (short)builder->rootNode->level == builder->maxTreeLevel);
 
 	KSI_TreeBuilder_free(builder);
 	KSI_DataHash_free(hsh);
 }
 
-static void testMaxTreeHeighDoubleHighestLevel(CuTest *tc) {
+static void testMaxTreeLevelDoubleHighestLevel(CuTest *tc) {
 	int res;
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
@@ -235,7 +235,8 @@ static void testMaxTreeHeighDoubleHighestLevel(CuTest *tc) {
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
 
-	CuAssert(tc, "The root hash node must have a lower level value than the max height.", (short)builder->rootNode->level <= builder->maxTreeLevel);
+	CuAssert(tc, "The root hash node must have a lower level value than the max level.", (short)builder->rootNode->level == builder->maxTreeLevel);
+
 	KSI_TreeBuilder_free(builder);
 	KSI_DataHash_free(hsh);
 }
@@ -246,7 +247,7 @@ static void testEmptyTreeBuilderClosing(CuTest *tc) {
 	char buf[1024];
 
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
-	CuAssert(tc, "Unable to create new treebuilder.", res == KSI_OK);
+	CuAssert(tc, "Unable to create new tree builder.", res == KSI_OK);
 
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Close on empty tree should not succeed.", res == KSI_INVALID_STATE);
@@ -262,7 +263,7 @@ static void testEmptyTreeBuilderWithMaxLevelClosing(CuTest *tc) {
 	char buf[1024];
 
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
-	CuAssert(tc, "Unable to create new treebuilder.", res == KSI_OK);
+	CuAssert(tc, "Unable to create new tree builder.", res == KSI_OK);
 
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Close on empty tree should not succeed.", res == KSI_INVALID_STATE);
@@ -281,14 +282,14 @@ static void testTreeBuilderDoubleClose(CuTest *tc) {
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
-	CuAssert(tc, "Unable to create new treebuilder.", res == KSI_OK);
+	CuAssert(tc, "Unable to create new tree builder.", res == KSI_OK);
 
 	/* Should succeed. */
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
 	CuAssert(tc, "Unable to add data 1st hash.", res == KSI_OK);
 
 	res = KSI_TreeBuilder_close(builder);
-	CuAssert(tc, "Unable to close treebuilder.", res == KSI_OK);
+	CuAssert(tc, "Unable to close tree builder.", res == KSI_OK);
 
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Close on closed tree should not succeed.", res == KSI_INVALID_STATE);
@@ -299,7 +300,6 @@ static void testTreeBuilderDoubleClose(CuTest *tc) {
 	KSI_DataHash_free(hsh);
 }
 
-
 CuSuite* KSITest_TreeBuilder_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -307,10 +307,10 @@ CuSuite* KSITest_TreeBuilder_getSuite(void)
 	SUITE_ADD_TEST(suite, testCreateTreeBuilder);
 	SUITE_ADD_TEST(suite, testTreeBuilderAddLeafs);
 	SUITE_ADD_TEST(suite, testGetAggregationChain);
-	SUITE_ADD_TEST(suite, testMaxTreeHeight1);
-	SUITE_ADD_TEST(suite, testMaxTreeHeightWithLevel);
-	SUITE_ADD_TEST(suite, testMaxTreeHeightWithFullTree);
-	SUITE_ADD_TEST(suite, testMaxTreeHeighDoubleHighestLevel);
+	SUITE_ADD_TEST(suite, testMaxTreeLevelt1);
+	SUITE_ADD_TEST(suite, testMaxTreeLevelWithAbove0Level);
+	SUITE_ADD_TEST(suite, testMaxTreeLevelWithFullTree);
+	SUITE_ADD_TEST(suite, testMaxTreeLevelDoubleHighestLevel);
 	SUITE_ADD_TEST(suite, testEmptyTreeBuilderClosing);
 	SUITE_ADD_TEST(suite, testEmptyTreeBuilderWithMaxLevelClosing);
 	SUITE_ADD_TEST(suite, testTreeBuilderDoubleClose);
