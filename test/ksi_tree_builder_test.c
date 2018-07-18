@@ -321,7 +321,6 @@ static void testMaxTreeLevelWithLevel(CuTest *tc) {
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 3, NULL);
 	CuAssert(tc, "Adding 3rd hash should not succeed.", res == KSI_BUFFER_OVERFLOW);
 
-	/* Should fail. */
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
 	CuAssert(tc, "Adding 4th hash may not fail.", res == KSI_OK);
 
