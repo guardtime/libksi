@@ -110,7 +110,7 @@ static void TestLogBlobWithInfoLevel(CuTest *tc) {
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_LOG_logBlob(ctx, KSI_LOG_INFO, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(ctx, KSI_LOG_INFO, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should be successful with info level.", res == KSI_OK);
 }
 
@@ -119,7 +119,7 @@ static void TestLogBlobWithDebugLevel(CuTest *tc) {
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(ctx, KSI_LOG_DEBUG, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should be successful with debug level.", res == KSI_OK);
 }
 
@@ -128,7 +128,7 @@ static void TestLogBlobWithNoticeLevel(CuTest *tc) {
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_LOG_logBlob(ctx, KSI_LOG_NOTICE, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(ctx, KSI_LOG_NOTICE, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should be successful with notice level.", res == KSI_OK);
 }
 
@@ -137,7 +137,7 @@ static void TestLogBlobWithWarnLevel(CuTest *tc) {
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_LOG_logBlob(ctx, KSI_LOG_WARN, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(ctx, KSI_LOG_WARN, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should be successful with warn level.", res == KSI_OK);
 }
 
@@ -146,7 +146,7 @@ static void TestLogBlobWithErrorLevel(CuTest *tc) {
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 	KSI_ERR_clearErrors(ctx);
 
-	res = KSI_LOG_logBlob(ctx, KSI_LOG_ERROR, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(ctx, KSI_LOG_ERROR, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should be successful with error level.", res == KSI_OK);
 }
 
@@ -154,7 +154,7 @@ static void TestLogBlobWithInfoLevelAndCtxNull(CuTest *tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 
-	res = KSI_LOG_logBlob(NULL, KSI_LOG_INFO, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(NULL, KSI_LOG_INFO, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should not be successful with info level and ctx null.", res == KSI_INVALID_ARGUMENT);
 }
 
@@ -162,7 +162,7 @@ static void TestLogBlobWithDebugLevelAndCtxNull(CuTest *tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 
-	res = KSI_LOG_logBlob(NULL, KSI_LOG_DEBUG, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(NULL, KSI_LOG_DEBUG, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should not be successful with debug level and ctx null.", res == KSI_INVALID_ARGUMENT);
 }
 
@@ -170,7 +170,7 @@ static void TestLogBlobWithNoticeLevelAndCtxNull(CuTest *tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 
-	res = KSI_LOG_logBlob(NULL, KSI_LOG_NOTICE, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(NULL, KSI_LOG_NOTICE, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should not be successful with notice level and ctx null.", res == KSI_INVALID_ARGUMENT);
 }
 
@@ -178,7 +178,7 @@ static void TestLogBlobWithWarnLevelAndCtxNull(CuTest *tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 
-	res = KSI_LOG_logBlob(NULL, KSI_LOG_WARN, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(NULL, KSI_LOG_WARN, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should not be successful with warn level and ctx null.", res == KSI_INVALID_ARGUMENT);
 }
 
@@ -186,7 +186,7 @@ static void TestLogBlobWithErrorLevelAndCtxNull(CuTest *tc) {
 	int res;
 	unsigned char raw[] = "\x01\x1f" "\x07\x15" "THIS IS A TLV CONTENT" "\x7\x06" "\xca\xff\xff\xff\xff\xfe";
 
-	res = KSI_LOG_logBlob(NULL, KSI_LOG_ERROR, raw, "Blob: ", sizeof(raw));
+	res = KSI_LOG_logBlob(NULL, KSI_LOG_ERROR, "Blob: ", raw, sizeof(raw));
 	CuAssert(tc, "Blob logging should not be successful with error level and ctx null.", res == KSI_INVALID_ARGUMENT);
 }
 
