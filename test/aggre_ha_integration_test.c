@@ -593,19 +593,19 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *scheme) {
 			case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
 					KSI_AggregationResp *resp = NULL;
 					char *reqCtx = NULL;
-					size_t *pos = NULL;
+					size_t pos;
+					int found = 0;
 
 					KSI_LOG_debug(ctx, "%s: RESPONSE.", __FUNCTION__);
 
 					res = KSI_AsyncHandle_getRequestCtx(handle, (const void**)&reqCtx);
 					CuAssert(tc, "Unable to get service request context.", res == KSI_OK && reqCtx != NULL);
 
-					res = KSI_List_indexOf(list, (void*)reqCtx, &pos);
-					CuAssert(tc, "Unable to get index.", res == KSI_OK && pos != NULL);
+					res = KSI_List_find(list, (void*)reqCtx, &found, &pos);
+					CuAssert(tc, "Unable to get index.", res == KSI_OK && pos != 0);
 
-					res = KSI_List_remove(list, *pos, NULL);
+					res = KSI_List_remove(list, pos, NULL);
 					CuAssert(tc, "Unable to remove from list.", res == KSI_OK);
-					KSI_free(pos);
 
 					res = KSI_AsyncHandle_getAggregationResp(handle, &resp);
 					CuAssert(tc, "Failed to get aggregation response.", res == KSI_OK && resp != NULL);

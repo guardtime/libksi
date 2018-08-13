@@ -166,6 +166,7 @@ extern "C" {
 #define KSI_MataDataElementList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_MetaDataElementList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_MetaDataElementList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_MetaDataElementList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_HashChainLinkIdentity);
 #define KSI_HashChainLinkIdentityList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -177,6 +178,7 @@ extern "C" {
 #define KSI_HashChainLinkIdentityList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_HashChainLinkIdentityList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_HashChainLinkIdentityList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_HashChainLinkIdentityList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_HashChainLink);
 #define KSI_HashChainLinkList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -188,6 +190,7 @@ extern "C" {
 #define KSI_HashChainLinkList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_HashChainLinkList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_HashChainLinkList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_HashChainLinkList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_CalendarHashChainLink);
 #define KSI_CalendarHashChainLinkList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -199,6 +202,7 @@ extern "C" {
 #define KSI_CalendarHashChainLinkList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_CalendarHashChainLinkList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_CalendarHashChainLinkList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_CalendarHashChainLinkList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_CalendarHashChain);
 #define KSI_CalendarHashChainList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -210,6 +214,7 @@ extern "C" {
 #define KSI_CalendarHashChainList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_CalendarHashChainList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_CalendarHashChainList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_CalendarHashChainList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_ExtendPdu);
 #define KSI_ExtendPduList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -221,6 +226,7 @@ extern "C" {
 #define KSI_ExtendPduList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_ExtendPduList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_ExtendPduList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_ExtendPduList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_AggregationPdu);
 #define KSI_AggregationPduList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -232,6 +238,7 @@ extern "C" {
 #define KSI_AggregationPduList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_AggregationPduList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AggregationPduList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_AggregationPduList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_Header);
 #define KSI_HeaderList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -243,6 +250,7 @@ extern "C" {
 #define KSI_HeaderList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_HeaderList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_HeaderList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_HeaderList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_Config);
 #define KSI_ConfigList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -254,6 +262,7 @@ extern "C" {
 #define KSI_ConfigList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_ConfigList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_ConfigList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_ConfigList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_AggregationReq);
 #define KSI_AggregationReqList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -265,6 +274,7 @@ extern "C" {
 #define KSI_AggregationReqList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_AggregationReqList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AggregationReqList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_AggregationReqList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_RequestAck);
 #define KSI_RequestAckList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -276,6 +286,7 @@ extern "C" {
 #define KSI_RequestAckList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_RequestAckList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_RequestAckList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_RequestAckList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_AggregationResp);
 #define KSI_AggregationRespList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -287,6 +298,7 @@ extern "C" {
 #define KSI_AggregationRespList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_AggregationRespList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AggregationRespList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_AggregationRespList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_ExtendReq);
 #define KSI_ExtendReqList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -298,6 +310,7 @@ extern "C" {
 #define KSI_ExtendReqList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_ExtendReqList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_ExtendReqList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_ExtendReqList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_ExtendResp);
 #define KSI_ExtendRespList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -309,6 +322,7 @@ extern "C" {
 #define KSI_ExtendRespList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_ExtendRespList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_ExtendRespList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_ExtendRespList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_PKISignedData);
 #define KSI_PKISignedDataList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -320,6 +334,7 @@ extern "C" {
 #define KSI_PKISignedDataList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_PKISignedDataList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_PKISignedDataList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_PKISignedDataList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_PublicationsHeader);
 #define KSI_PublicationsHeaderList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -331,6 +346,7 @@ extern "C" {
 #define KSI_PublicationsHeaderList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_PublicationsHeaderList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_PublicationsHeaderList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_PublicationsHeaderList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_CertificateRecord);
 #define KSI_CertificateRecordList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -342,6 +358,7 @@ extern "C" {
 #define KSI_CertificateRecordList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_CertificateRecordList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_CertificateRecordList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_CertificateRecordList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_PublicationData);
 #define KSI_PublicationDataList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -353,6 +370,7 @@ extern "C" {
 #define KSI_PublicationDataList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_PublicationDataList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_PublicationDataList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_PublicationDataList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_PublicationRecord);
 #define KSI_PublicationRecordList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -364,6 +382,7 @@ extern "C" {
 #define KSI_PublicationRecordList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_PublicationRecordList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_PublicationRecordList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_PublicationRecordList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_Integer);
 #define KSI_IntegerList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -375,6 +394,7 @@ extern "C" {
 #define KSI_IntegerList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_IntegerList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_IntegerList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_IntegerList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_OctetString);
 #define KSI_OctetStringList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -386,6 +406,7 @@ extern "C" {
 #define KSI_OctetStringList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_OctetStringList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_OctetStringList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_OctetStringList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_Utf8String);
 #define KSI_Utf8StringList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -397,6 +418,7 @@ extern "C" {
 #define KSI_Utf8StringList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_Utf8StringList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_Utf8StringList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_Utf8StringList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_Utf8StringNZ);
 #define KSI_Utf8StringNZList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -408,6 +430,7 @@ extern "C" {
 #define KSI_Utf8StringNZList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_Utf8StringNZList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_Utf8StringNZList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_Utf8StringNZList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_AggregationHashChain);
 #define KSI_AggregationHashChainList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -419,6 +442,7 @@ extern "C" {
 #define KSI_AggregationHashChainList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_AggregationHashChainList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AggregationHashChainList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_AggregationHashChainList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_CalendarAuthRec);
 #define KSI_CalendarAuthRecList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -430,6 +454,7 @@ extern "C" {
 #define KSI_CalendarAuthRecList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_CalendarAuthRecList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_CalendarAuthRecList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_CalendarAuthRecList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_TLV);
 #define KSI_TLVList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -441,6 +466,7 @@ extern "C" {
 #define KSI_TLVList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_TLVList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_TLVList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_TLVList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_PKICertificate);
 #define KSI_PKICertificateList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -452,6 +478,7 @@ extern "C" {
 #define KSI_PKICertificateList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_PKICertificateList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_PKICertificateList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_PKICertificateList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_AggregationAuthRec);
 #define KSI_AggregationAuthRecList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -463,6 +490,7 @@ extern "C" {
 #define KSI_AggregationAuthRecList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_AggregationAuthRecList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AggregationAuthRecList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_AggregationAuthRecList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	KSI_DEFINE_LIST(KSI_RFC3161);
 #define KSI_RFC3161List_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -474,6 +502,7 @@ extern "C" {
 #define KSI_RFC3161List_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_RFC3161List_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_RFC3161List_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_RFC3161List_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 KSI_DEFINE_LIST(KSI_RequestHandle);
 #define KSI_RequestHandleList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -485,6 +514,7 @@ KSI_DEFINE_LIST(KSI_RequestHandle);
 #define KSI_RequestHandleList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_RequestHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_RequestHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_RequestHandleList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 KSI_DEFINE_LIST(KSI_AsyncHandle);
 #define KSI_AsyncHandleList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -496,6 +526,7 @@ KSI_DEFINE_LIST(KSI_AsyncHandle);
 #define KSI_AsyncHandleList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_AsyncHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AsyncHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_AsyncHandleList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 KSI_DEFINE_LIST(KSI_AsyncService);
 #define KSI_AsyncServiceList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
@@ -507,6 +538,7 @@ KSI_DEFINE_LIST(KSI_AsyncService);
 #define KSI_AsyncServiceList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_AsyncServiceList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_AsyncServiceList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_AsyncServiceList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 
 

@@ -542,19 +542,19 @@ static void asyncExtending_collect_getResponse(CuTest* tc, const char *scheme) {
 				case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
 					KSI_ExtendResp *resp = NULL;
 					char *reqCtx = NULL;
-					size_t *pos = NULL;
+					size_t pos;
+					int found = 0;
 
 					KSI_LOG_debug(ctx, "%s: RESPONSE.", __FUNCTION__);
 
 					res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtx);
 					CuAssert(tc, "Unable to get service request context.", res == KSI_OK && reqCtx != NULL);
 
-					res = KSI_List_indexOf(list, (void*)reqCtx, &pos);
-					CuAssert(tc, "Unable to get index.", res == KSI_OK && pos != NULL);
+					res = KSI_List_find(list, (void*)reqCtx, &found, &pos);
+					CuAssert(tc, "Unable to get index.", res == KSI_OK && pos != 0);
 
-					res = KSI_List_remove(list, *pos, NULL);
+					res = KSI_List_remove(list, pos, NULL);
 					CuAssert(tc, "Unable to remove from list.", res == KSI_OK);
-					KSI_free(pos);
 
 					res = KSI_AsyncHandle_getExtendResp(respHandle, &resp);
 					CuAssert(tc, "Failed to get extension response.", res == KSI_OK && resp != NULL);

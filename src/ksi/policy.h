@@ -146,8 +146,11 @@ extern "C" {
 #define KSI_RuleVerificationResultList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
 #define KSI_RuleVerificationResultList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
 #define KSI_RuleVerificationResultList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define KSI_RuleVerificationResultList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
+
 #define KSI_TlvElementList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_TlvElementList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_TlvElementList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 	/**
 	 * Policy verification result structure.

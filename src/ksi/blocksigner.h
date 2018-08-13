@@ -39,6 +39,7 @@ KSI_DEFINE_LIST(KSI_BlockSignerHandle);
 #define KSI_BlockSignerHandleList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_BlockSignerHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_BlockSignerHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_BlockSignerHandleList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 /**
  * Create a new instance of #KSI_BlockSigner.

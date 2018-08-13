@@ -285,18 +285,19 @@ cleanup:
 
 int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)(void)) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t *pos = NULL;
+	size_t pos;
+	int found = 0;
 
 	if (ctx == NULL || initFn == NULL || cleanupFn == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_List_indexOf(ctx->cleanupFnList, (void *)cleanupFn, &pos);
+	res = KSI_List_find(ctx->cleanupFnList, (void *)cleanupFn, &found, &pos);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Only run the init function if the cleanup function is not found. */
-	if (pos == NULL) {
+	if (!found) {
 		res = initFn();
 		if (res != KSI_OK) goto cleanup;
 
@@ -307,8 +308,6 @@ int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)
 	res = KSI_OK;
 
 cleanup:
-
-	KSI_free(pos);
 
 	return res;
 }

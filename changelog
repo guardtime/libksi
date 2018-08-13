@@ -1,3 +1,7 @@
+Version 3.19
+
+* FEATURE: Added find function to KSI_List interface.
+
 Version 3.18
 
 * IMPROVEMENT: KSI_DataHash and KSI_DataHasher accept NULL as KSI context.
