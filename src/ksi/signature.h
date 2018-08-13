@@ -29,7 +29,7 @@ extern "C" {
 #endif
 	/**
 	 * \addtogroup signature KSI Signature
-	 * At the highest level of abstraction, a keyless signature consists of a hash chain linking the
+	 * At the highest level of abstraction, a KSI Blockchain signature consists of a hash chain linking the
 	 * signed document to the root hash value of the aggregation tree, followed by another hash chain
 	 * linking the root hash value of the aggregation tree to the published trust anchor.
 	 * @{

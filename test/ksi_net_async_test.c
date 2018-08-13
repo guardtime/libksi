@@ -32,7 +32,7 @@
 extern KSI_CTX *ctx;
 
 static const char *TEST_REQ_DATA[] = {
-	"Guardtime", "Keyless", "Signature", "Infrastructure", "(KSI)",
+	"Guardtime", "KSI", "Blockchain",
 	"is an", "industrial", "scale", "blockchain", "platform",
 	"that", "cryptographically", "ensures", "data", "integrity",
 	"and", "proves", "time", "of", "existence",
@@ -1329,8 +1329,6 @@ static void Test_AsyncSign_multipleRequests_loop(CuTest* tc) {
 		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-aggr_resp-req_id_10h.tlv",
 		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-aggr_resp-req_id_11h.tlv",
 		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-aggr_resp-req_id_12h.tlv",
-		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-aggr_resp-req_id_13h.tlv",
-		"resource/tlv/" TEST_RESOURCE_AGGR_VER "/ok-aggr_resp-req_id_14h.tlv",
 	};
 
 	int res;
@@ -1391,9 +1389,9 @@ static void Test_AsyncSign_multipleRequests_loop(CuTest* tc) {
 
 static void Test_AsyncSign_multipleRequests_loop_cacheSize5(CuTest* tc) {
 	static const char *TEST_REQ_DATA[] = {
-		"Guardtime", "Keyless", "Signature", "Infrastructure", "(KSI)",
-		"Guardtime", "Keyless", "Signature", "Infrastructure", "(KSI)",
-		"Guardtime", "Keyless", "Signature", "Infrastructure", "(KSI)",
+		"Guardtime", "KSI", "Blockchain", "is an", "industrial",
+		"Guardtime", "KSI", "Blockchain", "is an", "industrial",
+		"Guardtime", "KSI", "Blockchain", "is an", "industrial",
 		NULL
 	};
 	static const size_t TEST_REQ_DATA_COUNT = (sizeof(TEST_REQ_DATA) / sizeof(TEST_REQ_DATA[0])) - 1;

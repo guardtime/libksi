@@ -40,7 +40,7 @@ extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
 
 static const char *TEST_REQUESTS[] = {
-	"Guardtime", "Keyless", "Signature", "Infrastructure", "(KSI)",
+	"Guardtime", "KSI", "Blockchain",
 	"is an", "industrial", "scale", "blockchain", "platform",
 	"that", "cryptographically", "ensures", "data", "integrity",
 	"and", "proves", "time", "of", "existence",

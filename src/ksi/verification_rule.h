@@ -238,7 +238,7 @@ extern "C" {
 	int KSI_VerificationRule_CalendarAuthenticationRecordAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule is used to check if keyless signature contains publication record or not. If publication record is
+	 * This rule is used to check if the signature contains publication record or not. If publication record is
 	 * missing then status code #KSI_OK will be returned.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
@@ -249,7 +249,7 @@ extern "C" {
 	int KSI_VerificationRule_SignaturePublicationRecordPublicationHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule is used to check if keyless signature contains correct publication record publication time.
+	 * This rule is used to check if the signature contains correct publication record publication time.
 	 * If publication record is missing then status code #KSI_OK will ne returned.
 
 	 * \param[in]	info		Verification context to be used for given rule
@@ -325,7 +325,7 @@ extern "C" {
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * This rule is used to check if keyless signature contains publication record or not.
+	 * This rule is used to check if the signature contains publication record or not.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
@@ -360,7 +360,7 @@ extern "C" {
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * Rule to check that keyless signature does not contain calendar hash chain.
+	 * Rule to check that the signature does not contain calendar hash chain.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
@@ -392,7 +392,7 @@ extern "C" {
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
-	 * Rule to check if keyless signature contains calendar hash chain.
+	 * Rule to check if the signature contains calendar hash chain.
 	 *
 	 * \param[in]	info		Verification context to be used for given rule
 	 * \param[out]	result		Verification result.
