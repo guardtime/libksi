@@ -1314,7 +1314,7 @@ static int ksi_CalendarHashChain_verifyAggregationtimeCompatibility(const KSI_Ca
 	 * must not be equal. */
 	if (!KSI_Integer_equals(aAggrTime, bAggrTime)) {
 		KSI_LOG_debug(a->ctx,
-		        "Incompatible calendar hash chain - aggregation times mismatch.");
+				"Incompatible calendar hash chain - aggregation times mismatch.");
 		res = KSI_INCOMPATIBLE_HASH_CHAIN;
 		goto cleanup;
 	}
@@ -1347,6 +1347,10 @@ static int ksi_CalendarHashChain_verifyRightLinkCompatibility(const KSI_Calendar
 
 		res = KSI_HashChainLinkList_elementAt(a->hashChain, ai, &aLink);
 		if (res != KSI_OK) goto cleanup;
+		if (aLink == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (aLink->isLeft) continue;
 
@@ -1354,6 +1358,10 @@ static int ksi_CalendarHashChain_verifyRightLinkCompatibility(const KSI_Calendar
 		for (; bi < KSI_HashChainLinkList_length(b->hashChain); ++bi) {
 			res = KSI_HashChainLinkList_elementAt(b->hashChain, bi, &bLink);
 			if (res != KSI_OK) goto cleanup;
+			if (bLink == NULL) {
+				res = KSI_INVALID_STATE;
+				goto cleanup;
+			}
 
 			if (!bLink->isLeft) {
 				/* We need to increment it here to be able to continue with the next link here
@@ -1383,6 +1391,10 @@ static int ksi_CalendarHashChain_verifyRightLinkCompatibility(const KSI_Calendar
 
 		res = KSI_HashChainLinkList_elementAt(b->hashChain, bi, &bLink);
 		if (res != KSI_OK) goto cleanup;
+		if (bLink == NULL) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		if (!bLink->isLeft) {
 			KSI_LOG_debug(a->ctx, "Incompatible calendar hash chain - an extra right link in the second chain.");

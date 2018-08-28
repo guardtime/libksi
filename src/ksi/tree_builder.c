@@ -418,7 +418,10 @@ static int levelWithOverhead(KSI_TreeBuilder *builder, unsigned short inLevel, u
 		KSI_TreeBuilderLeafProcessor *cb = NULL;
 
 		res = KSI_TreeBuilderLeafProcessorList_elementAt(builder->cbList, i, &cb);
-		if (res != KSI_OK) goto cleanup;
+		if (res != KSI_OK || cb == NULL) {
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
 
 		level += cb->levelOverhead;
 

@@ -1400,11 +1400,11 @@ static int asyncClient_setOption(KSI_AsyncClient *c, const int opt, void *param)
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle **tmpCache = NULL;
 
-	KSI_ERR_clearErrors(c->ctx);
 	if (c == NULL || opt >= __NOF_KSI_ASYNC_OPT) {
-		KSI_pushError(c->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(c->ctx);
 
 	switch (opt) {
 		case KSI_ASYNC_OPT_REQUEST_CACHE_SIZE: {
@@ -1469,11 +1469,11 @@ cleanup:
 static int asyncClient_getOption(KSI_AsyncClient *c, const int opt, void *param) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_ERR_clearErrors(c->ctx);
 	if (c == NULL || opt >= __NOF_KSI_ASYNC_OPT || param == NULL) {
-		KSI_pushError(c->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(c->ctx);
 
 	switch (opt) {
 		/*** Options with type size_t. ***/
