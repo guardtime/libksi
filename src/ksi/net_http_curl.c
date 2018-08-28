@@ -193,14 +193,16 @@ cleanup:
 static int sendRequest(KSI_NetworkClient *client, KSI_RequestHandle *handle, char *url) {
 	int res = KSI_UNKNOWN_ERROR;
 	CurlNetHandleCtx *implCtx = NULL;
-	KSI_HttpClient *http = client->impl;
+	KSI_HttpClient *http = NULL;
 	char mimeTypeHeader[1024];
 
-	if (client == NULL || client->ctx == NULL || handle == NULL || url == NULL) {
+	if (client == NULL || client->ctx == NULL || client->impl == NULL || handle == NULL || url == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(client->ctx);
+
+	http = (KSI_HttpClient*)client->impl;
 
 	res = CurlNetHandleCtx_new(client->ctx, &implCtx);
 	if (res != KSI_OK) {

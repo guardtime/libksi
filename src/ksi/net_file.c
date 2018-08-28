@@ -155,12 +155,12 @@ static int prepareRequest(KSI_NetworkClient *client,
 						  FsClient_Endpoint *endp,
 						  const char *desc) {
 	int res;
-	KSI_FsClient *fsClient = client->impl;
+	KSI_FsClient *fsClient = NULL;
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
 	size_t raw_len = 0;
 
-	if (client == NULL || pdu == NULL || handle == NULL) {
+	if (client == NULL || client->impl == NULL || pdu == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -168,6 +168,8 @@ static int prepareRequest(KSI_NetworkClient *client,
 	KSI_ERR_clearErrors(client->ctx);
 
 	KSI_LOG_debug(client->ctx, "File: %s.", desc);
+
+	fsClient = (KSI_FsClient*)client->impl;
 
 	res = serialize(pdu, &raw, &raw_len);
 	if (res != KSI_OK) {
@@ -664,10 +666,16 @@ int KSI_FsClient_setPublicationUrl(KSI_NetworkClient *client, const char *path) 
 int KSI_FsClient_extractPath(const char *uri, char **path) {
 	int res = KSI_UNKNOWN_ERROR;
 	const char *scheme = "file://";
-	char *pathStart = strstr(uri, scheme) + strlen(scheme);
+	char *pathStart = NULL;
 	char *tmpPath = NULL;
 
-	if (path == NULL || pathStart == NULL) {
+	if (path == NULL || uri == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	pathStart = strstr(uri, scheme) + strlen(scheme);
+	if (pathStart == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}

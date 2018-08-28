@@ -477,11 +477,13 @@ cleanup:
 
 static time_t ASN1_GetTimeT(ASN1_TIME* time){
 	struct tm t;
-	const char* str = (const char*) time->data;
+	const char* str = NULL;
 	size_t i = 0;
 
 	if (time == NULL) return 0;
 	memset(&t, 0, sizeof(t));
+
+	str = (const char*)time->data;
 
 	if (time->type == V_ASN1_UTCTIME) {/* Two digit year. */
 		t.tm_year = (str[i++] - '0') * 10;

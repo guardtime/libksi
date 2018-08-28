@@ -57,12 +57,12 @@ static int prepareRequest(
 		char *url,
 		const char *desc) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_HttpClient *http = client->impl;
+	KSI_HttpClient *http = NULL;
 	KSI_RequestHandle *tmp = NULL;
 	unsigned char *raw = NULL;
 	size_t raw_len = 0;
 
-	if (client == NULL || pdu == NULL || handle == NULL) {
+	if (client == NULL || client->impl == NULL || pdu == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -83,6 +83,7 @@ static int prepareRequest(
 		goto cleanup;
 	}
 
+	http = (KSI_HttpClient *)client->impl;
 	if (http->sendRequest == NULL) {
 		KSI_pushError(client->ctx, res = KSI_UNKNOWN_ERROR, "Send request not initialized.");
 		goto cleanup;
