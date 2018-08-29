@@ -117,7 +117,7 @@ int KSI_isHashAlgorithmTrusted(KSI_HashAlgorithm algo_id) {
 }
 
 int KSI_checkHashAlgorithmAt(KSI_HashAlgorithm algo_id, time_t used_at) {
-	if (algo_id >= KSI_NUMBER_OF_KNOWN_HASHALGS || algo_id == KSI_HASHALG_INVALID) {
+	if (ksi_isHashAlgorithmIdValid(algo_id)) {
 		return KSI_UNKNOWN_HASH_ALGORITHM_ID;
 	}
 

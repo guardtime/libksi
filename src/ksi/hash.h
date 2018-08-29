@@ -56,9 +56,6 @@ extern "C" {
 	 * instances of #KSI_DataHasher and #KSI_DataHash.
 	 */
 	typedef enum KSI_HashAlgorithm_en {
-		/** An invalid hash algorithm. This is returned from #KSI_getHashAlgorithmByName,  */
-		KSI_HASHALG_INVALID = -1,
-
 		/** The SHA-1 algorithm. */
 		KSI_HASHALG_SHA1 = 0x00,
 		/** The SHA-256 algorithm. */
@@ -82,6 +79,9 @@ extern "C" {
 
 		/* Number of known hash algorithms. */
 		KSI_NUMBER_OF_KNOWN_HASHALGS,
+
+		/** An invalid hash algorithm. This is returned from #KSI_getHashAlgorithmByName,  */
+		KSI_HASHALG_INVALID = 0x100,
 	} KSI_HashAlgorithm;
 
 	KSI_VAR_DEPRECATED(extern const int KSI_HASHALG_SHA3_244, This is a typo - use #KSI_HASHALG_SHA3_224 instead!);
