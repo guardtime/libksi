@@ -253,7 +253,7 @@ static int getClientByUriScheme(const char *scheme, const char **replaceScheme) 
 	if (scheme != NULL) {
 		int i = 0;
 		while (schemeMap[i].scheme != NULL) {
-			if (strcmp(schemeMap[i].scheme, scheme) == 0) {
+			if (KSI_strcasecmp(schemeMap[i].scheme, scheme) == 0) {
 				netClient = schemeMap[i].client;
 				*replaceScheme = schemeMap[i].replace;
 				break;
