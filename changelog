@@ -1,25 +1,17 @@
 Version 3.18
 
+2018-08-27 release(3.18.2836)
+* FEATURE: High Availability add-on to the non-blocking network interface.
+* FEATURE: Added max tree level to tree builder.
 * IMPROVEMENT: KSI_DataHash and KSI_DataHasher accept NULL as KSI context.
-* IMPROVEMENT: Updated example code in README.md.
 * IMPROVEMENT: Added KSI_TlvElement_removeElement function.
 * IMPROVEMENT: Changed the curl HTTP debug messages for return codes and internal error messages.
-* FEATURE: High Availability add-on to the non-blocking network interface.
-* FEATURE: Added max tree height to tree builder.
+* IMPROVEMENT: KSI_DataHash and KSI_DataHasher accept NULL as KSI context.
+* IMPROVEMENT: Updated example code in README.md.
+* IMPROVEMENT: Added calendar hash chain consistency verification.
 * BUGFIX: Corrected possible crash in list removeElement when configured without object free method.
 * BUGFIX: Fixed typo in hash algorithm names.
 * BUGFIX: Fixed internal logging mechanism.
-
-Version 3.17
-
-* FEATURE: High Availability add-on to the non-blocking network interface.
-* FEATURE: Added max tree level to tree builder.
-* IMPROVEMENT: Changed the curl HTTP debug messages for return codes and internal error messages.
-* IMPROVEMENT: KSI_DataHash and KSI_DataHasher accept NULL as KSI context.
-* IMPROVEMENT: Updated example code in README.md.
-* IMPROVEMENT: Added KSI_TlvElement_removeElement function.
-* IMPROVEMENT: Added calendar hash chain consistency verification.
-* BUGFIX: Corrected possible crash in list removeElement when configured without object free method.
 
 Version 3.17
 
