@@ -1,6 +1,6 @@
 Version 3.18
 
-* BUGFIX: Invalid hash algorithm negative value is not ISO standard.
+* BUGFIX: Negative enum value is not ISO standard.
 
 2018-08-27 release(3.18.2836)
 * FEATURE: High Availability add-on to the non-blocking network interface.
