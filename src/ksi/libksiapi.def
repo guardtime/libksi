@@ -203,6 +203,7 @@ EXPORTS
 	KSI_List_elementAt
 	KSI_List_length
 	KSI_List_sort
+	KSI_List_find
 
 ;log.h
 EXPORTS
