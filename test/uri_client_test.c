@@ -50,6 +50,8 @@ static 	const char *validHttpUri[] = {
 		"127.0.0.1",
 		"localhost:1234",
 		"127.0.0.1:1234",
+		"KSI://localhost",
+		"KSI+HTTP://10.10.10.10",
 		NULL
 };
 
@@ -57,6 +59,7 @@ static 	const char *validHttpUri[] = {
 static const char *validTcpUri[] = {
 		"ksi+tcp://localhost:1234",
 		"ksi+tcp://127.0.0.1:1234",
+		"KSI+TCP://192.168.0.1:4321",
 		NULL
 };
 

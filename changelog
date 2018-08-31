@@ -1,3 +1,5 @@
+BUGFIX: Made URI schemes case insensitive.
+
 Version 3.18
 
 2018-08-27 release(3.18.2836)
