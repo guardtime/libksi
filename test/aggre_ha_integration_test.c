@@ -602,7 +602,7 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *scheme) {
 					CuAssert(tc, "Unable to get service request context.", res == KSI_OK && reqCtx != NULL);
 
 					res = KSI_List_find(list, (void*)reqCtx, &found, &pos);
-					CuAssert(tc, "Unable to get index.", res == KSI_OK && pos != 0);
+					CuAssert(tc, "Unable to get index.", res == KSI_OK && found != 0);
 
 					res = KSI_List_remove(list, pos, NULL);
 					CuAssert(tc, "Unable to remove from list.", res == KSI_OK);
