@@ -2731,9 +2731,13 @@ static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Inte
 		goto cleanup;
 	}
 	if (status != NULL && !KSI_Integer_equalsUInt(status, 0)) {
-		char msg[1024];
-		KSI_snprintf(msg, sizeof(msg), "Extender returned error %llu.", (unsigned long long)KSI_Integer_getUInt64(status));
-		KSI_pushError(ctx, res = KSI_convertExtenderStatusCode(status), msg);
+		KSI_Utf8String *errorMsg = NULL;
+		res = KSI_ExtendResp_getErrorMsg(resp, &errorMsg);
+		if (res != KSI_OK) {
+			KSI_pushError(ctx, res, NULL);
+			goto cleanup;
+		}
+		KSI_pushError(ctx, res = KSI_convertExtenderStatusCode(status), KSI_Utf8String_cstr(errorMsg));
 		goto cleanup;
 	}
 

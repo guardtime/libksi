@@ -205,6 +205,40 @@ static void testMedaData(CuTest *tc) {
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
+static void testMasking(CuTest *tc) {
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/" TEST_RESOURCE_AGGR_VER "/test_masking_response.tlv"
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_BlockSigner *bs = NULL;
+	size_t i;
+	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *prev = NULL;
+	KSI_OctetString *iv = NULL;
+	const unsigned char ivDat[] = {0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1};
+
+	KSI_OctetString_new(ctx, ivDat, sizeof(ivDat), &iv);
+	KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA2_256, &prev);
+	KSITest_DataHash_fromStr(ctx, "01004313f53502a18fe4a31ae0197ab09d4597042942a3a54e846fa01ff5479fa2", &hsh);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, prev, iv, &bs);
+	CuAssert(tc, "Unable to create data hash with masking.", res == KSI_OK && bs != NULL);
+
+	for (i = 0; i < 101; ++i) {
+		res = KSI_BlockSigner_addLeaf(bs, hsh, 0, NULL, NULL);
+		CuAssert(tc, "Unable to add leaf hash to the block signer.", res == KSI_OK);
+	}
+
+	KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+
+	/* The tree root hash value is verified with the signature, thus no need to do it twice here. */
+	res = KSI_BlockSigner_closeAndSign(bs);
+	CuAssert(tc, "Unable to close the blocksigner.", res == KSI_OK);
+
+	KSI_DataHash_free(hsh);
+	KSI_BlockSigner_free(bs);
+	KSI_OctetString_free(iv);
+	KSI_DataHash_free(prev);
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
 static void testIdentityMedaData(CuTest *tc) {
 #define TEST_AGGR_RESPONSE_FILE  "resource/tlv/" TEST_RESOURCE_AGGR_VER "/test_meta_data_response.tlv"
 	int res = KSI_UNKNOWN_ERROR;
@@ -473,6 +507,7 @@ CuSuite* KSITest_Blocksigner_getSuite(void) {
 	suite->preTest = preTest;
 
 	SUITE_ADD_TEST(suite, testFreeBeforeClose);
+	SUITE_ADD_TEST(suite, testMasking);
 	SUITE_ADD_TEST(suite, testMedaData);
 	SUITE_ADD_TEST(suite, testIdentityMedaData);
 	SUITE_ADD_TEST(suite, testSingle);

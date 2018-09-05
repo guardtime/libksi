@@ -43,7 +43,7 @@ BuildRequires: curl-devel
 
 %description
 Client-side runtime libraries for accessing
-Guardtime's Keyless Signature Service.
+Guardtime's KSI Blockchain Service.
 
 %package devel
 Summary: Guardtime KSI Client API for C
@@ -54,7 +54,7 @@ Requires: curl-devel
 
 %description devel
 Client-side development libraries and headers for accessing
-Guardtime's Keyless Signature Service.
+Guardtime's KSI Blockchain Service.
 
 %prep
 %setup
@@ -108,6 +108,7 @@ for sofile in %{_libdir}/libksi.so.* ; do echo $sofile >> %{libfiles}; done;
 %{_includedir}/ksi/log.h
 %{_includedir}/ksi/net.h
 %{_includedir}/ksi/net_async.h
+%{_includedir}/ksi/net_ha.h
 %{_includedir}/ksi/net_http.h
 %{_includedir}/ksi/net_tcp.h
 %{_includedir}/ksi/net_file.h

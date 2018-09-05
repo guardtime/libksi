@@ -751,6 +751,15 @@ static int KSI_signature_extendToWithoutVerification(const KSI_Signature *sig, K
 		goto cleanup;
 	}
 
+	/* Make sure, the new calendar hash chain is compatible with the old one. */
+	if (sig->calendarChain != NULL) {
+		res = KSI_CalendarHashChain_verifyCompatibilityTo(sig->calendarChain, calHashChain);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res , "Incompatible calendar hash chain");
+			goto cleanup;
+		}
+	}
+
 	res = KSI_SignatureBuilder_applyCalendarHashChain(builder, calHashChain);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);

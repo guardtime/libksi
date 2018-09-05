@@ -386,7 +386,7 @@ static void testHashAlgorithmDeprecatedDates(CuTest *tc) {
 	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_RIPEMD160) == 0);
 	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA2_384) == 0);
 	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA2_512) == 0);
-	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_244) == 0);
+	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_224) == 0);
 	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_256) == 0);
 	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_384) == 0);
 	CuAssert(tc, "Hash algorithm should not be deprecated.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA3_512) == 0);
@@ -401,7 +401,7 @@ static void testHashAlgorithmObsoleteDates(CuTest *tc) {
 	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_RIPEMD160) == 0);
 	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA2_384) == 0);
 	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA2_512) == 0);
-	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_244) == 0);
+	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_224) == 0);
 	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_256) == 0);
 	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_384) == 0);
 	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA3_512) == 0);
@@ -441,7 +441,7 @@ static void testAllHashing(CuTest *tc) {
 	expected[KSI_HASHALG_SHA2_384] = "4495385793894ac9a2cc1b2d8760da3ce50d14a193b19166417d503d853ad3588689e5a6b0e65675367394a207cac264";
 	expected[KSI_HASHALG_SHA2_512] = "2dcee3bebeeec061751c7e2c886fddb069502c3c71e1f70272d77a64c092e51b6a262d208939cc557de7650da347b08f643d515ff8009a7342454e73247761dd";
 	expected[0x06] = NULL; /* Deprecated hash function. */
-	expected[KSI_HASHALG_SHA3_244] = "TODO!";
+	expected[KSI_HASHALG_SHA3_224] = "TODO!";
 	expected[KSI_HASHALG_SHA3_256] = "TODO!";
 	expected[KSI_HASHALG_SHA3_384] = "TODO!";
 	expected[KSI_HASHALG_SHA3_512] = "TODO!";

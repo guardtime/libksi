@@ -134,6 +134,7 @@ EXPORTS
 	KSI_CalendarHashChain_setHashChain
 	KSI_CalendarHashChain_writeBytes
 	KSI_CalendarHashChain_ref
+	KSI_CalendarHashChain_verifyCompatibilityTo
 
 ;hmac.h
 EXPORTS
@@ -279,8 +280,14 @@ EXPORTS
 	KSI_AsyncService_setOption
 	KSI_AsyncService_getOption
 	KSI_AsyncService_run
-	KSI_AsyncService_setEndpoint
 	KSI_AsyncService_addRequest
+	KSI_AsyncService_setEndpoint
+	KSI_AsyncService_addEndpoint
+
+;net_ha.h
+EXPORTS
+	KSI_SigningHighAvailabilityService_new
+	KSI_ExtendingHighAvailabilityService_new
 
 ;net_http.h
 EXPORTS
@@ -320,7 +327,6 @@ EXPORTS
 	KSI_UriClient_setTransferTimeoutSeconds
 	KSI_UriClient_setConnectionTimeoutSeconds
 
-	KSI_AsyncService_setEndpoint
 
 ;pkitruststore.h
 EXPORTS
@@ -635,6 +641,7 @@ EXPORTS
 	KSI_Config_setCalendarFirstTime
 	KSI_Config_setCalendarLastTime
 	KSI_Config_ref
+	KSI_Config_clone
 	KSI_AggregationReq_free
 	KSI_AggregationReq_new
 	KSI_AggregationReq_getRequestId
@@ -646,6 +653,7 @@ EXPORTS
 	KSI_AggregationReq_setRequestLevel
 	KSI_AggregationReq_setConfig
 	KSI_AggregationReq_enclose
+	KSI_AggregationReq_clone
 	KSI_RequestAck_free
 	KSI_RequestAck_new
 	KSI_RequestAck_getRequestTime
@@ -693,6 +701,7 @@ EXPORTS
 	KSI_ExtendReq_setPublicationTime
 	KSI_ExtendReq_setConfig
 	KSI_ExtendReq_enclose
+	KSI_ExtendReq_clone
 	KSI_ExtendResp_free
 	KSI_ExtendResp_new
 	KSI_ExtendResp_getRequestId

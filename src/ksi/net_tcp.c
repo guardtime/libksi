@@ -496,7 +496,7 @@ int KSI_TcpClient_new(KSI_CTX *ctx, KSI_NetworkClient **tcp) {
 	}
 
 	t = KSI_new(KSI_TcpClient);
-	if (tmp == NULL) {
+	if (t == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
 	}

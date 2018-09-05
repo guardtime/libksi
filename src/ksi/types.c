@@ -26,6 +26,7 @@
 #include "pkitruststore.h"
 #include "net.h"
 #include "net_async.h"
+#include "net_ha.h"
 #include "tlv_element.h"
 
 #include "internal.h"
@@ -198,6 +199,7 @@ KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
 KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
 KSI_IMPLEMENT_LIST(KSI_AsyncHandle, KSI_AsyncHandle_free);
+KSI_IMPLEMENT_LIST(KSI_AsyncService, KSI_AsyncService_free);
 
 KSI_IMPLEMENT_REF(KSI_MetaDataElement);
 KSI_IMPLEMENT_REF(KSI_MetaData);
@@ -1840,6 +1842,7 @@ void KSI_Config_free(KSI_Config *t) {
 int KSI_Config_new(KSI_CTX *ctx, KSI_Config **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *tmp = NULL;
+
 	tmp = KSI_new(KSI_Config);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
@@ -1863,7 +1866,85 @@ cleanup:
 	return res;
 }
 
+int KSI_Config_clone(const KSI_Config *from, KSI_Config **to) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_Config *tmp = NULL;
+
+	if (from == NULL || to == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_Config_new(from->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	if (from->maxLevel) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->maxLevel), &tmp->maxLevel);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->aggrAlgo) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->aggrAlgo), &tmp->aggrAlgo);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->aggrPeriod) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->aggrPeriod), &tmp->aggrPeriod);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->maxRequests) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->maxRequests), &tmp->maxRequests);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->calendarFirstTime) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->calendarFirstTime), &tmp->calendarFirstTime);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->calendarLastTime) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->calendarLastTime), &tmp->calendarLastTime);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->parentUri) {
+		size_t i;
+
+		res = KSI_Utf8StringList_new(&tmp->parentUri);
+		if (res != KSI_OK) goto cleanup;
+
+		for (i = 0; i < KSI_Utf8StringList_length(from->parentUri); i++) {
+			KSI_Utf8String *uri = NULL;
+			KSI_Utf8String *tmpStr = NULL;
+
+			res = KSI_Utf8StringList_elementAt(from->parentUri, i, &uri);
+			if (res != KSI_OK) goto cleanup;
+
+			res = KSI_Utf8String_new(from->ctx, KSI_Utf8String_cstr(uri), strlen(KSI_Utf8String_cstr(uri)) + 1, &tmpStr);
+			if (res != KSI_OK) goto cleanup;
+
+			res = KSI_Utf8StringList_append(tmp->parentUri, tmpStr);
+			if (res != KSI_OK) {
+				KSI_Utf8String_free(tmpStr);
+				goto cleanup;
+			}
+		}
+	}
+
+	*to = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_Config_free(tmp);
+	return res;
+}
+
+
+
 KSI_IMPLEMENT_REF(KSI_Config);
+KSI_IMPLEMENT_GET_CTX(KSI_Config);
 
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, maxLevel, MaxLevel);
 KSI_IMPLEMENT_GETTER(KSI_Config, KSI_Integer*, aggrAlgo, AggrAlgo);
@@ -1899,6 +1980,7 @@ void KSI_AggregationReq_free(KSI_AggregationReq *t) {
 int KSI_AggregationReq_new(KSI_CTX *ctx, KSI_AggregationReq **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *tmp = NULL;
+
 	tmp = KSI_new(KSI_AggregationReq);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
@@ -2016,6 +2098,62 @@ cleanup:
 
 	KSI_TLV_free(tmp);
 
+	return res;
+}
+
+int KSI_AggregationReq_clone(const KSI_AggregationReq *from, KSI_AggregationReq **to) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationReq *tmp = NULL;
+
+	if (from == NULL || to == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_new(from->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	if (from->requestId) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->requestId), &tmp->requestId);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->requestHash) {
+		const unsigned char *imprint = NULL;
+		size_t len = 0;
+
+		res = KSI_DataHash_getImprint(from->requestHash, &imprint, &len);
+		if (res != KSI_OK) goto cleanup;
+		res = KSI_DataHash_fromImprint(from->ctx, imprint, len, &tmp->requestHash);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->requestLevel) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->requestLevel), &tmp->requestLevel);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->config) {
+		res = KSI_Config_clone(from->config, &tmp->config);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->raw) {
+		const unsigned char *data = NULL;
+		size_t len = 0;
+
+		res = KSI_OctetString_extract(from->raw, &data, &len);
+		if (res != KSI_OK) goto cleanup;
+		res = KSI_OctetString_new(from->ctx, data, len, &tmp->raw);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*to = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_AggregationReq_free(tmp);
 	return res;
 }
 
@@ -2418,6 +2556,58 @@ cleanup:
 
 	return res;
 }
+
+int KSI_ExtendReq_clone(const KSI_ExtendReq *from, KSI_ExtendReq **to) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_ExtendReq *tmp = NULL;
+
+	if (from == NULL || to == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_ExtendReq_new(from->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	if (from->requestId) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->requestId), &tmp->requestId);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->aggregationTime) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->aggregationTime), &tmp->aggregationTime);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->publicationTime) {
+		res = KSI_Integer_new(from->ctx, KSI_Integer_getUInt64(from->publicationTime), &tmp->publicationTime);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->config) {
+		res = KSI_Config_clone(from->config, &tmp->config);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	if (from->raw) {
+		const unsigned char *data = NULL;
+		size_t len = 0;
+
+		res = KSI_OctetString_extract(from->raw, &data, &len);
+		if (res != KSI_OK) goto cleanup;
+		res = KSI_OctetString_new(from->ctx, data, len, &tmp->raw);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*to = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_ExtendReq_free(tmp);
+	return res;
+}
+
 
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, requestId, RequestId);
 KSI_IMPLEMENT_GETTER(KSI_ExtendReq, KSI_Integer*, aggregationTime, AggregationTime);

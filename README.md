@@ -1,6 +1,6 @@
 # libksi #
-Guardtime Keyless Signature Infrastructure (KSI) is an industrial scale blockchain platform that cryptographically
-ensures data integrity and proves time of existence. Its keyless signatures, based on hash chains, link data to global
+Guardtime KSI Blockchain is an industrial scale blockchain platform that cryptographically
+ensures data integrity and proves time of existence. Its signatures, based on hash chains, link data to global
 calendar blockchain. The checkpoints of the blockchain, published in newspapers and electronic media, enable long term
 integrity of any digital asset without the need to trust any system. There are many applications for KSI, a classical
 example is signing of any type of logs - system logs, financial transactions, call records, etc. For more,
@@ -147,7 +147,7 @@ A simple example how to sign a document and verify the signature:
 	/* Read the publications file from a file. */
 	KSI_PublicationsFile_fromFile(ksi, KSI_PUBLICATIONS_FILE, &pubFile);
 
-	/* Publications file siging cert verification constraints. */
+	/* Publications file signing cert verification constraints. */
 	KSI_CertConstraint certConstr[] = {
 		{ KSI_CERT_EMAIL, "publications@guardtime.com"},
 		{ NULL, NULL}

@@ -1964,6 +1964,7 @@ EXPAND_AS_DEFINED      = KSI_DEFINE_FN_FROM_TLV \
 						 KSI_DEFINE_REF \
 						 KSI_DEFINE_WRITE_BYTES \
 						 KSI_FN_DEPRECATED \
+						 KSI_VAR_DEPRECATED \
 						 KSI_DEFINE_EXTERN
 
 # If the SKIP_FUNCTION_MACROS tag is set to YES then doxygen's preprocessor will

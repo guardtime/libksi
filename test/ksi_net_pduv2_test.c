@@ -662,45 +662,6 @@ static void testExtenderWrongData(CuTest* tc) {
 #undef TEST_EXT_RESPONSE_FILE
 }
 
-static void testExtendInvalidSignature(CuTest* tc) {
-#define TEST_SIGNATURE_FILE     "resource/tlv/nok-sig-wrong-aggre-time.ksig"
-#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/nok-sig-wrong-aggre-time-extend_response.tlv"
-
-	int res;
-	KSI_Signature *sig = NULL;
-	KSI_Signature *ext = NULL;
-	KSI_PolicyVerificationResult *result = NULL;
-	KSI_VerificationContext context;
-
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &sig);
-	CuAssert(tc, "Unable to load signature from file.", res == KSI_OK && sig != NULL);
-
-	res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
-	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
-
-	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
-
-	res = KSI_Signature_extendToWithPolicy(sig, ctx, NULL, KSI_VERIFICATION_POLICY_EMPTY, NULL, &ext);
-	CuAssert(tc, "Extended signature should not verify.", res == KSI_OK && ext != NULL);
-	context.signature = ext;
-
-	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_INTERNAL, &context, &result);
-	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
-	CuAssert(tc, "Unexpected verification result.", result->finalResult.resultCode == KSI_VER_RES_FAIL);
-	CuAssert(tc, "Unexpected verification error code.", result->finalResult.errorCode == KSI_VER_ERR_INT_3);
-
-	KSI_PolicyVerificationResult_free(result);
-	KSI_VerificationContext_clean(&context);
-	KSI_Signature_free(sig);
-	KSI_Signature_free(ext);
-
-#undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_RESPONSE_FILE
-}
-
 static void testExtAuthFailure(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
 #define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ext_error_pdu.tlv"
@@ -1166,8 +1127,7 @@ static void testExtendingBackgroundVerification(CuTest* tc) {
 	CuAssert(tc, "Unable to set extend response from file.", res == KSI_OK);
 
 	res = KSI_Signature_extendTo(sig, ctx, NULL, &ext);
-	CuAssert(tc, "Wrong answer from extender should not be tolerated.", res == KSI_VERIFICATION_FAILURE && ext == NULL);
-	CuAssert(tc, "Unexpected verification error code.", ctx->lastFailedSignature->policyVerificationResult->finalResult.errorCode == KSI_VER_ERR_INT_3);
+	CuAssert(tc, "Wrong answer from extender should not be tolerated.", res == KSI_INCOMPATIBLE_HASH_CHAIN && ext == NULL);
 
 	KSI_Signature_free(sig);
 	KSI_Signature_free(ext);
@@ -1933,6 +1893,65 @@ static void testExtending_hmacAlgorithmDeprecated(CuTest* tc) {
 #undef TEST_SIGNATURE_FILE
 }
 
+static void testExtendWithExtraRightLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/nok-sig-2014-04-30.1-extra-right-link.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ok-sig-2014-04-30.1-extend_response.tlv"
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	int res;
+
+	/* The signature is broken, but would be fixed after the extending process, if the calendar hash chain compatibility would not be checked. */
+	KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &sig);
+	KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Signature extending should have failed as the original calendar hash chain has an extra right-link.", res == KSI_INCOMPATIBLE_HASH_CHAIN && ext == NULL);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testExtendWithMissingRightLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/nok-sig-2014-04-30.1-missing-right-link.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ok-sig-2014-04-30.1-extend_response.tlv"
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	int res;
+
+	/* The signature is broken, but would be fixed after the extending process, if the calendar hash chain compatibility would not be checked. */
+	KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &sig);
+	KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Signature extending should have failed as the original calendar hash chain has a missing right-link.", res == KSI_INCOMPATIBLE_HASH_CHAIN && ext == NULL);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
+
+static void testExtendWithWrongRightLink(CuTest *tc) {
+#define TEST_SIGNATURE_FILE     "resource/tlv/nok-sig-2014-04-30.1-wrong-right-link.ksig"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v2/ok-sig-2014-04-30.1-extend_response.tlv"
+	KSI_Signature *sig = NULL;
+	KSI_Signature *ext = NULL;
+	int res;
+
+	/* The signature is broken, but would be fixed after the extending process, if the calendar hash chain compatibility would not be checked. */
+	KSI_Signature_fromFileWithPolicy(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), KSI_VERIFICATION_POLICY_EMPTY, NULL, &sig);
+	KSI_CTX_setExtender(ctx, getFullResourcePathUri(TEST_EXT_RESPONSE_FILE), TEST_USER, TEST_PASS);
+
+	res = KSI_extendSignature(ctx, sig, &ext);
+	CuAssert(tc, "Signature extending should have failed as the original calendar hash chain has a missing right-link.", res == KSI_INCOMPATIBLE_HASH_CHAIN && ext == NULL);
+
+	KSI_Signature_free(sig);
+
+#undef TEST_EXT_RESPONSE_FILE
+#undef TEST_SIGNATURE_FILE
+}
 
 
 CuSuite* KSITest_NetPduV2_getSuite(void) {
@@ -1958,7 +1977,6 @@ CuSuite* KSITest_NetPduV2_getSuite(void) {
 	SUITE_ADD_TEST(suite, testExtendTo);
 	SUITE_ADD_TEST(suite, testExtendSigNoCalChain);
 	SUITE_ADD_TEST(suite, testExtenderWrongData);
-	SUITE_ADD_TEST(suite, testExtendInvalidSignature);
 	SUITE_ADD_TEST(suite, testExtAuthFailure);
 	SUITE_ADD_TEST(suite, testExtendingWithoutPublication);
 	SUITE_ADD_TEST(suite, testExtendingToNULL);
@@ -1996,6 +2014,9 @@ CuSuite* KSITest_NetPduV2_getSuite(void) {
 	SUITE_ADD_TEST(suite, testSigningWithLevel);
 	SUITE_ADD_TEST(suite, testSigning_hmacAlgorithmDeprecated);
 	SUITE_ADD_TEST(suite, testExtending_hmacAlgorithmDeprecated);
+	SUITE_ADD_TEST(suite, testExtendWithExtraRightLink);
+	SUITE_ADD_TEST(suite, testExtendWithMissingRightLink);
+	SUITE_ADD_TEST(suite, testExtendWithWrongRightLink);
 
 	return suite;
 }

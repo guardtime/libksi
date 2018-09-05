@@ -159,6 +159,7 @@ static void asyncExtend_loop_getResponse(CuTest* tc, const char *url, const char
 	size_t reqNo = 0;
 	size_t onHold = 0;
 	size_t received = 0;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
 	KSI_ERR_clearErrors(ctx);
@@ -220,13 +221,17 @@ static void asyncExtend_loop_getResponse(CuTest* tc, const char *url, const char
 
 		if (respHandle == NULL) {
 			if (reqNo == nofReqs) {
+				CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
+
 				/* There is nothing to be sent. */
 				/* Wait for a while to avoid busy loop. */
 				KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-				sleep_ms(50);
+				sleep_ms(conf.async.timeout.sleep);
+				slept += conf.async.timeout.sleep;
 			}
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(respHandle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -274,6 +279,9 @@ static void asyncExtend_loop_getResponse(CuTest* tc, const char *url, const char
 
 					KSI_Signature_free(ext);
 				}
+				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
 				break;
 
 			case KSI_ASYNC_STATE_ERROR:
@@ -333,6 +341,7 @@ static void async_getError(CuTest* tc, const char *url, const char *user, const 
 	KSI_AsyncHandle *handle = NULL;
 	time_t startTime;
 	size_t onHold = 0;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
 	KSI_ERR_clearErrors(ctx);
@@ -363,12 +372,16 @@ static void async_getError(CuTest* tc, const char *url, const char *user, const 
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle == NULL) {
-			/* There is nothing has been received. */
+			CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
+
+			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(50);
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(handle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -409,6 +422,7 @@ static void asyncExtend_toFuture(CuTest* tc, const char *url, const char *user, 
 	KSI_AsyncHandle *handle = NULL;
 	time_t startTime;
 	size_t onHold = 0;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
 	KSI_ERR_clearErrors(ctx);
@@ -438,12 +452,16 @@ static void asyncExtend_toFuture(CuTest* tc, const char *url, const char *user, 
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle == NULL) {
-			/* There is nothing has been received. */
+			CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
+
+			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(50);
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(handle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -555,6 +573,7 @@ static void asyncExtend_requestConfigOnly(CuTest* tc, const char *url, const cha
 	KSI_ExtendReq *request = NULL;
 	KSI_Config *cfg = NULL;
 	size_t pendingCount = 0;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
 	KSI_ERR_clearErrors(ctx);
@@ -598,12 +617,17 @@ static void asyncExtend_requestConfigOnly(CuTest* tc, const char *url, const cha
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (handle == NULL) {
-			/* There is nothing has been received. */
+			CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
+
+			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(50);
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
+
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(handle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -646,6 +670,7 @@ static void asyncExtend_requestConfigWithReq(CuTest* tc, const char *url, const 
 	size_t pendingCount = 0;
 	char confReceived = 0;
 	char respReceived = 0;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
 	KSI_ERR_clearErrors(ctx);
@@ -694,12 +719,17 @@ static void asyncExtend_requestConfigWithReq(CuTest* tc, const char *url, const 
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (respHandle == NULL) {
-			/* There is nothing has been received. */
+			CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
+
+			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(50);
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
+
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(respHandle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -763,12 +793,11 @@ static void asyncExtend_signature(CuTest* tc, const char *url, const char *user,
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
-	KSI_ExtendReq *request = NULL;
-	KSI_Integer *signTime = NULL;
 	time_t startTime;
 	size_t onHold = 0;
 	char respReceived = 0;
 	KSI_Signature *sig = NULL;
+	size_t slept = 0;
 
 	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
 	KSI_ERR_clearErrors(ctx);
@@ -801,12 +830,17 @@ static void asyncExtend_signature(CuTest* tc, const char *url, const char *user,
 		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
 
 		if (respHandle == NULL) {
-			/* There is nothing has been received. */
+			CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
+
+			/* There is nothing to be sent. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
-			sleep_ms(50);
+			sleep_ms(conf.async.timeout.sleep);
+			slept += conf.async.timeout.sleep;
+
 			continue;
 		}
+		slept = 0;
 
 		res = KSI_AsyncHandle_getState(respHandle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
@@ -834,6 +868,9 @@ static void asyncExtend_signature(CuTest* tc, const char *url, const char *user,
 					KSI_Signature_free(ext);
 					respReceived = 1;
 				}
+				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
 				break;
 
 			default:

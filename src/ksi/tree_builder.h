@@ -76,6 +76,11 @@ struct KSI_TreeBuilderLeafProcessor_st {
 	int (*fn)(KSI_TreeNode *in, void *c, KSI_TreeNode **out);
 	/** The processor context. */
 	void *c;
+
+	/* By how much does the level increase after the processor has finished. It is used to calculate the
+	 * tree height before a leaf is added to enforce the maximum tree height. */
+	unsigned char levelOverhead;
+
 };
 
 KSI_DEFINE_LIST(KSI_TreeBuilderLeafProcessor);
@@ -106,6 +111,9 @@ struct KSI_TreeBuilder_st {
 	KSI_LIST(KSI_TreeBuilderLeafProcessor) *cbList;
 	/** Common hashing object. */
 	KSI_DataHasher *hsr;
+	/** Maximum level of the root hash. If adding a leaf would make the level of the root hash greater than this
+	 * parameter, an error is returned. If the value is less or equal to 0 it is ignored. */
+	short maxTreeLevel;
 };
 
 /**

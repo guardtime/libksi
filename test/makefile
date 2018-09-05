@@ -74,6 +74,7 @@ ALLTESTS_OBJ = \
 	$(OBJ_DIR)\ksi_truststore_test.obj \
 	$(OBJ_DIR)\ksi_tree_builder_test.obj \
 	$(OBJ_DIR)\ksi_hmac_test.obj \
+	$(OBJ_DIR)\log_test.obj \
 	$(OBJ_DIR)\CuTest.obj \
 	$(OBJ_DIR)\compatibility_test.obj \
 	$(OBJ_DIR)\uri_client_test.obj \
@@ -90,6 +91,8 @@ INTTESTS_OBJ = \
 	$(OBJ_DIR)\all_integration_tests.obj \
 	$(OBJ_DIR)\aggre_integration_test.obj \
 	$(OBJ_DIR)\aggre_async_integration_test.obj \
+	$(OBJ_DIR)\aggre_ha_integration_test.obj \
+	$(OBJ_DIR)\ext_ha_integration_test.obj \
 	$(OBJ_DIR)\ext_integration_tests.obj \
 	$(OBJ_DIR)\ext_async_integration_tests.obj \
 	$(OBJ_DIR)\pub_integration_tests.obj \
@@ -102,7 +105,7 @@ RESIGNER_OBJ = \
 	$(OBJ_DIR)\resigner.obj
 
 ASYNCSIGNER_OBJ = \
-	$(OBJ_DIR)\test_sign_async.obj \
+	$(OBJ_DIR)\test_async_signer.obj \
 	$(OBJ_DIR)\support_tests.obj \
 	$(OBJ_DIR)\CuTest.obj \
 	$(OBJ_DIR)\test_conf.obj

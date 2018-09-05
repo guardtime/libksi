@@ -260,6 +260,8 @@ int KSI_TreeBuilder_new(KSI_CTX *ctx, KSI_HashAlgorithm algo, KSI_TreeBuilder **
 	tmp->hsr = NULL;
 	memset(tmp->stack, 0, sizeof(tmp->stack));
 
+	tmp->maxTreeLevel = 0;
+
 	res = KSI_DataHasher_open(ctx, algo, &tmp->hsr);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -399,16 +401,113 @@ cleanup:
 	return res;
 }
 
+/**
+ * Adds the overhead of the node processors to the input level.
+ */
+static int levelWithOverhead(KSI_TreeBuilder *builder, unsigned short inLevel, unsigned short *outLevel) {
+	int res;
+	size_t i;
+	unsigned short level = inLevel;
+
+	if (builder == NULL || outLevel == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	for (i = 0; i < KSI_TreeBuilderLeafProcessorList_length(builder->cbList); i++) {
+		KSI_TreeBuilderLeafProcessor *cb = NULL;
+
+		res = KSI_TreeBuilderLeafProcessorList_elementAt(builder->cbList, i, &cb);
+		if (res != KSI_OK || cb == NULL) {
+			if (res == KSI_OK) res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
+
+		level += cb->levelOverhead;
+
+		if (!KSI_IS_VALID_TREE_LEVEL(level)) {
+			res = KSI_INVALID_STATE;
+			goto cleanup;
+		}
+
+	}
+
+	*outLevel = level;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+/** Calculates the level of the root node if a new node with a level is added.
+ * \param[in] builder The tree builder.
+ * \param[in] level   The level from the next input hash. If 0, the height of the current tree is calculated.
+ * \return Returns the level of the root hash.
+ */
+static unsigned short calculateHighestLevel(KSI_TreeBuilder *builder, int level) {
+	unsigned int height = 0;
+	int carry = 0;
+	int i;
+
+	if (builder == NULL) return 0;
+
+
+	for (i = 0; i < KSI_TREE_BUILDER_STACK_LEN; i++) {
+		if (i < level) {
+			if (builder->stack[i] != NULL) {
+				/* If there's at least one sub-tree, this will increase the overall tree height by one. */
+				carry = 1;
+			}
+		} else {
+			if (i == level) {
+				/* Calculate the height just in case if the forest is empty. */
+				height = level + carry;
+				++carry;
+			}
+
+			if (builder->stack[i] != NULL) {
+				height = i + carry;
+			} else {
+				carry = 1;
+			}
+		}
+	}
+
+	return height;
+}
+
 static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *node = NULL;
 	KSI_TreeLeafHandle *tmp = NULL;
+
 
 	if (builder == NULL || (hsh == NULL && metaData == NULL) || (hsh != NULL && metaData != NULL) || !KSI_IS_VALID_TREE_LEVEL(level)) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 	KSI_ERR_clearErrors(builder->ctx);
+
+
+	if (builder->maxTreeLevel > 0) {
+		unsigned short actualInputHeight;
+
+		/* Let's not waste time and effort. */
+		if (level > builder->maxTreeLevel) {
+			KSI_pushError(builder->ctx, res = KSI_BUFFER_OVERFLOW, "Input level greater than maximum tree height.");
+			goto cleanup;
+		}
+
+		res = levelWithOverhead(builder, level, &actualInputHeight);
+		if (res != KSI_OK) goto cleanup;
+
+		if (calculateHighestLevel(builder, actualInputHeight) > builder->maxTreeLevel) {
+			KSI_pushError(builder->ctx, res = KSI_BUFFER_OVERFLOW, "The maximum height passed.");
+			goto cleanup;
+		}
+	}
 
 	/* Make sure the builder is in a correct state. */
 	if (builder->rootNode != NULL) {

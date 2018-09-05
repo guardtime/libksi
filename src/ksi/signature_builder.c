@@ -161,14 +161,20 @@ static int replaceCalendarChain(KSI_Signature *sig, KSI_CalendarHashChain *calen
 		goto cleanup;
 	}
 
-	res = (sig->calendarChain == NULL) ?
-			/* In case there is no calendar hash chain attached, append a new one. */
-			KSI_TLV_appendNestedTlv(sig->baseTlv, newCalChainTlv) :
-			/* Otherwise replace the calendar hash chain. */
-			KSI_TLV_replaceNestedTlv(sig->baseTlv, oldCalChainTlv, newCalChainTlv);
-	if (res != KSI_OK) {
-		KSI_pushError(sig->ctx, res, NULL);
-		goto cleanup;
+	if (sig->calendarChain == NULL) {
+		/* In case there is no calendar hash chain attached, append a new one. */
+		res = KSI_TLV_appendNestedTlv(sig->baseTlv, newCalChainTlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
+	} else {
+		/* Otherwise replace the calendar hash chain. */
+		res = KSI_TLV_replaceNestedTlv(sig->baseTlv, oldCalChainTlv, newCalChainTlv);
+		if (res != KSI_OK) {
+			KSI_pushError(sig->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	newCalChainTlv = NULL;

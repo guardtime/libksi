@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2017 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -24,7 +24,11 @@
 #include "internal.h"
 #include "signature_builder.h"
 #include "impl/signature_builder_impl.h"
-#include "impl/net_impl.h"
+#include "net.h"
+#include "net_tcp.h"
+#include "net_http.h"
+#include "impl/net_async_impl.h"
+#include "impl/net_uri_impl.h"
 #include "impl/ctx_impl.h"
 
 #define KSI_ASYNC_REQUEST_ID_OFFSET 32
@@ -55,7 +59,7 @@ void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
 	}
 }
 
-static int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o) {
+int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle *tmp = NULL;
 
@@ -64,7 +68,7 @@ static int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 		goto cleanup;
 	}
 
-	tmp = KSI_malloc(sizeof(KSI_AsyncHandle));
+	tmp = KSI_new(KSI_AsyncHandle);
 	if (tmp == NULL) {
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
@@ -821,6 +825,13 @@ static void asyncClient_setResponseError(KSI_AsyncClient *c, int state, int err,
 			c->reqCache[i]->errMsg = KSI_Utf8String_ref(errMsg);
 		}
 	}
+
+	if (c->serverConf != NULL && c->serverConf->state == state) {
+		c->serverConf->state = KSI_ASYNC_STATE_ERROR;
+		c->serverConf->err = err;
+		c->serverConf->errExt = extErr;
+		c->serverConf->errMsg = KSI_Utf8String_ref(errMsg);
+	}
 }
 
 static int handleResponse(KSI_AsyncClient *c, void *resp,
@@ -981,7 +992,7 @@ cleanup:
 	return res;
 }
 
-static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config) {
+static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config, KSI_Config_Callback confCallback) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle *confHandle = NULL;
 
@@ -992,9 +1003,12 @@ static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config
 	KSI_ERR_clearErrors(c->ctx);
 
 	if (c->serverConf != NULL) {
+		/* Server config has been requested by the user. */
+
 		c->serverConf->state = KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED;
 		/* Update internal state if the request has been requested. */
-		if (c->serverConf->aggrReq != NULL && c->serverConf->respCtx == NULL) {
+		if ((c->serverConf->aggrReq != NULL || c->serverConf->extReq != NULL) &&
+				c->serverConf->respCtx == NULL) {
 			c->pending--;
 			c->received++;
 		}
@@ -1004,10 +1018,9 @@ static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config
 		c->serverConf->respCtx = (void*)KSI_Config_ref(config);
 		c->serverConf->respCtx_free = (void (*)(void*))KSI_Config_free;
 	} else {
-		KSI_Config_Callback confCallback = (KSI_Config_Callback)(c->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]);
-
-		/* It is push conf which was not explicitly requested. Invoke the user conf receive callback. */
-		if (confCallback != NULL) {
+		/* It is push conf which was not explicitly requested. */
+		if (confCallback != NULL && c->options[KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK]) {
+			/* Invoke the user conf receive callback. */
 			res = confCallback(c->ctx, config);
 			if (res != KSI_OK) {
 				KSI_pushError(c->ctx, res, NULL);
@@ -1047,7 +1060,8 @@ static int processResponseQueue(KSI_AsyncClient *c,
 		int (*pdu_verify)(const void *pdu, const char *pass),
 		int (*pdu_getConfResponse)(const void *pdu, KSI_Config **confResponse),
 		int (*convertStatusCode)(const KSI_Integer *statusCode),
-		int (*asyncClient_handleResponse)(KSI_AsyncClient *c, void *pdu)) {
+		int (*asyncClient_handleResponse)(KSI_AsyncClient *c, void *pdu),
+		KSI_Config_Callback confCallback) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *resp = NULL;
 	void *pdu = NULL;
@@ -1094,13 +1108,13 @@ static int processResponseQueue(KSI_AsyncClient *c,
 				goto cleanup;
 			}
 
-			KSI_LOG_logBlob(c->ctx, KSI_LOG_DEBUG, "Parsing response response", raw, len);
+			KSI_LOG_logBlob(c->ctx, KSI_LOG_DEBUG, "Parsing response", raw, len);
 
 			/* Get PDU object. */
 			res = pdu_parse(c->ctx, raw, len, &pdu);
 			if(res != KSI_OK){
-				KSI_LOG_logBlob(c->ctx, KSI_LOG_ERROR, "Parsing aggregation response failed", raw, len);
-				KSI_pushError(c->ctx, res, "Unable to parse aggregation pdu.");
+				KSI_LOG_logBlob(c->ctx, KSI_LOG_ERROR, "Parsing response PDU failed", raw, len);
+				KSI_pushError(c->ctx, res, "Unable to parse PDU.");
 				goto cleanup;
 			}
 
@@ -1143,7 +1157,7 @@ static int processResponseQueue(KSI_AsyncClient *c,
 
 			/* Handle push config. */
 			if (tmpConf != NULL) {
-				res = asyncClient_handleServerConfig(c, tmpConf);
+				res = asyncClient_handleServerConfig(c, tmpConf, confCallback);
 				if (res != KSI_OK) {
 					KSI_pushError(c->ctx, res , NULL);
 					goto cleanup;
@@ -1192,7 +1206,10 @@ static int asyncClient_processAggregationResponseQueue(KSI_AsyncClient *c) {
 			(int (*)(const void *, const char *))KSI_AggregationPdu_verify,
 			(int (*)(const void *, KSI_Config **))KSI_AggregationPdu_getConfResponse,
 			(int (*)(const KSI_Integer *))KSI_convertAggregatorStatusCode,
-			(int (*)(KSI_AsyncClient *, void *))asyncClient_handleAggregationResp);
+			(int (*)(KSI_AsyncClient *, void *))asyncClient_handleAggregationResp,
+			(KSI_Config_Callback)(c->options[KSI_ASYNC_OPT_PUSH_CONF_CALLBACK] ?
+					c->options[KSI_ASYNC_OPT_PUSH_CONF_CALLBACK] :
+					c->ctx->options[KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK]));
 }
 
 static int asyncClient_processExtenderResponseQueue(KSI_AsyncClient *c) {
@@ -1204,7 +1221,10 @@ static int asyncClient_processExtenderResponseQueue(KSI_AsyncClient *c) {
 			(int (*)(const void *, const char *))KSI_ExtendPdu_verify,
 			(int (*)(const void *, KSI_Config **))KSI_ExtendPdu_getConfResponse,
 			(int (*)(const KSI_Integer *))KSI_convertExtenderStatusCode,
-			(int (*)(KSI_AsyncClient *, void *))asyncClient_handleExtendResp);
+			(int (*)(KSI_AsyncClient *, void *))asyncClient_handleExtendResp,
+			(KSI_Config_Callback)(c->options[KSI_ASYNC_OPT_PUSH_CONF_CALLBACK] ?
+					c->options[KSI_ASYNC_OPT_PUSH_CONF_CALLBACK] :
+					c->ctx->options[KSI_OPT_EXT_CONF_RECEIVED_CALLBACK]));
 }
 
 static bool asyncClient_finalizeRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle) {
@@ -1376,15 +1396,15 @@ cleanup:
 	return res;
 }
 
-static int asyncClient_setOption(KSI_AsyncClient *c, int opt, void *param) {
+static int asyncClient_setOption(KSI_AsyncClient *c, const int opt, void *param) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle **tmpCache = NULL;
 
-	KSI_ERR_clearErrors(c->ctx);
 	if (c == NULL || opt >= __NOF_KSI_ASYNC_OPT) {
-		KSI_pushError(c->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(c->ctx);
 
 	switch (opt) {
 		case KSI_ASYNC_OPT_REQUEST_CACHE_SIZE: {
@@ -1423,12 +1443,18 @@ static int asyncClient_setOption(KSI_AsyncClient *c, int opt, void *param) {
 			c->options[opt] = (size_t)param;
 			break;
 
+		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
+			c->options[opt] = (size_t)param;
+			break;
+
+		/* Private options. */
 		case KSI_ASYNC_PRIVOPT_ROUND_DURATION:
+		case KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK:
 			c->options[opt] = (size_t)param;
 			break;
 
 		default:
-			KSI_pushError(c->ctx, res = KSI_INVALID_ARGUMENT, "Unhandled option.");
+			KSI_pushError(c->ctx, res = KSI_INVALID_ARGUMENT, "Unknown option.");
 			goto cleanup;
 	}
 
@@ -1440,14 +1466,14 @@ cleanup:
 	return res;
 }
 
-static int asyncClient_getOption(KSI_AsyncClient *c, int opt, void *param) {
+static int asyncClient_getOption(KSI_AsyncClient *c, const int opt, void *param) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	KSI_ERR_clearErrors(c->ctx);
 	if (c == NULL || opt >= __NOF_KSI_ASYNC_OPT || param == NULL) {
-		KSI_pushError(c->ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+	KSI_ERR_clearErrors(c->ctx);
 
 	switch (opt) {
 		/*** Options with type size_t. ***/
@@ -1456,16 +1482,21 @@ static int asyncClient_getOption(KSI_AsyncClient *c, int opt, void *param) {
 		case KSI_ASYNC_OPT_RCV_TIMEOUT:
 		case KSI_ASYNC_OPT_SND_TIMEOUT:
 		case KSI_ASYNC_OPT_MAX_REQUEST_COUNT:
-		/* Private options. */
-		case KSI_ASYNC_PRIVOPT_ROUND_DURATION:
+		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
 			*(size_t*)param = c->options[opt];
 			break;
 		case KSI_ASYNC_OPT_REQUEST_CACHE_SIZE:
 			*(size_t*)param = c->options[opt] - KSI_ASYNC_CACHE_START_POS;
 			break;
 
+		/* Private options. */
+		case KSI_ASYNC_PRIVOPT_ROUND_DURATION:
+		case KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK:
+			*(size_t*)param = c->options[opt];
+			break;
+
 		default:
-			KSI_pushError(c->ctx, res = KSI_INVALID_ARGUMENT, "Unhandled option.");
+			KSI_pushError(c->ctx, res = KSI_INVALID_ARGUMENT, "Unknown option.");
 			goto cleanup;
 	}
 
@@ -1484,8 +1515,10 @@ static int asyncClient_setDefaultOptions(KSI_AsyncClient *c) {
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_SND_TIMEOUT, (void *)KSI_ASYNC_DEFAULT_TIMEOUT_SEC)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)KSI_ASYNC_DEFAULT_REQUEST_CACHE_SIZE)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT)) != KSI_OK) goto cleanup;
+	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)NULL)) != KSI_OK) goto cleanup;
 	/* Private options. */
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_PRIVOPT_ROUND_DURATION, (void *)KSI_ASYNC_ROUND_DURATION_SEC)) != KSI_OK) goto cleanup;
+	if ((res = asyncClient_setOption(c, KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK, (void *)true)) != KSI_OK) goto cleanup;
 cleanup:
 	return res;
 }
@@ -1558,23 +1591,23 @@ cleanup:
 	return res;
 }
 
-int KSI_AsyncService_addRequest(KSI_AsyncService *s, KSI_AsyncHandle *handle) {
+int KSI_AsyncService_addRequest(KSI_AsyncService *service, KSI_AsyncHandle *handle) {
 	int res = KSI_UNKNOWN_ERROR;
 
-	if (s == NULL || handle == NULL) {
+	if (service == NULL || handle == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-	KSI_ERR_clearErrors(s->ctx);
+	KSI_ERR_clearErrors(service->ctx);
 
-	if (s->impl == NULL || s->addRequest == NULL) {
-		KSI_pushError(s->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
+	if (service->impl == NULL || service->addRequest == NULL) {
+		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
 		goto cleanup;
 	}
 
-	res = s->addRequest(s->impl, handle);
+	res = service->addRequest(service->impl, handle);
 	if (res != KSI_OK) {
-		KSI_pushError(s->ctx, res, NULL);
+		KSI_pushError(service->ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -1598,6 +1631,145 @@ int KSI_AsyncService_run(KSI_AsyncService *service, KSI_AsyncHandle **handle, si
 	}
 
 	res = service->run(service->impl, service->responseHandler, handle, waiting);
+	if (res != KSI_OK) {
+		KSI_pushError(service->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+static int asyncService_setupAsyncClient(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key) {
+	int res = KSI_UNKNOWN_ERROR;
+	char *schm = NULL;
+	char *ksi_user = NULL;
+	char *ksi_pass = NULL;
+	char *host = NULL;
+	unsigned port = 0;
+	char *path = NULL;
+	char *query = NULL;
+	char *fragment = NULL;
+	const char *scheme = NULL;
+	const char *replace = NULL;
+	int unableToParse = 0;
+	char addr[0xffff];
+	int c;
+
+	if (service == NULL || uri == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (service->impl != NULL) {
+		res = KSI_INVALID_STATE;
+		goto cleanup;
+	}
+
+	res = service->uriSplit(uri, &schm, &ksi_user, &ksi_pass, &host, &port, &path, &query, &fragment);
+	if (res != KSI_OK) unableToParse = 1;
+
+	c = service->getClientByUriScheme(schm, &replace);
+	scheme = (replace != NULL) ? replace : schm;
+
+	switch (c) {
+		case URI_TCP:
+			if (host == NULL || port == 0) {
+				res = KSI_INVALID_ARGUMENT;
+				goto cleanup;
+			}
+
+			service->impl_free = (void (*)(void*))KSI_AsyncClient_free;
+			res = KSI_TcpAsyncClient_new(service->ctx, (KSI_AsyncClient **)&service->impl);
+			if (res != KSI_OK) goto cleanup;
+
+			res = KSI_TcpAsyncClient_setService(service->impl,
+					host, port,
+					loginId != NULL ? loginId : ksi_user,
+					key != NULL ? key : ksi_pass);
+			if (res != KSI_OK) goto cleanup;
+			break;
+
+		case URI_HTTP:
+			if (unableToParse == 0 || replace) {
+				/* Create a new URL where the scheme is replaced with the correct one and KSI user and pass is removed. */
+				res = service->uriCompose(scheme, NULL, NULL, host, port, path, query, fragment, addr, sizeof(addr));
+				if (res != KSI_OK) goto cleanup;
+			}
+
+			service->impl_free = (void (*)(void*))KSI_AsyncClient_free;
+			res = KSI_HttpAsyncClient_new(service->ctx, (KSI_AsyncClient **)&service->impl);
+			if (res != KSI_OK) goto cleanup;
+
+			res = KSI_HttpAsyncClient_setService(service->impl,
+					strlen(addr) ? addr : uri,
+					loginId != NULL ? loginId : ksi_user,
+					key != NULL ? key : ksi_pass);
+			if (res != KSI_OK) goto cleanup;
+			break;
+
+		case URI_FILE:
+		case URI_UNKNOWN:
+		default:
+			res = KSI_INVALID_FORMAT;
+			goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+
+	KSI_free(schm);
+	KSI_free(ksi_user);
+	KSI_free(ksi_pass);
+	KSI_free(host);
+	KSI_free(path);
+	KSI_free(query);
+	KSI_free(fragment);
+
+	return res;
+}
+
+int KSI_AsyncService_setEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (service == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(service->ctx);
+
+	if (service->setEndpoint == NULL) {
+		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = service->setEndpoint(service, uri, loginId, key);
+	if (res != KSI_OK) {
+		KSI_pushError(service->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSI_AsyncService_addEndpoint(KSI_AsyncService *service, const char *uri, const char *loginId, const char *key) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (service == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(service->ctx);
+
+	if (service->addEndpoint == NULL) {
+		KSI_pushError(service->ctx, res = KSI_INVALID_STATE, "Async service client is not properly initialized.");
+		goto cleanup;
+	}
+
+	res = service->addEndpoint(service, uri, loginId, key);
 	if (res != KSI_OK) {
 		KSI_pushError(service->ctx, res, NULL);
 		goto cleanup;
@@ -1641,6 +1813,9 @@ int KSI_SigningAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->setOption = (int (*)(void *, int, void *))asyncClient_setOption;
 	tmp->getOption = (int (*)(void *, int, void *))asyncClient_getOption;
 
+	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))asyncService_setupAsyncClient;
+	tmp->addEndpoint = (int (*)(void *, const char *, const char *, const char *))asyncService_setupAsyncClient;
+
 	*service = tmp;
 	tmp = NULL;
 
@@ -1676,6 +1851,9 @@ int KSI_ExtendingAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->setOption = (int (*)(void *, int, void *))asyncClient_setOption;
 	tmp->getOption = (int (*)(void *, int, void *))asyncClient_getOption;
 
+	tmp->setEndpoint = (int (*)(void *, const char *, const char *, const char *))asyncService_setupAsyncClient;
+	tmp->addEndpoint = (int (*)(void *, const char *, const char *, const char *))asyncService_setupAsyncClient;
+
 	*service = tmp;
 	tmp = NULL;
 
@@ -1695,12 +1873,13 @@ int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count) {
 	return s->getReceivedCount(s->impl, count);
 }
 
-int KSI_AsyncService_setOption(KSI_AsyncService *s, const KSI_AsyncOption option, void *value) {
-	if ((s == NULL || s->impl == NULL || s->setOption == NULL) || option >= __KSI_ASYNC_OPT_COUNT) return KSI_INVALID_ARGUMENT;
+int KSI_AsyncService_setOption(KSI_AsyncService *s, const int option, void *value) {
+	if ((s == NULL || s->impl == NULL || s->setOption == NULL) || (size_t)option >= __NOF_KSI_ASYNC_OPT) return KSI_INVALID_ARGUMENT;
 	return s->setOption(s->impl, option, value);
 }
 
-int KSI_AsyncService_getOption(const KSI_AsyncService *s, const KSI_AsyncOption option, void *value) {
-	if ((s == NULL || s->impl == NULL || s->getOption == NULL) || option >= __KSI_ASYNC_OPT_COUNT) return KSI_INVALID_ARGUMENT;
+int KSI_AsyncService_getOption(const KSI_AsyncService *s, const int option, void *value) {
+	if ((s == NULL || s->impl == NULL || s->getOption == NULL) || (size_t)option >= __NOF_KSI_ASYNC_OPT) return KSI_INVALID_ARGUMENT;
 	return s->getOption(s->impl, option, value);
 }
+

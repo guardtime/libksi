@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -33,6 +33,9 @@
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
 #endif
 
+#define KSITEST_ASYNC_SLEEP_TIME_MS 100
+#define KSITEST_ASYNC_NO_RESP_TIMEOUT_MS (100 * 10 * 5)
+
 KSI_CTX *ctx = NULL;
 
 /**
@@ -49,6 +52,8 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, IntegrationTestPack_getSuite);
 	addSuite(suite, AsyncAggrIntegrationTests_getSuite);
 	addSuite(suite, AsyncExtIntegrationTests_getSuite);
+	addSuite(suite, HaAggrIntegrationTests_getSuite);
+	addSuite(suite, HaExtIntegrationTests_getSuite);
 
 	return suite;
 }
@@ -82,6 +87,10 @@ static int RunAllTests() {
 		}
 		KSI_CTX_setExtenderHmacAlgorithm(ctx, alg_id);
 	}
+
+	/* Set default timeout values. */
+	if (conf.async.timeout.sleep == 0) conf.async.timeout.sleep = KSITEST_ASYNC_SLEEP_TIME_MS;
+	if (conf.async.timeout.cumulative == 0) conf.async.timeout.cumulative = KSITEST_ASYNC_NO_RESP_TIMEOUT_MS;
 
 	res = KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 	if (res != KSI_OK) {

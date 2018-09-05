@@ -25,6 +25,8 @@
 #include "net_async.h"
 #include "impl/ctx_impl.h"
 #include "impl/net_impl.h"
+#include "impl/net_uri_impl.h"
+#include "impl/net_async_impl.h"
 
 KSI_IMPLEMENT_GET_CTX(KSI_NetworkClient);
 KSI_IMPLEMENT_GET_CTX(KSI_RequestHandle);
@@ -230,6 +232,41 @@ static int uriCompose(const char *scheme, const char *user, const char *pass, co
 	}
 
 	return KSI_OK;
+}
+
+static int getClientByUriScheme(const char *scheme, const char **replaceScheme) {
+	int netClient = -1;
+
+	static const struct {
+		const char *scheme;
+		const char *replace;
+		enum client_e client;
+	} schemeMap[] = {
+			{"ksi", "http", URI_HTTP},
+			{"ksi+http", "http", URI_HTTP},
+			{"ksi+https", "https", URI_HTTP},
+			{"ksi+tcp", NULL, URI_TCP},
+			{"file", NULL, URI_FILE},
+			{NULL, NULL, -1}
+	};
+
+	if (scheme != NULL) {
+		int i = 0;
+		while (schemeMap[i].scheme != NULL) {
+			if (KSI_strcasecmp(schemeMap[i].scheme, scheme) == 0) {
+				netClient = schemeMap[i].client;
+				*replaceScheme = schemeMap[i].replace;
+				break;
+			}
+			i++;
+		}
+	}
+
+	if (netClient == -1) {
+		netClient = URI_UNKNOWN;
+	}
+
+	return netClient;
 }
 
 void KSI_NetEndpoint_free(KSI_NetEndpoint *endPoint) {
@@ -1141,6 +1178,7 @@ int KSI_AbstractNetworkClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	tmp->setStringParam = setStringParam;
 	tmp->uriSplit = uriSplit;
 	tmp->uriCompose = uriCompose;
+	tmp->getClientByUriScheme = getClientByUriScheme;
 
 	/* Create Abstract endpoints. */
 	res = KSI_AbstractNetEndpoint_new(ctx, &aggrEndpoint);
@@ -1304,8 +1342,12 @@ int KSI_AbstractAsyncService_new(KSI_CTX *ctx, KSI_AsyncService **service) {
 	tmp->getReceivedCount = NULL;
 	tmp->setOption = NULL;
 
+	tmp->setEndpoint = NULL;
+	tmp->addEndpoint = NULL;
+
 	tmp->uriSplit = uriSplit;
 	tmp->uriCompose = uriCompose;
+	tmp->getClientByUriScheme = getClientByUriScheme;
 
 	*service = tmp;
 	tmp = NULL;

@@ -61,6 +61,7 @@ int KSITest_CTX_clone(KSI_CTX **out);
 CuSuite* KSITest_CTX_getSuite(void);
 CuSuite* KSITest_RDR_getSuite(void);
 CuSuite* KSITest_TLV_getSuite(void);
+CuSuite* KSITest_Log_getSuite(void);
 CuSuite* KSITest_TLV_Sample_getSuite(void);
 CuSuite* KSITest_Hash_getSuite(void);
 CuSuite* KSITest_NetCommon_getSuite(void);

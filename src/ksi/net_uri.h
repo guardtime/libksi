@@ -52,10 +52,8 @@ extern "C" {
 	int KSI_UriClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int timeout);
 	int KSI_UriClient_setConnectionTimeoutSeconds(KSI_NetworkClient *client, int timeout);
 
-	int KSI_AsyncService_setEndpoint(KSI_AsyncService *s, const char *uri, const char *loginId, const char *key);
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* KSI_NET_CURL_H_ */
+#endif /* KSI_NET_URI_H_ */
