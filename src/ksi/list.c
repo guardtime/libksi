@@ -110,14 +110,15 @@ cleanup:
 	return res;
 }
 
-static int indexOf(KSI_List *list, void *o, size_t **pos) {
+static int find(KSI_List *list, void *o, int *found, size_t *pos) {
 	int res = KSI_UNKNOWN_ERROR;
+	int fnd = 0;
+
 	struct listImpl_st *pImpl;
 
 	size_t i;
-	size_t *tmp = NULL;
 
-	if (list == NULL || o == NULL || pos == NULL) {
+	if (list == NULL || o == NULL || found == NULL || pos == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -129,35 +130,60 @@ static int indexOf(KSI_List *list, void *o, size_t **pos) {
 		goto cleanup;
 	}
 
-	if (pImpl->arr == NULL) {
-		*pos = NULL;
-		res = KSI_OK;
-		goto cleanup;
-	}
-
-	for (i = 0; i < pImpl->arr_len; i++) {
-		if (o == pImpl->arr[i].ptr) {
-			tmp = KSI_calloc(sizeof(i), 1);
-			if (tmp == NULL) {
-				res = KSI_OUT_OF_MEMORY;
-				goto cleanup;
+	if (pImpl->arr != NULL) {
+		for (i = 0; i < pImpl->arr_len; i++) {
+			if (o == pImpl->arr[i].ptr) {
+				fnd = 1;
+				break;
 			}
-			*tmp = i;
-			break;
 		}
 	}
 
-	*pos = tmp;
-	tmp = NULL;
+	if (fnd) {
+		*pos = i;
+	}
+
+	*found = fnd;
 
 	res = KSI_OK;
 
 cleanup:
 
-	KSI_free(tmp);
+	return res;
+}
+
+static int indexOf(KSI_List *list, void *o, size_t **pos) {
+	int res = KSI_UNKNOWN_ERROR;
+	int found;
+
+	size_t tmp;
+	size_t *ptr = NULL;
+
+	res = find(list, o, &found, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	if (found) {
+		ptr = KSI_calloc(sizeof(size_t), 1);
+		if (ptr == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+
+		*ptr = tmp;
+	}
+
+	*pos = ptr;
+	ptr = NULL;
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_free(ptr);
 
 	return res;
 }
+
 
 static int replaceElementAt(KSI_List *list, size_t pos, void *o) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -345,6 +371,7 @@ int KSI_List_new(void (*obj_free)(void *), KSI_List **list) {
 	tmp->removeElement = removeElement;
 	tmp->sort = KSI_List_sort;
 	tmp->foldl = KSI_List_foldl;
+	tmp->find = find;
 
 	impl = KSI_new(struct listImpl_st);
 	if (impl == NULL) {
@@ -621,7 +648,27 @@ cleanup:
 	return res;
 }
 
-KSI_IMPLEMENT_LIST(KSI_PKICertificate, KSI_PKICertificate_free);
+int KSI_List_find(KSI_List *list, void *o, int *found, size_t *pos) {
+	int res = KSI_UNKNOWN_ERROR;
 
+	if (list == NULL || found == NULL || pos == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (list->find == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = list->find(list, o, found, pos);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
 
 

@@ -1,4 +1,9 @@
 BUGFIX: Made URI schemes case insensitive.
+Version 3.19
+
+* FEATURE: Added find function to KSI_List interface.
+
+Version 3.18
 
 Version 3.18
 

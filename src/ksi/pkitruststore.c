@@ -209,3 +209,6 @@ cleanup:
 
 	return res;
 }
+
+KSI_IMPLEMENT_LIST(KSI_PKICertificate, KSI_PKICertificate_free);
+

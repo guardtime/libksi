@@ -431,9 +431,10 @@ cleanup:
 
 int KSI_TlvElement_setElement(KSI_TlvElement *parent, KSI_TlvElement *child) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t *pos = NULL;
+	size_t pos;
 	struct filter_st fc;
 	KSI_TlvElement *ptr = NULL;
+	int found;
 
 	fc.filters = NULL;
 	fc.filters_len = 0;
@@ -464,17 +465,17 @@ int KSI_TlvElement_setElement(KSI_TlvElement *parent, KSI_TlvElement *child) {
 			res = KSI_TlvElementList_elementAt(fc.result, 0, &ptr);
 			if (res != KSI_OK) goto cleanup;
 
-			res = KSI_TlvElementList_indexOf(parent->subList, ptr, &pos);
+			res = KSI_TlvElementList_find(parent->subList, ptr, &found, &pos);
 			if (res != KSI_OK) goto cleanup;
 
-			if (pos == NULL) {
+			if (!found) {
 				res = KSI_INVALID_STATE;
 				goto cleanup;
 			}
 
 			{
 				KSI_TlvElement *ref = NULL;
-				res = KSI_TlvElementList_replaceAt(parent->subList, *pos, ref = KSI_TlvElement_ref(child));
+				res = KSI_TlvElementList_replaceAt(parent->subList, pos, ref = KSI_TlvElement_ref(child));
 				if (res != KSI_OK) {
 					/* Cleanup the reference. */
 					KSI_TlvElement_free(ref);
@@ -494,7 +495,6 @@ int KSI_TlvElement_setElement(KSI_TlvElement *parent, KSI_TlvElement *child) {
 
 cleanup:
 
-	KSI_free(pos);
 	KSI_TlvElementList_free(fc.result);
 
 	return res;
@@ -551,7 +551,7 @@ cleanup:
 
 int KSI_TlvElement_removeElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvElement **el) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t *pos = NULL;
+	size_t pos;
 	struct filter_st fc;
 	KSI_TlvElement *ptr = NULL;
 
@@ -575,19 +575,21 @@ int KSI_TlvElement_removeElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvEl
 	if (res != KSI_OK) goto cleanup;
 
 	if (KSI_TlvElementList_length(fc.result) == 1) {
+		int found;
+
 		/* Found one element, remove it. */
 		res = KSI_TlvElementList_elementAt(fc.result, 0, &ptr);
 		if (res != KSI_OK) goto cleanup;
 
-		res = KSI_TlvElementList_indexOf(parent->subList, ptr, &pos);
+		res = KSI_TlvElementList_find(parent->subList, ptr, &found, &pos);
 		if (res != KSI_OK) goto cleanup;
 
-		if (pos == NULL) {
+		if (!found) {
 			res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 
-		res = KSI_TlvElementList_remove(parent->subList, *pos, el);
+		res = KSI_TlvElementList_remove(parent->subList, pos, el);
 		if (res != KSI_OK) goto cleanup;
 
 		parent->ftlv.dat_len -= ptr->ftlv.hdr_len + ptr->ftlv.dat_len;
@@ -601,7 +603,6 @@ int KSI_TlvElement_removeElement(KSI_TlvElement *parent, unsigned tag, KSI_TlvEl
 
 cleanup:
 
-	KSI_free(pos);
 	KSI_TlvElementList_free(fc.result);
 
 	return res;

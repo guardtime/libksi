@@ -21,6 +21,7 @@
 #define KSI_LIST_H_
 
 #include <stddef.h>
+#include "common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,6 +88,7 @@ typedef struct KSI_List_st KSI_List;
 	\param[in]	el		Pointer to the element.
 	\param[out]	pos		Pointer to the receiving pointer.
 	\return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	\note For fewer allocations use the *List_find function instead.
 	*/																				\
 	int (*indexOf)(ltype *, rtype *, size_t **);		\
 	/*! Add the element to the given position in the list. All elements with
@@ -137,7 +139,18 @@ typedef struct KSI_List_st KSI_List;
 	 */ \
 	int (*foldl)(ltype *list, void *foldCtx, int (*fn)(rtype *el, void *foldCtx)); \
 	/*! Internal implementation of the list. */ \
-	void *pImpl;										\
+	void *pImpl;\
+	/*!
+	 * Find the index of the given element. If the element is found, the \c found output variable
+	 * will be evaluated to 1 and the index of the element is stored in \c pos. If the element is
+	 * not present, the parameter \c found is evaluated to 0 and the output variable \c pos remains
+	 * unchanged. If the process fails with an error neither \c pos nor \c found will be changed.
+	 * \param[in]	list	Pointer to the list.
+	 * \param[in]	el		Pointer to the element.
+	 * \param[out]	found	Output pointer for a boolean value whether the object was found or not.
+	 * \param[out]	pos		Output pointer for the index value if the element was found.
+	 */ \
+	int (*find)(ltype *list, rtype *el, int *found, size_t *pos); \
 
 /**
  * This macro defines a new list of given type.
@@ -163,6 +176,7 @@ int KSI_List_elementAt(KSI_List *list, size_t pos, void **o);
 size_t KSI_List_length(KSI_List *list);
 int KSI_List_sort(KSI_List *list, int (*)(const void **, const void **));
 int KSI_List_foldl(KSI_List *list, void *foldCtx, int (*fn)(void *el, void *foldCtx));
+int KSI_List_find(KSI_List *list, void *el, int *found, size_t *pos);
 
 /**
  * This macro implements all the functions of a list for a given type.

@@ -520,7 +520,8 @@ unsigned KSI_TLV_getTag(const KSI_TLV *tlv) {
 
 int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTlv) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t *pos = NULL;
+	size_t pos;
+	int found = 0;
 
 	if (parentTlv == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -534,18 +535,18 @@ int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTl
 		goto cleanup;
 	}
 
-	res = KSI_TLVList_indexOf(parentTlv->nested, oldTlv, &pos);
+	res = KSI_TLVList_find(parentTlv->nested, oldTlv, &found, &pos);
 	if (res != KSI_OK) {
 		KSI_pushError(parentTlv->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	if (pos == NULL) {
+	if (!found) {
 		KSI_pushError(parentTlv->ctx, res = KSI_INVALID_ARGUMENT, "Nested TLV not found.");
 		goto cleanup;
 	}
 
-	res = KSI_TLVList_replaceAt(parentTlv->nested, *pos, newTlv);
+	res = KSI_TLVList_replaceAt(parentTlv->nested, pos, newTlv);
 	if (res != KSI_OK) {
 		KSI_pushError(parentTlv->ctx, res, NULL);
 		goto cleanup;
@@ -554,7 +555,6 @@ int KSI_TLV_replaceNestedTlv(KSI_TLV *parentTlv, KSI_TLV *oldTlv, KSI_TLV *newTl
 	res = KSI_OK;
 
 cleanup:
-	KSI_free(pos);
 
 	return res;
 }

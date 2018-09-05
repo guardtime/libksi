@@ -93,6 +93,7 @@ KSI_DEFINE_LIST(KSI_TreeBuilderLeafProcessor);
 #define KSI_TreeBuilderLeafProcessorList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_TreeBuilderLeafProcessorList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_TreeBuilderLeafProcessorList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? ( ((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn)))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_TreeBuilderLeafProcessorList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 struct KSI_TreeBuilder_st {
 	/** KSI context. */
@@ -131,6 +132,7 @@ KSI_DEFINE_LIST(KSI_TreeLeafHandle);
 #define KSI_TreeLeafHandleList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
 #define KSI_TreeLeafHandleList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_TreeLeafHandleList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? ( ((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn)))) : KSI_INVALID_STATE) : KSI_OK)
+#define KSI_TreeLeafHandleList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
 
 KSI_DEFINE_REF(KSI_TreeLeafHandle);
 
