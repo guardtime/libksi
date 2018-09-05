@@ -4,6 +4,8 @@ Version 3.19
 * FEATURE: Added find function to KSI_List interface.
 
 Version 3.18
+* IMPROVEMENT: Function KSI_CTX_getLastFailedSignature is deprecated. See KSI_VERIFICATION_POLICY_EMPTY for replacement.
+* BUGFIX: Made URI schemes case insensitive.
 
 Version 3.18
 

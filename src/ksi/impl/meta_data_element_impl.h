@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2018 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -31,10 +31,12 @@ extern "C" {
 		KSI_CTX *ctx;
 		size_t ref;
 
-		KSI_Utf8String *DEPRECATED_clientId;
-		KSI_Utf8String *DEPRECATED_machineId;
-		KSI_Integer *DEPRECATED_sequenceNr;
-		KSI_Integer *DEPRECATED_reqTimeInMicros;
+		/* Temporary fieds for holding getter values for further cleanup. */
+		KSI_OctetString *padding;
+		KSI_Utf8String *clientId;
+		KSI_Utf8String *machineId;
+		KSI_Integer *sequenceNr;
+		KSI_Integer *reqTimeInMicros;
 
 		KSI_TlvElement *impl;
 	};

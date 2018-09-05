@@ -841,7 +841,7 @@ int KSI_CTX_getPublicationCertEmail(KSI_CTX *ctx, const char **address);
  * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
  * \note Ownership of \c lastFailedSignature is passed to the caller who is responsible for freeing the object.
  */
-int KSI_CTX_getLastFailedSignature(KSI_CTX *ctx, KSI_Signature **lastFailedSignature);
+KSI_FN_DEPRECATED(int KSI_CTX_getLastFailedSignature(KSI_CTX *ctx, KSI_Signature **lastFailedSignature), Use #KSI_VERIFICATION_POLICY_EMPTY instead.);
 
 /**
  * @}
