@@ -18,18 +18,12 @@
  */
 
 
-#ifndef BLOCKSIGNER_C_
-#define BLOCKSIGNER_C_
-
 #include "internal.h"
 #include "blocksigner.h"
 #include "tree_builder.h"
 #include "hashchain.h"
 #include "signature_builder.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 KSI_IMPLEMENT_LIST(KSI_BlockSignerHandle, KSI_BlockSignerHandle_free);
 
@@ -560,10 +554,3 @@ cleanup:
 
 	return res;
 }
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* BLOCKSIGNER_C_ */
