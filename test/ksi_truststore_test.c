@@ -182,13 +182,13 @@ static void TestPKICertificateToString(CuTest *tc) {
 	const char expectedValue_2[] =	"PKI Certificate (30:46:fe:e4):\n"
 									"  * Issued to: E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE\n"
 									"  * Issued by: E=publications@guardtime.com CN=Guardtime AS O=Guardtime AS C=EE\n"
-									"  * Valid from: 2015-10-14 08:27:04 UTC to 2018-10-13 08:27:04 UTC [valid]\n"
+									"  * Valid from: 2015-10-14 08:27:04 UTC to 2018-10-13 08:27:04 UTC [expired]\n"
 									"  * Serial Number: 01\n";
 
 	const char expectedValue_3[] =	"PKI Certificate (c1:c2:80:cb):\n"
 									"  * Issued to: E=serial@test.com CN=Serial Test O=Serial Test C=EE\n"
 									"  * Issued by: E=ksicapi@test.com CN=Unit Testing O=Unit Testing C=EE\n"
-									"  * Valid from: 2015-10-14 12:28:15 UTC to 2018-10-13 12:28:15 UTC [valid]\n"
+									"  * Valid from: 2015-10-14 12:28:15 UTC to 2018-10-13 12:28:15 UTC [expired]\n"
 									"  * Serial Number: 6a:95:fe\n";
 
 	const char expectedValue_4[] =	"PKI Certificate (00:d7:ce:f3):\n"
