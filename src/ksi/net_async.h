@@ -352,6 +352,25 @@ extern "C" {
 	int KSI_AsyncService_getReceivedCount(KSI_AsyncService *s, size_t *count);
 
 	/**
+	 * Async service network connection establishment listener callback.
+	 * \param[in]		ctx				KSI context object.
+	 * \param[in]		id				Unique async service id (useful in case of HA service).
+	 * \param[in]		userp			Contains whatever user-defined value set using the KSI_ASYNC_OPT_CALLBACK_USERDATA.
+	 * \param[in]		connected		Boolean value indication connection state.
+	 * \return Implementation must return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	typedef int (*KSI_AsyncServiceCallback_ConnectState)(KSI_CTX *ctx, size_t id, void *userp, int connected);
+
+	/**
+	 * Async service configuration receive callback.
+	 * \param[in]		ctx				KSI context object.
+	 * \param[in]		userp			Contains whatever user-defined value set using the KSI_ASYNC_OPT_CALLBACK_USERDATA.
+	 * \param[in]		conf			Pointer to the configuration.
+	 * \return Implementation must return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	typedef int (*KSI_AsyncServiceCallback_Config)(KSI_CTX *ctx, void *userp, int connected);
+
+	/**
 	 * Enum defining async service options. Pay attention to the used parameter type.
 	 * \see #KSI_AsyncService_setOption for applying option values.
 	 * \see #KSI_AsyncService_getOption for extracting option values.
@@ -424,6 +443,15 @@ extern "C" {
 		 */
 		KSI_ASYNC_OPT_PUSH_CONF_CALLBACK,
 
+#if 0
+		/**
+		 * Same as #KSI_ASYNC_OPT_PUSH_CONF_CALLBACK.
+		 * \param		p_func		Paramer of type #KSI_AsyncServiceCallback_Config.
+		 * \note Current option has higher priority than #KSI_ASYNC_OPT_PUSH_CONF_CALLBACK.
+		 */
+		KSI_ASYNC_OPT_PUSH_CONF_CALLBACK_WITH_USERDATA,
+#endif
+
 		/**
 		 * Get the list of high availability service subservices.
 		 * \param[out]	p_list		Paramer of type #KSI_AsyncServiceList.
@@ -433,6 +461,20 @@ extern "C" {
 		 * \see #KSI_AsyncService_addEndpoint for adding a subservice to the high availability service.
 		 */
 		KSI_ASYNC_OPT_HA_SUBSERVICE_LIST,
+
+		/**
+		 * The callback is invoked when the network connection state to a server has changed.
+		 * \param		p_func		Paramer of type #KSI_AsyncServiceConnectState_Callback.
+		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
+		 * and casted to #KSI_AsyncServiceConnectState_Callback before use.
+		 */
+		KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK,
+
+		/**
+		 * Custom pointer to be passed to callbacks. The pointer nor its data is processed internally.
+		 * \param		pdata		Paramer of type void*.
+		 */
+		KSI_ASYNC_OPT_CALLBACK_USERDATA,
 
 		__KSI_ASYNC_OPT_COUNT
 	} KSI_AsyncOption;

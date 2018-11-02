@@ -131,6 +131,11 @@ cleanup:
 }
 #endif
 
+static int connectListener(KSI_CTX *ctx, size_t id, void* p, int state) {
+	KSI_LOG_debug(ctx, ">>>>>>>>>>>> [%p] connected=%d\n", (void*)id, state != 0);
+	return KSI_OK;
+}
+
 int main(int argc, char **argv) {
 	KSI_CTX *ksi = NULL;
 	int res = KSI_UNKNOWN_ERROR;
@@ -269,6 +274,12 @@ int main(int argc, char **argv) {
 			}
 
 		}
+	}
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK, (void*)connectListener);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set connect listener.\n");
+		goto cleanup;
 	}
 
 	nof_requests = atoi(argv[AGRV_NOF_TEST_REQUESTS]);
