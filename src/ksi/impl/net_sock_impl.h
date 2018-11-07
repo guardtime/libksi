@@ -54,6 +54,7 @@
 #  define close(sock) closesocket(sock)
 #  define poll WSAPoll
 #  define ioctl ioctlsocket
+#  define KSI_INVALID_SOCKET  INVALID_SOCKET
 #  define KSI_SCK_SOCKET_ERROR SOCKET_ERROR
 #  define KSI_SCK_errno       WSAGetLastError()
 #  define KSI_SCK_strerror(no) ""
@@ -63,6 +64,7 @@
 #  define KSI_SCK_EINPROGRESS WSAEINPROGRESS
 #  define KSI_SCK_EINTR       WSAEINTR
 #else
+#  define KSI_INVALID_SOCKET  (-1)
 #  define KSI_SCK_SOCKET_ERROR (-1)
 #  define KSI_SCK_errno       (errno)
 #  define KSI_SCK_strerror(no) strerror(no)
