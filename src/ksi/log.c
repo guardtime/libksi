@@ -91,7 +91,7 @@ KSI_LOG_FN(notice, NOTICE);
 KSI_LOG_FN(warn, WARN);
 KSI_LOG_FN(error, ERROR);
 
-int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len) {
+static int logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len) {
 	int res = KSI_UNKNOWN_ERROR;
 	char *logStr = NULL;
 	size_t logStr_size = 0;
@@ -132,6 +132,32 @@ cleanup:
 
 	KSI_free(logStr);
 
+	return res;
+}
+
+int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix_format, const unsigned char *data, size_t data_len, ...) {
+	int res = KSI_UNKNOWN_ERROR;
+	char prefix[1024] = {'\0'};
+
+	if (ctx == NULL || (data == NULL && data_len != 0) || (data != NULL && data_len == 0)) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	if (level > ctx->logLevel) goto cleanup;
+
+	if (prefix_format != NULL) {
+		va_list va;
+		va_start(va, data_len);
+		KSI_vsnprintf(prefix, sizeof(prefix), prefix_format, va);
+		va_end(va);
+	}
+
+	res = logBlob(ctx, level, prefix, data, data_len);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+cleanup:
 	return res;
 }
 
