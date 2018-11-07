@@ -1328,6 +1328,9 @@ static int asyncClient_run(KSI_AsyncClient *c, int (*handleResp)(KSI_AsyncClient
 	KSI_ERR_clearErrors(c->ctx);
 	res = c->dispatch(c->clientImpl);
 	if (res == KSI_ASYNC_CONNECTION_CLOSED) {
+		/* Request in KSI_ASYNC_STATE_WAITING_FOR_RESPONSE state will not get responded. However, run through the
+		 * response queue first, there might be some valid responses still waiting.
+		 */
 		connClosed = true;
 	} else if (res != KSI_OK) {
 		KSI_pushError(c->ctx, res, "Async client impl returned error.");

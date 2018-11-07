@@ -216,7 +216,6 @@ extern "C" {
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note A valid configuration will only be returned if the handle state is #KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED.
 	 * \see #KSI_AsyncHandle_getState for getting the state of the request.
-	 * \see #KSI_Config_free for cleaning up returned resources.
 	 */
 	int KSI_AsyncHandle_getConfig(const KSI_AsyncHandle *h, KSI_Config **config);
 
@@ -359,16 +358,7 @@ extern "C" {
 	 * \param[in]		connected		Boolean value indication connection state.
 	 * \return Implementation must return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	typedef int (*KSI_AsyncServiceCallback_ConnectState)(KSI_CTX *ctx, size_t id, void *userp, int connected);
-
-	/**
-	 * Async service configuration receive callback.
-	 * \param[in]		ctx				KSI context object.
-	 * \param[in]		userp			Contains whatever user-defined value set using the KSI_ASYNC_OPT_CALLBACK_USERDATA.
-	 * \param[in]		conf			Pointer to the configuration.
-	 * \return Implementation must return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 */
-	typedef int (*KSI_AsyncServiceCallback_Config)(KSI_CTX *ctx, void *userp, int connected);
+	typedef int (*KSI_AsyncServiceCallback_ConnectState)(KSI_CTX *ctx, size_t id, void *userp, const char *host, int connected);
 
 	/**
 	 * Enum defining async service options. Pay attention to the used parameter type.
@@ -443,15 +433,6 @@ extern "C" {
 		 */
 		KSI_ASYNC_OPT_PUSH_CONF_CALLBACK,
 
-#if 0
-		/**
-		 * Same as #KSI_ASYNC_OPT_PUSH_CONF_CALLBACK.
-		 * \param		p_func		Paramer of type #KSI_AsyncServiceCallback_Config.
-		 * \note Current option has higher priority than #KSI_ASYNC_OPT_PUSH_CONF_CALLBACK.
-		 */
-		KSI_ASYNC_OPT_PUSH_CONF_CALLBACK_WITH_USERDATA,
-#endif
-
 		/**
 		 * Get the list of high availability service subservices.
 		 * \param[out]	p_list		Paramer of type #KSI_AsyncServiceList.
@@ -465,6 +446,7 @@ extern "C" {
 		/**
 		 * The callback is invoked when the network connection state to a server has changed.
 		 * \param		p_func		Paramer of type #KSI_AsyncServiceConnectState_Callback.
+		 * \note Only applicable in case of TCP client.
 		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
 		 * and casted to #KSI_AsyncServiceConnectState_Callback before use.
 		 */
