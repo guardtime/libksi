@@ -213,7 +213,7 @@ int KSI_LOG_logDataHash(KSI_CTX *ctx, int level, const char *prefix, const KSI_D
 	res = KSI_DataHash_getImprint(hsh, &imprint, &imprint_len);
 	if (res != KSI_OK) goto cleanup;
 
-	res = KSI_LOG_logBlob(ctx, level, prefix, imprint, imprint_len);
+	res = logBlob(ctx, level, prefix, imprint, imprint_len);
 
 cleanup:
 
