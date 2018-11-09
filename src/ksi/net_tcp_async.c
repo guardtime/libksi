@@ -267,14 +267,6 @@ static int dispatch(TcpAsyncCtx *tcpCtx) {
 					closeSocket(tcpCtx, __LINE__);
 					goto cleanup;
 				}
-			} else {
-				/* Verify that the connection hasn't been closed by peer meanwhile. */
-				if (pfd.revents & POLLHUP) {
-					KSI_LOG_debug(tcpCtx->ctx, "[%p] Async TCP connection closed.", tcpCtx);
-					closeSocket(tcpCtx, __LINE__);
-					res = KSI_ASYNC_CONNECTION_CLOSED;
-					goto cleanup;
-				}
 			}
 			break;
 	}
