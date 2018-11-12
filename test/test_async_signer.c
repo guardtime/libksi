@@ -42,6 +42,7 @@
 
 /*#define REQ_ADD_LEVEL*/
 /*#define SIG_CREATE_FROM_RESPONSE*/
+/*#define USE_CONNECTION_STATE_CALLBACK*/
 
 enum {
 	ARGV_COMMAND = 0,
@@ -128,6 +129,13 @@ cleanup:
 	KSI_SignatureBuilder_free(builder);
 
 	return res;
+}
+#endif
+
+#ifdef USE_CONNECTION_STATE_CALLBACK
+static int logConnectionState(KSI_CTX *ctx, size_t id, void* p, const char *host, int state) {
+	KSI_LOG_debug(ctx, "[%p] host=%s %s.", (void*)id, host, state ? "connected" : "disconnected");
+	return KSI_OK;
 }
 #endif
 
@@ -270,6 +278,14 @@ int main(int argc, char **argv) {
 
 		}
 	}
+
+#ifdef USE_CONNECTION_STATE_CALLBACK
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK, (void*)logConnectionState);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set connect listener.\n");
+		goto cleanup;
+	}
+#endif
 
 	nof_requests = atoi(argv[AGRV_NOF_TEST_REQUESTS]);
 	KSI_LOG_info(ksi, "Nof test requests: %llu", (unsigned long long)nof_requests);

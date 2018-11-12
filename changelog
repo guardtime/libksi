@@ -1,6 +1,11 @@
 * IMPROVEMENT: Helper interface for creating signing KSI_AsyncHandle.
+* FEATURE: Added async service option KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK for setting connection state listener.
+* FEATURE: Added prefix string format support to KSI_LOG_logBlob. Interface remains fully backwards compatible.
+* IMPROVEMENT: Enhanced async client logging, by adding client and request id's. Provides more distinguishable log entries in case of high availability service.
+* IMPROVEMENT: Added async TCP peer connection POLLHUP signal handling. Requests will return immediately with error state instead of waiting for timeout.
 * IMPROVEMENT: Failing test TestPKICertificateToString fixed with corrections made to the expired certificates.
-BUGFIX: Made URI schemes case insensitive.
+* BUGFIX: Made URI schemes case insensitive.
+
 Version 3.19
 
 * FEATURE: Added find function to KSI_List interface.

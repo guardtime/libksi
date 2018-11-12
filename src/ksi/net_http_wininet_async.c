@@ -89,8 +89,8 @@ struct WinAsyncReq_st {
 	/* WinINet request handle. */
 	HINTERNET requestHandle;
 
-	/* KSI context. */
-	KSI_CTX *ctx;
+	/* Parent client. */
+	HttpAsyncCtx *client;
 
 	/* Request context. */
 	KSI_AsyncHandle *reqCtx;
@@ -131,11 +131,11 @@ static void WinAsyncReq_free(WinAsyncReq *o) {
 	}
 }
 
-static int WinAsyncReq_new(KSI_CTX *ctx, WinAsyncReq **o) {
+static int WinAsyncReq_new(HttpAsyncCtx *clientCtx, WinAsyncReq **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	WinAsyncReq *tmp = NULL;
 
-	if (ctx == NULL || o == NULL) {
+	if (clientCtx == NULL || o == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -146,7 +146,7 @@ static int WinAsyncReq_new(KSI_CTX *ctx, WinAsyncReq **o) {
 		goto cleanup;
 	}
 
-	tmp->ctx = ctx;
+	tmp->client = clientCtx;
 	tmp->reqCtx = NULL;
 	tmp->requestHandle = NULL;
 	tmp->len = 0;
@@ -227,7 +227,9 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 		WinAsyncReq *request = (WinAsyncReq*)dwContext;
 
 #ifdef KSI_DEBUG_WININET_STATUS_CALLBACK
-		KSI_LOG_debug(request->ctx, "Async WinINet: request %p: thread %d: status %d (%s).", request, GetCurrentThreadId(), dwInternetStatus, WinINetCallbackStatus_toString(dwInternetStatus));
+		KSI_LOG_debug(request->ctx, "[%p] Async WinINet: [%p] thread %d: status %d (%s).",
+				request->client, request,
+				GetCurrentThreadId(), dwInternetStatus, WinINetCallbackStatus_toString(dwInternetStatus));
 #endif
 		switch (dwInternetStatus) {
 
@@ -244,7 +246,8 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 					BYTE rcvBuff[2048];
 
 					if (request->status != KSI_ASYNC_NOT_FINISHED) {
-						KSI_LOG_debug(request->ctx, "Async WinINet: %p Request has completed.", request);
+						KSI_LOG_debug(request->client->ctx, "[%p] Async WinINet: [%p] Request has completed.",
+								request->client, request);
 						goto cleanup;
 					}
 
@@ -256,12 +259,16 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 					/* Get the HTTP status code. */
 					if (!HttpQueryInfo(request->requestHandle, HTTP_QUERY_STATUS_CODE | HTTP_QUERY_FLAG_NUMBER,
 							&httpStatus, &infoLen, 0)) {
-						KSI_LOG_error(request->ctx, "Async WinINet: Unable to get HTTP status. Error %d.", (dwError = GetLastError()));
+						KSI_LOG_error(request->client->ctx, "[%p] Async WinINet: [%p] Unable to get HTTP status. Error %d.",
+								request->client, request,
+								(dwError = GetLastError()));
 						goto cleanup;
 					}
 
 					if (httpStatus >= 400 && httpStatus < 600) {
-						KSI_LOG_error(request->ctx, "Async WinINet: received HTTP code %d.", httpStatus);
+						KSI_LOG_error(request->client->ctx, "[%p] Async WinINet: [%p] received HTTP code %d.",
+								request->client, request,
+								httpStatus);
 						request->status = KSI_HTTP_ERROR;
 						request->errExt = httpStatus;
 						/* We are finished with the request. Close handle and wait for INTERNET_STATUS_HANDLE_CLOSING. */
@@ -282,9 +289,12 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 							dwError = GetLastError();
 							if (dwError == ERROR_IO_PENDING) {
 								/* Wait for INTERNET_STATUS_REQUEST_COMPLETE.  */
-								KSI_LOG_debug(request->ctx, "Async WinINet: %p IO pending.", request);
+								KSI_LOG_debug(request->client->ctx, "[%p] Async WinINet: [%p] IO pending.",
+										request->client, request);
 							} else {
-								KSI_LOG_error(request->ctx, "Async WinINet: Unable to read data. Error %d.", dwError);
+								KSI_LOG_error(request->client->ctx, "[%p] Async WinINet: [%p] Unable to read data. Error %d.",
+										request->client, request,
+										dwError);
 							}
 							goto cleanup;
 						}
@@ -307,11 +317,14 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 						request->len += ib.dwBufferLength;
 						tmp_buffer = NULL;
 
-						KSI_LOG_debug(request->ctx, "Async WinINet: %p Received %lu bytes (%lu total).",
-								request, ib.dwBufferLength, request->len);
+						KSI_LOG_debug(request->client->ctx, "[%p] Async WinINet: [%p] Received %lu bytes (%lu total).",
+								request->client, request,
+								ib.dwBufferLength, request->len);
 					}
 
-					KSI_LOG_debug(request->ctx, "Async WinINet: %p Complete (%lu bytes received).", request, request->len);
+					KSI_LOG_debug(request->client->ctx, "[%p] Async WinINet: [%p] Complete (%lu bytes received).",
+							request->client, request,
+							request->len);
 
 					request->dataRcving = false;
 					request->dataComplete = true;
@@ -340,7 +353,9 @@ static void CALLBACK WinINet_asyncCallback(HINTERNET hInternet, DWORD_PTR dwCont
 
 cleanup:
 		if (dwError != ERROR_SUCCESS && dwError != ERROR_IO_PENDING) {
-			KSI_LOG_error(request->ctx, "Async WinINet: %p Status %d: Error %d.", request, dwInternetStatus, dwError);
+			KSI_LOG_error(request->client->ctx, "[%p] Async WinINet: [%p] Status %d: Error %d.",
+					request->client, request,
+					dwInternetStatus, dwError);
 			/* Set error. */
 			request->status = KSI_NETWORK_ERROR;
 			request->errExt = dwError;
@@ -416,7 +431,7 @@ static int WinINet_init(HttpAsyncCtx *clientCtx) {
 
 	/* Set status callback. */
 	if (InternetSetStatusCallback(hConnect, WinINet_asyncCallback) == INTERNET_INVALID_STATUS_CALLBACK)	{
-		KSI_LOG_error(clientCtx->ctx, "Async WinINet: Unable to set callback. Error %d.", GetLastError());
+		KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: Unable to set callback. Error %d.", clientCtx, GetLastError());
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;
 	}
@@ -463,12 +478,13 @@ static int WinINet_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req, DW
 
 	/* Verify the length on the raw data. */
 	if (req->len > DWORD_MAX) {
-		KSI_LOG_error(clientCtx->ctx, "Async WinINet: Request length larger than DWORD_MAX %d.", req->len);
+		KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: Request length larger than DWORD_MAX %d.",
+				clientCtx, req->len);
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = WinAsyncReq_new(clientCtx->ctx, &httpReq);
+	res = WinAsyncReq_new(clientCtx, &httpReq);
 	if (res != KSI_OK) {
 		KSI_pushError(clientCtx->ctx, res, NULL);
 		goto cleanup;
@@ -489,7 +505,8 @@ static int WinINet_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req, DW
 			reqFlags,
 			(DWORD_PTR)httpReq);
 	if (httpReq->requestHandle == NULL) {
-		KSI_LOG_error(clientCtx->ctx, "Async WinINet: Unable to initialize request handle. Error %d.", GetLastError());
+		KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: Unable to initialize request handle. Error %d.",
+				clientCtx, GetLastError());
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;
 	}
@@ -497,7 +514,8 @@ static int WinINet_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req, DW
 	/* Create events. */
 	httpReq->closedEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	if (httpReq->closedEvent == NULL) {
-		KSI_LOG_error(httpReq->ctx, "Async WinINet: failed to create event handle. Error %d.", GetLastError());
+		KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: failed to create event handle. Error %d.",
+				clientCtx, GetLastError());
 		res = KSI_OUT_OF_MEMORY;
 		goto cleanup;
 	}
@@ -505,21 +523,24 @@ static int WinINet_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req, DW
 	/* Set timeouts (in millisec). */
 	opt = (DWORD)clientCtx->options[KSI_ASYNC_OPT_CON_TIMEOUT] * 1000 * 2;
 	if (!InternetSetOption(httpReq->requestHandle, INTERNET_OPTION_CONNECT_TIMEOUT, &opt, sizeof(opt))) {
-		KSI_LOG_error(clientCtx->ctx, "Async WinINet: Unable to set connect timeout. Error %d.", GetLastError());
+		KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: Unable to set connect timeout. Error %d.",
+				clientCtx, GetLastError());
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;
 	}
 
 	opt = (DWORD)clientCtx->options[KSI_ASYNC_OPT_SND_TIMEOUT] * 1000 * 2;
 	if (!InternetSetOption(httpReq->requestHandle, INTERNET_OPTION_SEND_TIMEOUT, &opt, sizeof(opt))) {
-		KSI_LOG_error(clientCtx->ctx, "Async WinINet: Unable to set send timeout. Error %d.", GetLastError());
+		KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: Unable to set send timeout. Error %d.",
+				clientCtx, GetLastError());
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;
 	}
 
 	opt = (DWORD)clientCtx->options[KSI_ASYNC_OPT_RCV_TIMEOUT] * 1000 * 2;
 	if (!InternetSetOption(httpReq->requestHandle, INTERNET_OPTION_RECEIVE_TIMEOUT, &opt, sizeof(opt))) {
-		KSI_LOG_error(clientCtx->ctx, "Async WinINet: Unable to set receive timeout. Error %d.", GetLastError());
+		KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: Unable to set receive timeout. Error %d.",
+				clientCtx, GetLastError());
 		res = KSI_NETWORK_ERROR;
 		goto cleanup;
 	}
@@ -528,7 +549,8 @@ static int WinINet_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req, DW
 	if (clientCtx->mimeType) {
 		if (!HttpAddRequestHeaders(httpReq->requestHandle, clientCtx->mimeType, -1L,
 				HTTP_ADDREQ_FLAG_ADD | HTTP_ADDREQ_FLAG_REPLACE)) {
-			KSI_LOG_error(clientCtx->ctx, "Async WinINet: Unable to set MIME type. Error %d.", GetLastError());
+			KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: Unable to set MIME type. Error %d.",
+					clientCtx, GetLastError());
 			res = KSI_NETWORK_ERROR;
 			goto cleanup;
 		}
@@ -542,13 +564,13 @@ static int WinINet_sendRequest(HttpAsyncCtx *clientCtx, KSI_AsyncHandle *req, DW
 				(LPVOID)httpReq->reqCtx->raw, (DWORD)httpReq->reqCtx->len)) {
 		DWORD dwError = GetLastError();
 		if (dwError != ERROR_IO_PENDING) {
-			KSI_LOG_error(clientCtx->ctx, "Async WinINet: failed to send request. Error %d.", dwError);
+			KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: failed to send request. Error %d.", clientCtx, dwError);
 			res = KSI_NETWORK_ERROR;
 			if (error) *error = dwError;
 			goto cleanup;
 		}
 	}
-	KSI_LOG_debug(clientCtx->ctx, "Async WinINet: request %p sent.", httpReq);
+	KSI_LOG_debug(clientCtx->ctx, "[%p] Async WinINet: [%p] request sent.", clientCtx, httpReq);
 
 	res = WinAsyncReqList_append(clientCtx->httpQueue, httpReq);
 	if (res != KSI_OK) goto cleanup;
@@ -606,14 +628,17 @@ static int WinINet_handleResponse(HttpAsyncCtx *clientCtx) {
 		}
 
 		if (httpReq->status != KSI_OK) {
-			KSI_LOG_debug(clientCtx->ctx, "Async WinINet: error result %x:%d.", httpReq->status, httpReq->errExt);
+			KSI_LOG_debug(clientCtx->ctx, "[%p] Async WinINet: error result %x:%d.",
+					clientCtx, httpReq->status, httpReq->errExt);
 			handle->state = KSI_ASYNC_STATE_ERROR;
 			handle->err = httpReq->status;
 			handle->errExt = httpReq->errExt;
 		} else {
 			size_t count = 0;
 
-			KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinINet: received stream", httpReq->raw, httpReq->len);
+			KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "[%p] Async WinINet: received stream",
+					httpReq->raw, httpReq->len,
+					clientCtx);
 
 			while (count < httpReq->len) {
 				KSI_FTLV ftlv;
@@ -624,26 +649,32 @@ static int WinINet_handleResponse(HttpAsyncCtx *clientCtx) {
 				res = KSI_FTLV_memRead(httpReq->raw + count, httpReq->len - count, &ftlv);
 				if (res != KSI_OK) {
 					KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_ERROR,
-							"Async WinINet: Unable to extract TLV from input stream",
-							httpReq->raw, httpReq->len);
+							"[%p] Async WinINet: Unable to extract TLV from input stream",
+							httpReq->raw, httpReq->len,
+							clientCtx);
 					handle->state = KSI_ASYNC_STATE_ERROR;
 					handle->err = KSI_NETWORK_ERROR;
 					break;
 				}
 				tlvSize = ftlv.hdr_len + ftlv.dat_len;
 
-				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinINet: received response", httpReq->raw + count, tlvSize);
+				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "[%p] Async WinINet: received response",
+						httpReq->raw + count, tlvSize,
+						clientCtx);
 
 				res = KSI_OctetString_new(clientCtx->ctx, httpReq->raw + count,  tlvSize, &resp);
 				if (res != KSI_OK) {
-					KSI_LOG_error(clientCtx->ctx, "Async WinINet: unable to create new KSI_OctetString object. Error: %x.", res);
+					KSI_LOG_error(clientCtx->ctx,
+							"[%p] Async WinINet: unable to create new KSI_OctetString object. Error: %x.",
+							clientCtx, res);
 					res = KSI_OK;
 					goto cleanup;
 				}
 
 				res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
 				if (res != KSI_OK) {
-					KSI_LOG_error(clientCtx->ctx, "Async WinINet: unable to add new response to queue. Error: %x.", res);
+					KSI_LOG_error(clientCtx->ctx, "[%p] Async WinINet: unable to add new response to queue. Error: %x.",
+							clientCtx, res);
 					res = KSI_OK;
 					goto cleanup;
 				}
@@ -681,7 +712,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 	if (clientCtx->sessionHandle == NULL) {
 		/* Only open connection if there is anything in request queue. */
 		if (KSI_AsyncHandleList_length(clientCtx->reqQueue) == 0) {
-			KSI_LOG_debug(clientCtx->ctx, "Async WinINet not ready: request is queue empty.");
+			KSI_LOG_debug(clientCtx->ctx, "[%p] Async WinINet: not ready, request queue is empty.", clientCtx);
 			res = KSI_OK;
 			goto cleanup;
 		}
@@ -721,21 +752,21 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 
 		/* Check if the request count can be restarted. */
 		if (difftime(curTime, clientCtx->roundStartAt) >= clientCtx->options[KSI_ASYNC_PRIVOPT_ROUND_DURATION]) {
-			KSI_LOG_info(clientCtx->ctx, "Async WinINet round request count: %u", clientCtx->roundCount);
+			KSI_LOG_info(clientCtx->ctx, "[%p] Async WinINet: round request count: %u", clientCtx, clientCtx->roundCount);
 			clientCtx->roundCount = 0;
 			clientCtx->roundStartAt = curTime;
 		}
 		/* Check if more requests can be sent within the given timeframe. */
 		if (!(clientCtx->roundCount < clientCtx->options[KSI_ASYNC_OPT_MAX_REQUEST_COUNT])) {
-			KSI_LOG_debug(clientCtx->ctx, "Async WinINet round max request count reached.");
+			KSI_LOG_debug(clientCtx->ctx, "[%p] Async WinINet: round max request count reached.", clientCtx);
 			break;
 		}
 
-		KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async WinINet: Preparing request", req->raw, req->len);
+		KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "[%p] Async WinINet: Preparing request", req->raw, req->len, clientCtx);
 
 		res = WinINet_sendRequest(clientCtx, req, &error);
 		if (res != KSI_OK) {
-			KSI_LOG_debug(clientCtx->ctx, "Async WinINet: Failed to send request. Error %x:%d.", res, error);
+			KSI_LOG_debug(clientCtx->ctx, "[%p] Async WinINet: Failed to send request. Error %x:%d.", clientCtx, res, error);
 			KSI_pushError(clientCtx->ctx, res, "Failed to send request.");
 			/* Set error. */
 			req->state = KSI_ASYNC_STATE_ERROR;
@@ -759,7 +790,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 	/* Handle input. */
 	res = WinINet_handleResponse(clientCtx);
 	if (res != KSI_OK) {
-		KSI_LOG_debug(clientCtx->ctx, "Async WinINet: Failed to handle response. Error %x.", res);
+		KSI_LOG_debug(clientCtx->ctx, "[%p] Async WinINet: Failed to handle response. Error %x.", clientCtx, res);
 		KSI_pushError(clientCtx->ctx, res, "Failed to handle response.");
 		res = KSI_OK;
 		goto cleanup;
