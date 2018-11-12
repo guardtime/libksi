@@ -134,6 +134,63 @@ cleanup:
 	return res;
 }
 
+int KSI_AsyncSigningHandle_new(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_AsyncHandle **o) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AggregationReq *req = NULL;
+	KSI_DataHash *hshRef = NULL;
+	KSI_Integer *reqLvl = NULL;
+	KSI_AsyncHandle *tmp = NULL;
+
+	if (ctx == NULL || rootHash == NULL || o == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_AggregationReq_new(ctx, &req);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_setRequestHash(req, (hshRef = KSI_DataHash_ref(rootHash)));
+	if (res != KSI_OK) {
+		KSI_DataHash_free(hshRef);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Integer_new(ctx, rootLevel, &reqLvl);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	res = KSI_AggregationReq_setRequestLevel(req, reqLvl);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	reqLvl = NULL;
+
+	res = KSI_AsyncAggregationHandle_new(ctx, req, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	req = NULL;
+
+	*o = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_AggregationReq_free(req);
+	KSI_Integer_free(reqLvl);
+	KSI_AsyncHandle_free(tmp);
+
+	return res;
+}
+
 int KSI_AsyncExtendHandle_new(KSI_CTX *ctx, KSI_ExtendReq *req, KSI_AsyncHandle **o) {
 	int res = KSI_UNKNOWN_ERROR;
 
