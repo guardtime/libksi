@@ -312,6 +312,137 @@ void Test_AsyncSign_loop_http(CuTest* tc) {
 	asyncSigning_loop_getResponse(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
 }
 
+
+static void asyncSigning_useSigningHandle_loop_getResponse(CuTest* tc, const char *url, const char *user, const char *pass) {
+	int res;
+	KSI_AsyncService *as = NULL;
+	time_t startTime;
+	const char **p_req = NULL;
+	size_t onHold = 0;
+	size_t received = 0;
+	size_t slept = 0;
+
+	KSI_LOG_debug(ctx, "%s: START (%s)", __FUNCTION__, url);
+	KSI_ERR_clearErrors(ctx);
+	startTime = time(NULL);
+
+	res = KSI_SigningAsyncService_new(ctx, &as);
+	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && as != NULL);
+
+	res = KSI_AsyncService_setEndpoint(as, url, user, pass);
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)(1 << 3));
+	CuAssert(tc, "Unable to set maximum request count.", res == KSI_OK);
+
+	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void*)(NOF_TEST_REQUESTS));
+	CuAssert(tc, "Unable to set request cache size.", res == KSI_OK);
+
+	p_req = TEST_REQUESTS;
+	do {
+		KSI_AsyncHandle *respHandle = NULL;
+		int state = KSI_ASYNC_STATE_UNDEFINED;
+
+		if (*p_req != NULL) {
+			KSI_AsyncHandle *reqHandle = NULL;
+			KSI_DataHash *hsh = NULL;
+
+			KSI_LOG_debug(ctx, "%s: REQUEST (\"%s\").", __FUNCTION__, *p_req);
+
+			res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
+			CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
+
+			res = KSI_AsyncSigningHandle_new(ctx, (void*)KSI_DataHash_ref(hsh), 0, &reqHandle);
+			CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
+
+			res = KSI_AsyncHandle_setRequestCtx(reqHandle, hsh, (void (*)(void*))KSI_DataHash_free);
+			CuAssert(tc, "Unable to set request context.", res == KSI_OK);
+
+			res = KSI_AsyncService_addRequest(as, reqHandle);
+			CuAssert(tc, "Unable to add request.", res == KSI_OK);
+			p_req++;
+		}
+
+		KSI_LOG_debug(ctx, "%s: RUN.", __FUNCTION__);
+
+		res = KSI_AsyncService_run(as, &respHandle, &onHold);
+		CuAssert(tc, "Failed to run async service.", res == KSI_OK);
+
+		if (respHandle == NULL) {
+			if (*p_req == NULL) {
+				CuAssert(tc, "No response within timeout.", slept < conf.async.timeout.cumulative);
+
+				/* There is nothing to be sent. */
+				/* Wait for a while to avoid busy loop. */
+				KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
+				sleep_ms(conf.async.timeout.sleep);
+				slept += conf.async.timeout.sleep;
+			}
+			continue;
+		}
+		slept = 0;
+
+		res = KSI_AsyncHandle_getState(respHandle, &state);
+		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
+
+		switch (state) {
+			case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
+					KSI_DataHash *reqCtx = NULL;
+					KSI_DataHash *docHsh = NULL;
+					KSI_Signature *signature = NULL;
+
+					KSI_LOG_debug(ctx, "%s: RESPONSE.", __FUNCTION__);
+
+					res = KSI_AsyncHandle_getSignature(respHandle, &signature);
+					CuAssert(tc, "Unable to extract signature.", res == KSI_OK && signature != NULL);
+
+					res = KSI_Signature_getDocumentHash(signature, &docHsh);
+					CuAssert(tc, "Unable to get document hash.", res == KSI_OK && docHsh != NULL);
+
+					res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtx);
+					CuAssert(tc, "Unable to get request context.", res == KSI_OK && reqCtx != NULL);
+
+					CuAssert(tc, "Request context data mismatch.", KSI_DataHash_equals(reqCtx, docHsh));
+
+					received++;
+
+					KSI_Signature_free(signature);
+				}
+				break;
+			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
+				/* do nothing. */
+				break;
+
+			case KSI_ASYNC_STATE_ERROR:
+				CuFail(tc, "Requests must succeed.");
+				break;
+
+			default:
+				CuFail(tc, "Unknown state for finalized request.");
+				break;
+		}
+
+		KSI_AsyncHandle_free(respHandle);
+	} while (onHold);
+	CuAssert(tc, "Response count mismatch.", NOF_TEST_REQUESTS == received);
+
+	KSI_LOG_debug(ctx, "%s: CLEANUP.", __FUNCTION__);
+
+	KSI_AsyncService_free(as);
+
+	KSI_LOG_debug(ctx, "%s: FINISH in %fs.", __FUNCTION__, difftime(time(NULL), startTime));
+}
+
+void Test_AsyncSign_useSigningHandle_loop_tcp(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_useSigningHandle_loop_getResponse(tc, KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
+void Test_AsyncSign_useSigningHandle_loop_http(CuTest* tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+	asyncSigning_useSigningHandle_loop_getResponse(tc, KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
+}
+
 static void asyncSigning_collect_getResponse(CuTest* tc, const char *url, const char *user, const char *pass) {
 	int res;
 	KSI_AsyncService *as = NULL;
@@ -1114,6 +1245,7 @@ CuSuite* AsyncAggrIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyOptions_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyCacheSizeOption_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_useSigningHandle_loop_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_tcp);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_tcp);
@@ -1127,6 +1259,7 @@ CuSuite* AsyncAggrIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyOptions_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyCacheSizeOption_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_http);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_useSigningHandle_loop_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_http);

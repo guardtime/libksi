@@ -258,6 +258,7 @@ EXPORTS
 	KSI_AbstractAsyncClient_new
 	KSI_AsyncHandle_free
 	KSI_AsyncAggregationHandle_new
+	KSI_AsyncSigningHandle_new
 	KSI_AsyncExtendHandle_new
 	KSI_AsyncExtendingHandle_new
 	KSI_AsyncHandle_setRequestCtx

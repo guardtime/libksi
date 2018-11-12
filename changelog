@@ -1,3 +1,4 @@
+* IMPROVEMENT: Helper interface for creating signing KSI_AsyncHandle.
 * IMPROVEMENT: Failing test TestPKICertificateToString fixed with corrections made to the expired certificates.
 BUGFIX: Made URI schemes case insensitive.
 Version 3.19

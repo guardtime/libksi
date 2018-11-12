@@ -64,8 +64,27 @@ extern "C" {
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 * \note The handle takes ownership of the \c req resource, thus it may not be freed after a successful
 	 * call to this function.
+	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
+	 * \see #KSI_AsyncHandle_getAggregationResp for retrieving aggregation response.
+	 * \see #KSI_AsyncHandle_getSignature for retrieving KSI signature fot the \c rootHash hash value.
 	 */
 	int KSI_AsyncAggregationHandle_new(KSI_CTX *ctx, KSI_AggregationReq *req, KSI_AsyncHandle **o);
+
+	/**
+	 * Constructor for the async signing handle object.
+	 * \param[in]		ctx				KSI context.
+	 * \param[in]		rootHash		Root value of the hash tree. If \c rootLevel is nil, it is the document hash.
+	 * \param[in]		rootLevel		Level of the root node (0 =< x <= 0xff).
+	 * \param[out]		o				Pointer to the receiving pointer.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The handle takes ownership of the \c rootHash resource, thus it may not be freed after a successful
+	 * call to this function.
+	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
+	 * \see #KSI_AsyncHandle_getAggregationResp for retrieving aggregation response.
+	 * \see #KSI_AsyncHandle_getSignature for retrieving KSI signature fot the \c rootHash hash value.
+	 * \see #KSI_DataHash_ref for keeping a reference to the \c rootHash.
+	 */
+	int KSI_AsyncSigningHandle_new(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_AsyncHandle **o);
 
 	/**
 	 * Constructor for the async handle object.
@@ -77,6 +96,7 @@ extern "C" {
 	 * call to this function.
 	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
 	 * \see #KSI_AsyncHandle_getExtendResp for retrieving extend response.
+	 * \see #KSI_SignatureBuilder_applyCalendarHashChain for constructing a KSI signature from extending response.
 	 */
 	int KSI_AsyncExtendHandle_new(KSI_CTX *ctx, KSI_ExtendReq *req, KSI_AsyncHandle **o);
 
