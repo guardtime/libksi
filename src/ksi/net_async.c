@@ -137,7 +137,6 @@ cleanup:
 int KSI_AsyncSigningHandle_new(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_t rootLevel, KSI_AsyncHandle **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationReq *req = NULL;
-	KSI_DataHash *hshRef = NULL;
 	KSI_Integer *reqLvl = NULL;
 	KSI_AsyncHandle *tmp = NULL;
 
@@ -153,9 +152,8 @@ int KSI_AsyncSigningHandle_new(KSI_CTX *ctx, KSI_DataHash *rootHash, KSI_uint64_
 		goto cleanup;
 	}
 
-	res = KSI_AggregationReq_setRequestHash(req, (hshRef = KSI_DataHash_ref(rootHash)));
+	res = KSI_AggregationReq_setRequestHash(req, rootHash);
 	if (res != KSI_OK) {
-		KSI_DataHash_free(hshRef);
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}

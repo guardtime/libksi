@@ -352,10 +352,10 @@ static void asyncSigning_useSigningHandle_loop_getResponse(CuTest* tc, const cha
 			res = KSI_DataHash_create(ctx, *p_req, strlen(*p_req), KSI_HASHALG_SHA2_256, &hsh);
 			CuAssert(tc, "Unable to create data hash from string.", res == KSI_OK && hsh != NULL);
 
-			res = KSI_AsyncSigningHandle_new(ctx, hsh, 0, &reqHandle);
+			res = KSI_AsyncSigningHandle_new(ctx, (void*)KSI_DataHash_ref(hsh), 0, &reqHandle);
 			CuAssert(tc, "Unable to create async request.", res == KSI_OK && reqHandle != NULL);
 
-			res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)KSI_DataHash_ref(hsh), (void (*)(void*))KSI_DataHash_free);
+			res = KSI_AsyncHandle_setRequestCtx(reqHandle, hsh, (void (*)(void*))KSI_DataHash_free);
 			CuAssert(tc, "Unable to set request context.", res == KSI_OK);
 
 			res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -1259,7 +1259,7 @@ CuSuite* AsyncAggrIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyOptions_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSigningService_verifyCacheSizeOption_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_loop_http);
-	SUITE_ADD_TEST(suite, Test_AsyncSign_useSigningHandle_loop_tcp);
+	SUITE_ADD_TEST(suite, Test_AsyncSign_useSigningHandle_loop_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_collect_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_useExtender_http);
 	SUITE_ADD_TEST(suite, Test_AsyncSign_fillupCache_http);
