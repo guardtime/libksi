@@ -74,7 +74,7 @@ static int prepareRequest(
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, desc, raw, raw_len);
+	KSI_LOG_logBlob(client->ctx, KSI_LOG_DEBUG, "%s", raw, raw_len, desc);
 
 	/* Create a new request handle. */
 	res = KSI_RequestHandle_new(client->ctx, raw, raw_len, &tmp);

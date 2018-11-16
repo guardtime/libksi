@@ -102,16 +102,17 @@ extern "C" {
 	int KSI_LOG_error(KSI_CTX *ctx, char *format, ...) KSI_ATTRIBUTE((format(printf, 2, 3)));
 
 	/**
-	 * A helper function for logging raw data. The log message will be prefixed with \c prefix and
+	 * A helper function for logging raw data. The log message will be prefixed with \c prefix_format and
 	 * the binary data is logged as hex.
-	 * \param[in]	ctx			KSI context.
-	 * \param[in]	level		Log level.
-	 * \param[in]	prefix		Prefix for the log message.
-	 * \param[in]	data		Pointer to the raw data.
-	 * \param[in]	data_len	Length of the data.
+	 * \param[in]	ctx				KSI context.
+	 * \param[in]	level			Log level.
+	 * \param[in]	prefix_format	Format string for the log prefix message.
+	 * \param[in]	data			Pointer to the raw data.
+	 * \param[in]	data_len		Length of the data.
+	 * \param[in]	...				Arguments.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
-	int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix, const unsigned char *data, size_t data_len);
+	int KSI_LOG_logBlob(KSI_CTX *ctx, int level, const char *prefix_format, const unsigned char *data, size_t data_len, ...) KSI_ATTRIBUTE((format(printf, 3, 6)));
 
 	/**
 	 * A helper function for logging plain #KSI_TLV objects. The log message will be prefixed
@@ -124,6 +125,7 @@ extern "C" {
 	 * \see #KSI_TLV_toString
 	 */
 	int KSI_LOG_logTlv(KSI_CTX *ctx, int level, const char *prefix, const KSI_TLV *tlv);
+
 
 	/**
 	 * A helper function for logging plain #KSI_TLV objects. The log message will be prefixed

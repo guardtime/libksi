@@ -1408,6 +1408,9 @@ static int asyncClient_run(KSI_AsyncClient *c, int (*handleResp)(KSI_AsyncClient
 	KSI_ERR_clearErrors(c->ctx);
 	res = c->dispatch(c->clientImpl);
 	if (res == KSI_ASYNC_CONNECTION_CLOSED) {
+		/* Request in KSI_ASYNC_STATE_WAITING_FOR_RESPONSE state will not get responded. However, run through the
+		 * response queue first, there might be some valid responses still waiting.
+		 */
 		connClosed = true;
 	} else if (res != KSI_OK) {
 		KSI_pushError(c->ctx, res, "Async client impl returned error.");
@@ -1520,10 +1523,12 @@ static int asyncClient_setOption(KSI_AsyncClient *c, const int opt, void *param)
 		case KSI_ASYNC_OPT_RCV_TIMEOUT:
 		case KSI_ASYNC_OPT_SND_TIMEOUT:
 		case KSI_ASYNC_OPT_MAX_REQUEST_COUNT:
+		case KSI_ASYNC_OPT_CALLBACK_USERDATA:
 			c->options[opt] = (size_t)param;
 			break;
 
 		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
+		case KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK:
 			c->options[opt] = (size_t)param;
 			break;
 
@@ -1562,7 +1567,11 @@ static int asyncClient_getOption(KSI_AsyncClient *c, const int opt, void *param)
 		case KSI_ASYNC_OPT_RCV_TIMEOUT:
 		case KSI_ASYNC_OPT_SND_TIMEOUT:
 		case KSI_ASYNC_OPT_MAX_REQUEST_COUNT:
+		case KSI_ASYNC_OPT_CALLBACK_USERDATA:
+			*(size_t*)param = c->options[opt];
+			break;
 		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
+		case KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK:
 			*(size_t*)param = c->options[opt];
 			break;
 		case KSI_ASYNC_OPT_REQUEST_CACHE_SIZE:
@@ -1596,6 +1605,8 @@ static int asyncClient_setDefaultOptions(KSI_AsyncClient *c) {
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_REQUEST_CACHE_SIZE, (void *)KSI_ASYNC_DEFAULT_REQUEST_CACHE_SIZE)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_MAX_REQUEST_COUNT, (void *)KSI_ASYNC_DEFAULT_ROUND_MAX_COUNT)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)NULL)) != KSI_OK) goto cleanup;
+	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK, (void *)NULL)) != KSI_OK) goto cleanup;
+	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_CALLBACK_USERDATA, (void *)NULL)) != KSI_OK) goto cleanup;
 	/* Private options. */
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_PRIVOPT_ROUND_DURATION, (void *)KSI_ASYNC_ROUND_DURATION_SEC)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK, (void *)true)) != KSI_OK) goto cleanup;
