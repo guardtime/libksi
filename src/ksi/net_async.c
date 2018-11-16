@@ -1873,6 +1873,15 @@ cleanup:
 
 void KSI_AsyncService_free(KSI_AsyncService *service) {
 	if (service != NULL) {
+		size_t len;
+		/* Release recycled handles. */
+		/* Run garbage collection here, as KSI_CTX can be used for other purposes after using the service. */
+		while (((len = KSI_AsyncHandleList_length(service->ctx->asyncHandleRecycle)) > 0)) {
+			KSI_AsyncHandle *tmp = NULL;
+			if (KSI_AsyncHandleList_remove(service->ctx->asyncHandleRecycle, len - 1, &tmp) != KSI_OK) break;
+			KSI_AsyncHandle_free(tmp);
+		}
+
 		if (service->impl_free) service->impl_free(service->impl);
 		KSI_free(service);
 	}
