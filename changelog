@@ -1,3 +1,4 @@
+* BUGFIX: Fixed high availability server aggregation persion configuration consolodation.
 * IMPROVEMENT: Helper interface for creating signing KSI_AsyncHandle.
 * FEATURE: Added async service option KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK for setting connection state listener.
 * FEATURE: Added prefix string format support to KSI_LOG_logBlob. Interface remains fully backwards compatible.
