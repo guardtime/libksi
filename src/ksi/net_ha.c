@@ -192,6 +192,7 @@ static int KSI_HighAvailabilityService_addRequest(KSI_HighAvailabilityService *h
 		addRes = KSI_AsyncService_addRequest(as, tmp);
 		if (addRes != KSI_OK) {
 			KSI_pushError(has->ctx, addRes, NULL);
+			KSI_LOG_debug(has->ctx, "Request rejected by sub-service %d.", (int)i);
 			KSI_LOG_logCtxError(has->ctx, KSI_LOG_DEBUG);
 
 			KSI_AsyncHandle_free(tmp);
@@ -206,6 +207,7 @@ static int KSI_HighAvailabilityService_addRequest(KSI_HighAvailabilityService *h
 	}
 	/* If all clients have failed to accept the request, then fail with the returned error. */
 	if (added == false) {
+		KSI_LOG_debug(has->ctx, "Request rejected by all sub-service.");
 		res = addRes;
 		goto cleanup;
 	}
@@ -237,7 +239,7 @@ static bool isAggrAlgoValid(KSI_uint64_t val) {
 
 static bool isAggrPeriodValid(KSI_uint64_t val) {
 	/* Values under 0.1 and over 20 seconds are discarded. */
-	return (val > 0 || val <= KSI_HA_CONF_MAX_PERIOD_S);
+	return (val > 0 || val <= KSI_HA_CONF_MAX_PERIOD_S * 1000);
 }
 
 static bool isMaxRequestsValid(KSI_uint64_t val) {
