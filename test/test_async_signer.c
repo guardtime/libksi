@@ -604,9 +604,6 @@ int main(int argc, char **argv) {
 				goto cleanup;
 			}
 		} while (received % 100); /* Give it a chance to send new request out. */
-
-KSI_LOG_debug(ksi, ">>> >>> Succeeded request: %llu.\n", (unsigned long long)succeeded);
-
 	} while (pending || (req_no < nof_requests));
 
 	res = KSI_OK;
