@@ -43,8 +43,8 @@
 
 #define KSI_ASYNC_CACHE_START_POS 1
 
-void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
-	if (o != NULL && --o->ref == 0) {
+static void KSI_AsyncHandle_cleanup(KSI_AsyncHandle *o) {
+	if (o != NULL) {
 		KSI_AggregationReq_free(o->aggrReq);
 		KSI_ExtendReq_free(o->extReq);
 		if (o->respCtx_free) o->respCtx_free(o->respCtx);
@@ -54,24 +54,45 @@ void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
 
 		KSI_nofree(o->signature);
 		KSI_nofree(o->pubRec);
+	}
+}
 
+void KSI_AsyncHandle_free(KSI_AsyncHandle *o) {
+	if (o == NULL) return;
+
+	if (o->ref == 0) {
 		KSI_free(o);
+		return;
+	}
+
+	if (--o->ref == 0) {
+		KSI_AsyncHandle_cleanup(o);
+
+		if (o->ctx == NULL || KSI_AsyncHandleList_append(o->ctx->asyncHandleRecycle, o) != KSI_OK) {
+			KSI_free(o);
+		}
 	}
 }
 
 int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AsyncHandle *tmp = NULL;
+	size_t len;
 
 	if (ctx == NULL || o == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	tmp = KSI_new(KSI_AsyncHandle);
-	if (tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
+	if ((len = KSI_AsyncHandleList_length(ctx->asyncHandleRecycle)) > 0) {
+		res = KSI_AsyncHandleList_remove(ctx->asyncHandleRecycle, len - 1, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		tmp = KSI_new(KSI_AsyncHandle);
+		if (tmp == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
 	}
 
 	tmp->ctx = ctx;
@@ -780,6 +801,7 @@ static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 			confHandle = handle;
 		}
 
+		KSI_AsyncHandle_free(c->serverConf);
 		c->serverConf = confHandle;
 		confHandle = NULL;
 		c->pending++;
@@ -1058,16 +1080,19 @@ static int asyncClient_handleServerConfig(KSI_AsyncClient *c, KSI_Config *config
 	KSI_ERR_clearErrors(c->ctx);
 
 	if (c->serverConf != NULL) {
-		/* Server config has been requested by the user. */
 
 		c->serverConf->state = KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED;
-		/* Update internal state if the request has been requested. */
+		/* In case of a user configuration request, there must be a _Req object present. */
+		/* Otherwise, it is a consiquentive server push configuration. */
 		if ((c->serverConf->aggrReq != NULL || c->serverConf->extReq != NULL) &&
 				c->serverConf->respCtx == NULL) {
+			/* Server config has been requested by the user.
+			 * Update internal state, as the configuration has been received for the first time before the handle
+			 * could be returned to the user. */
 			c->pending--;
 			c->received++;
 		}
-		/* Clear previoous response if present, as it will be renewed. */
+		/* Clear previous response if present, as it will be renewed. */
 		if (c->serverConf->respCtx != NULL) c->serverConf->respCtx_free(c->serverConf->respCtx);
 		/* Set received config. */
 		c->serverConf->respCtx = (void*)KSI_Config_ref(config);

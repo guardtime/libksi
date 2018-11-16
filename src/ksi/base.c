@@ -236,6 +236,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->freeCertConstraintsArray = freeCertConstraintsArray;
 	ctx->lastFailedSignature = NULL;
 	ctx->dataHashRecycle = NULL;
+	ctx->asyncHandleRecycle = NULL;
 	KSI_ERR_clearErrors(ctx);
 
 	/* Init options. */
@@ -266,6 +267,9 @@ int KSI_CTX_new(KSI_CTX **context) {
 	if (res != KSI_OK) goto cleanup;
 
 	res = KSI_DataHashList_new(&ctx->dataHashRecycle);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_AsyncHandleList_new(&ctx->asyncHandleRecycle);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
@@ -355,6 +359,7 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 		KSI_Signature_free(ctx->lastFailedSignature);
 
 		KSI_DataHashList_free(ctx->dataHashRecycle);
+		KSI_AsyncHandleList_free(ctx->asyncHandleRecycle);
 
 		KSI_free(ctx);
 	}
