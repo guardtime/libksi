@@ -192,6 +192,7 @@ static int KSI_HighAvailabilityService_addRequest(KSI_HighAvailabilityService *h
 		addRes = KSI_AsyncService_addRequest(as, tmp);
 		if (addRes != KSI_OK) {
 			KSI_pushError(has->ctx, addRes, NULL);
+			KSI_LOG_debug(has->ctx, "Request rejected by sub-service %d.", (int)i);
 			KSI_LOG_logCtxError(has->ctx, KSI_LOG_DEBUG);
 
 			KSI_AsyncHandle_free(tmp);
@@ -206,6 +207,7 @@ static int KSI_HighAvailabilityService_addRequest(KSI_HighAvailabilityService *h
 	}
 	/* If all clients have failed to accept the request, then fail with the returned error. */
 	if (added == false) {
+		KSI_LOG_debug(has->ctx, "Request rejected by all sub-service.");
 		res = addRes;
 		goto cleanup;
 	}
@@ -221,7 +223,8 @@ cleanup:
 }
 
 #define KSI_HA_CONF_MAX_LEVEL 20
-#define KSI_HA_CONF_MAX_PERIOD_S 20
+#define KSI_HA_CONF_MIN_PERIOD_MS 100
+#define KSI_HA_CONF_MAX_PERIOD_MS (20 * 1000)
 #define KSI_HA_CONF_MAX_REQUESTS 16000
 #define KSI_HA_CONF_CALENDAR_BEGIN 1136073600
 
@@ -237,7 +240,7 @@ static bool isAggrAlgoValid(KSI_uint64_t val) {
 
 static bool isAggrPeriodValid(KSI_uint64_t val) {
 	/* Values under 0.1 and over 20 seconds are discarded. */
-	return (val > 0 || val <= KSI_HA_CONF_MAX_PERIOD_S);
+	return (val > KSI_HA_CONF_MIN_PERIOD_MS || val <= KSI_HA_CONF_MAX_PERIOD_MS);
 }
 
 static bool isMaxRequestsValid(KSI_uint64_t val) {
@@ -354,7 +357,7 @@ static int KSI_Config_consolidateAggrPeriod(KSI_Config *conf, KSI_Config *respCf
 	}
 
 	/* The smallest value should be taken. */
-	if (KSI_Integer_compare(a, b) > 0) {
+	if (KSI_Integer_getUInt64(a) == 0 || KSI_Integer_compare(a, b) > 0) {
 		res = KSI_Config_setAggrPeriod(conf, b);
 		if (res != KSI_OK) goto cleanup;
 		KSI_Integer_free(a);

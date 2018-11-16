@@ -41,8 +41,10 @@
 #include "support_tests.h"
 
 /*#define REQ_ADD_LEVEL*/
-/*#define SIG_CREATE_FROM_RESPONSE*/
+#define CREATE_SIGNATURE
+/*#define SIGNATURE_FROM_RESPONSE*/
 /*#define USE_CONNECTION_STATE_CALLBACK*/
+#define REQUEST_CONFIG
 
 enum {
 	ARGV_COMMAND = 0,
@@ -101,7 +103,7 @@ cleanup:
 	return res;
 }
 
-#ifdef SIG_CREATE_FROM_RESPONSE
+#ifdef SIGNATURE_FROM_RESPONSE
 static int createSignature(const KSI_AggregationResp *resp, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_SignatureBuilder *builder = NULL;
@@ -149,6 +151,9 @@ int main(int argc, char **argv) {
 	KSI_DataHash *reqHsh = NULL;
 #ifdef REQ_ADD_LEVEL
 	KSI_Integer *reqLvl = NULL;
+#endif
+#ifdef REQUEST_CONFIG
+	KSI_Config *cfg = NULL;
 #endif
 	FILE *logFile = NULL;
 	size_t pending = 0;
@@ -287,6 +292,44 @@ int main(int argc, char **argv) {
 	}
 #endif
 
+#ifdef REQUEST_CONFIG
+	res = KSI_AggregationReq_new(ksi, &req);
+	if (res != KSI_OK || req == NULL) {
+		fprintf(stderr, "Unable to create aggregation request.\n");
+		goto cleanup;
+	}
+
+	res = KSI_Config_new(ksi, &cfg);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set request data hash.\n");
+		goto cleanup;
+	}
+
+	res = KSI_AggregationReq_setConfig(req, cfg);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to set request data hash.\n");
+		goto cleanup;
+	}
+	cfg = NULL;
+
+	res = KSI_AsyncAggregationHandle_new(ksi, req, &reqHandle);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to create async request.\n");
+		goto cleanup;
+	}
+	req = NULL;
+
+	KSI_LOG_info(ksi, "Configuration request.");
+
+	res = KSI_AsyncService_addRequest(as, reqHandle);
+	if (res != KSI_OK) {
+		fprintf(stderr, "Unable to add config request.\n");
+		goto cleanup;
+	}
+	reqHandle = NULL;
+#endif
+
+
 	nof_requests = atoi(argv[AGRV_NOF_TEST_REQUESTS]);
 	KSI_LOG_info(ksi, "Nof test requests: %llu", (unsigned long long)nof_requests);
 	do {
@@ -388,51 +431,84 @@ int main(int argc, char **argv) {
 				switch (state) {
 					case KSI_ASYNC_STATE_RESPONSE_RECEIVED: {
 							KSI_DataHash *reqCtxHash = NULL;
-							KSI_DataHash *sigDocHash = NULL;
-#ifdef SIG_CREATE_FROM_RESPONSE
-							KSI_AggregationResp *resp = NULL;
-#endif
+							KSI_DataHash *inputHash = NULL;
 
 							KSI_LOG_info(ksi, "Handle response.");
 
-#ifdef SIG_CREATE_FROM_RESPONSE
+#ifdef CREATE_SIGNATURE
 
-							res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
-							if (res != KSI_OK) {
-								fprintf(stderr, "Failed to get aggregation response.\n");
-								goto cleanup;
-							}
+  #ifdef SIGNATURE_FROM_RESPONSE
+							do {
+								KSI_AggregationResp *resp = NULL;
 
-							res = createSignature(resp, &signature);
-							if (res != KSI_OK) {
-								fprintf(stderr, "Failed to create signature.\n");
-								goto cleanup;
-							}
-#else
+								res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
+								if (res != KSI_OK) {
+									fprintf(stderr, "Failed to get aggregation response.\n");
+									goto cleanup;
+								}
+
+								res = createSignature(resp, &signature);
+								if (res != KSI_OK) {
+									fprintf(stderr, "Failed to create signature.\n");
+									goto cleanup;
+								}
+							} while(0);
+  #else
 							res = KSI_AsyncHandle_getSignature(respHandle, &signature);
 							if (res != KSI_OK) {
 								fprintf(stderr, "Failed to get signature.\n");
 								goto cleanup;
 							}
-#endif
+  #endif
 
-							res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtxHash);
-							if (res != KSI_OK && reqCtxHash != NULL) {
-							  fprintf(stderr, "Unable to get request context.\n");
-							  goto cleanup;
-							}
-
-
-							res = KSI_Signature_getDocumentHash(signature, &sigDocHash);
-							if (res != KSI_OK && sigDocHash != NULL) {
+							res = KSI_Signature_getDocumentHash(signature, &inputHash);
+							if (res != KSI_OK || inputHash == NULL) {
 							  fprintf(stderr, "Unable to get signature document hash.\n");
 							  goto cleanup;
 							}
 
-							if (!KSI_DataHash_equals(reqCtxHash, sigDocHash)) {
+#else
+							do {
+								KSI_AggregationResp *resp = NULL;
+								KSI_AggregationHashChainList *aggrChainList = NULL;
+								KSI_AggregationHashChain *aggrChain = NULL;
+
+								res = KSI_AsyncHandle_getAggregationResp(respHandle, &resp);
+								if (res != KSI_OK) {
+									fprintf(stderr, "Failed to get aggregation response.\n");
+									goto cleanup;
+								}
+
+								res = KSI_AggregationResp_getAggregationChainList(resp, &aggrChainList);
+								if (res != KSI_OK) {
+								  fprintf(stderr, "Unable to get aggregation chain list.\n");
+								  goto cleanup;
+								}
+
+								res = KSI_AggregationHashChainList_elementAt(aggrChainList, 0, &aggrChain);
+								if (res != KSI_OK) {
+								  fprintf(stderr, "Unable to get aggregation chain.\n");
+								  goto cleanup;
+								}
+
+								res = KSI_AggregationHashChain_getInputHash(aggrChain, &inputHash);
+								if (res != KSI_OK) {
+								  fprintf(stderr, "Unable to get input hash.\n");
+								  goto cleanup;
+								}
+							} while(0);
+#endif
+
+							res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&reqCtxHash);
+							if (res != KSI_OK || reqCtxHash == NULL) {
+							  fprintf(stderr, "Unable to get request context.\n");
+							  goto cleanup;
+							}
+
+							if (!KSI_DataHash_equals(reqCtxHash, inputHash)) {
 								KSI_LOG_error(ksi, "Request context data mismatch.");
 								KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash ", reqCtxHash);
-								KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Document hash", sigDocHash);
+								KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Document hash", inputHash);
 							} else {
 								succeeded++;
 							}
@@ -444,14 +520,34 @@ int main(int argc, char **argv) {
 
 					case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED: {
 							KSI_Config *pushConf = NULL;
+							KSI_Integer *maxLvl = NULL;
+							KSI_Integer *maxReq = NULL;
+							KSI_Integer *aggrAlg = NULL;
+							KSI_Integer *aggrPer = NULL;
+
 
 							KSI_LOG_info(ksi, "Handle push configuration.");
 
 							res = KSI_AsyncHandle_getConfig(respHandle, &pushConf);
-							if (res != KSI_OK || pushConf != NULL) {
+							if (res != KSI_OK || pushConf == NULL) {
 								fprintf(stderr, "Failed to extract push configuration.\n");
 								goto cleanup;
 							}
+
+							/* Do not care about possible errors, just log the result. */
+							KSI_Config_getMaxLevel(pushConf, &maxLvl);
+							KSI_Config_getMaxRequests(pushConf, &maxReq);
+							KSI_Config_getAggrAlgo(pushConf, &aggrAlg);
+							KSI_Config_getAggrPeriod(pushConf, &aggrPer);
+							KSI_LOG_debug(ksi, "Server configuration: \n"
+											   "  max level:      %llu\n"
+											   "  max requests:   %llu\n"
+											   "  aggr algorithm: %llu\n"
+											   "  aggr period:    %llu",
+									(unsigned long long)KSI_Integer_getUInt64(maxLvl),
+									(unsigned long long)KSI_Integer_getUInt64(maxReq),
+									(unsigned long long)KSI_Integer_getUInt64(aggrAlg),
+									(unsigned long long)KSI_Integer_getUInt64(aggrPer));
 
 							KSI_AsyncHandle_free(respHandle); respHandle = NULL;
 						}
@@ -535,6 +631,9 @@ cleanup:
 	KSI_DataHash_free(reqHsh);
 #ifdef REQ_ADD_LEVEL
 	KSI_Integer_free(reqLvl);
+#endif
+#ifdef REQUEST_CONFIG
+	KSI_Config_free(cfg);
 #endif
 
 	KSI_CTX_free(ksi);

@@ -34,10 +34,24 @@
 #include "types.h"
 #include "list.h"
 
-
 typedef struct HttpAsyncCtx_st HttpAsyncCtx;
 typedef struct CurlMulti_st CurlMulti;
 typedef struct CurlAsyncRequest_st CurlAsyncRequest;
+
+static void CurlAsyncRequest_free(CurlAsyncRequest *t);
+
+KSI_DEFINE_LIST(CurlAsyncRequest)
+#define CurlAsyncRequestList_append(lst, o) KSI_APPLY_TO_NOT_NULL((lst), append, ((lst), (o)))
+#define CurlAsyncRequestList_remove(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), removeElement, ((lst), (pos), (o)))
+#define CurlAsyncRequestList_indexOf(lst, o, i) KSI_APPLY_TO_NOT_NULL((lst), indexOf, ((lst), (o), (i)))
+#define CurlAsyncRequestList_insertAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), insertAt, ((lst), (pos), (o)))
+#define CurlAsyncRequestList_replaceAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), replaceAt, ((lst), (pos), (o)))
+#define CurlAsyncRequestList_elementAt(lst, pos, o) KSI_APPLY_TO_NOT_NULL((lst), elementAt, ((lst), (pos), (o)))
+#define CurlAsyncRequestList_length(lst) (((lst) != NULL && (lst)->length != NULL) ? (lst)->length((lst)) : 0)
+#define CurlAsyncRequestList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
+#define CurlAsyncRequestList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
+#define CurlAsyncRequestList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
+KSI_IMPLEMENT_LIST(CurlAsyncRequest, CurlAsyncRequest_free)
 
 struct CurlMulti_st {
 	size_t initCount;
@@ -57,7 +71,7 @@ struct HttpAsyncCtx_st {
 
 	/* HTTP header fields. */
 	char *userAgent;
-	char *mimeType;
+	struct curl_slist *httpHeaders;
 
 	/* Round throttling. */
 	time_t roundStartAt;
@@ -70,73 +84,92 @@ struct HttpAsyncCtx_st {
 	char *ksi_user;
 	char *ksi_pass;
 	char *url;
+
+	/* This list is used to recycle #CurlAsyncRequest objects to reduce the number of allocs. */
+	KSI_LIST(CurlAsyncRequest) *reqRecycle;
 };
 
 struct CurlAsyncRequest_st {
+	size_t ref;
 	HttpAsyncCtx *client;
 	/* Curl easy handle. */
 	CURL *easyHandle;
-	/* Curl HTTP header list. */
-	struct curl_slist *httpHeaders;
 	/* Error message. */
 	char errMsg[CURL_ERROR_SIZE];
 	/* Receive buffer. */
 	unsigned char *raw;
 	size_t len;
+	size_t cap;
 	/* Request context. */
 	KSI_AsyncHandle *reqCtx;
 };
 
-static void curlAsyncRequest_free(CurlAsyncRequest *t) {
-	if (t != NULL) {
-		KSI_nofree(t->client);
-		KSI_AsyncHandle_free(t->reqCtx);
-		KSI_free(t->raw);
-		if (t->httpHeaders != NULL) curl_slist_free_all(t->httpHeaders);
-		if (t->easyHandle != NULL) curl_easy_cleanup(t->easyHandle);
-		KSI_free(t);
+static void CurlAsyncRequest_free(CurlAsyncRequest *t) {
+	if (t == NULL) return;
+	if (t->ref == 0) goto cleanup;
+	if (--t->ref == 0) {
+		if (t->client == NULL || CurlAsyncRequestList_append(t->client->reqRecycle, t) != KSI_OK) goto cleanup;
+		return;
 	}
+cleanup:
+	KSI_nofree(t->client);
+	KSI_AsyncHandle_free(t->reqCtx);
+	KSI_free(t->raw);
+	if (t->easyHandle != NULL) curl_easy_cleanup(t->easyHandle);
+	KSI_free(t);
 }
 
-static int curlAsyncRequest_new(HttpAsyncCtx *client, CurlAsyncRequest **t) {
+static int CurlAsyncRequest_new(HttpAsyncCtx *client, CurlAsyncRequest **t) {
 	int res = KSI_UNKNOWN_ERROR;
 	CurlAsyncRequest *tmp = NULL;
+	size_t len;
 
 	if (client == NULL || t == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	tmp = KSI_malloc(sizeof(CurlAsyncRequest));
-	if (tmp == NULL) {
-		res = KSI_OUT_OF_MEMORY;
-		goto cleanup;
+	if ((len = CurlAsyncRequestList_length(client->reqRecycle)) > 0) {
+		res = CurlAsyncRequestList_remove(client->reqRecycle, len - 1, &tmp);
+		if (res != KSI_OK) goto cleanup;
+
+		curl_easy_reset(tmp->easyHandle);
+		KSI_AsyncHandle_free(tmp->reqCtx);
+	} else {
+		tmp = KSI_malloc(sizeof(CurlAsyncRequest));
+		if (tmp == NULL) {
+			res = KSI_OUT_OF_MEMORY;
+			goto cleanup;
+		}
+		tmp->ref = 0;
+
+		tmp->cap = 0;
+		tmp->raw = NULL;
+
+		tmp->easyHandle = curl_easy_init();
+		if (tmp->easyHandle == NULL) {
+			KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, "Curl: Unable to init easy handle.");
+			goto cleanup;
+		}
 	}
+	tmp->ref = 1;
+
 	tmp->client = client;
-
-	tmp->easyHandle = NULL;
-	tmp->len = 0;
-	tmp->raw = NULL;
 	tmp->errMsg[0] = '\0';
-	tmp->httpHeaders = NULL;
 	tmp->reqCtx = NULL;
-
-	tmp->easyHandle = curl_easy_init();
-	if (tmp->easyHandle == NULL) {
-		KSI_pushError(client->ctx, res = KSI_OUT_OF_MEMORY, "Curl: Unable to init easy handle.");
-		goto cleanup;
-	}
+	/* Reset the receive buffer tail. */
+	tmp->len = 0;
 
 	*t = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
 cleanup:
-	curlAsyncRequest_free(tmp);
+	CurlAsyncRequest_free(tmp);
 	return res;
 }
 
-static int curlAsyncRequest_processResponse(CurlAsyncRequest *curlResponse) {
+static int CurlAsyncRequest_processResponse(CurlAsyncRequest *curlResponse) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_OctetString *resp = NULL;
 	HttpAsyncCtx *clientCtx = NULL;
@@ -210,7 +243,7 @@ cleanup:
 static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *userdata) {
 	const size_t bytesReceived = size * nmemb;
 	CurlAsyncRequest *curlReq = (CurlAsyncRequest*)userdata;
-	size_t bytesCount = 0;
+	size_t totalCount = 0;
 	unsigned char *tmp_buffer = NULL;
 
 	/* Just for safety, should never happen */
@@ -219,37 +252,42 @@ static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *u
 		 * amount passed to the callback function, it'll signal an error condition to the libcurl. This will cause
 		 * the transfer to get aborted and the libcurl function used will return CURLE_WRITE_ERROR.
 		 */
-		bytesCount = bytesReceived + 1;
+		totalCount = bytesReceived + 1;
 		goto cleanup;
 	}
 
-	bytesCount = curlReq->len + bytesReceived;
-	if (bytesCount > UINT_MAX) {
+	totalCount = curlReq->len + bytesReceived;
+	if (totalCount > UINT_MAX) {
 		KSI_LOG_debug(curlReq->client->ctx,
 				"[%p] Async Curl HTTP: [%p] too many bytes received %llu bytes (%llu so far).",
 				curlReq->client, curlReq,
 				(unsigned long long)curlReq->len, (unsigned long long)bytesReceived);
 		goto cleanup;
 	}
-	tmp_buffer = KSI_calloc(bytesCount, 1);
-	if (tmp_buffer == NULL) goto cleanup;
 
-	memcpy(tmp_buffer, curlReq->raw, curlReq->len);
+	if (totalCount > curlReq->cap) {
+		size_t newCap = totalCount + 255;
+		tmp_buffer = KSI_calloc(newCap, sizeof(unsigned char));
+		if (tmp_buffer == NULL) goto cleanup;
+		curlReq->cap = newCap;
+
+		memcpy(tmp_buffer, curlReq->raw, curlReq->len);
+		KSI_free(curlReq->raw);
+	} else {
+		tmp_buffer = curlReq->raw;
+	}
 	memcpy(tmp_buffer + curlReq->len, ptr, bytesReceived);
-
-	KSI_free(curlReq->raw);
 	curlReq->raw = tmp_buffer;
-	curlReq->len = bytesCount;
+	curlReq->len = totalCount;
 	tmp_buffer = NULL;
 
-	KSI_LOG_debug(curlReq->client->ctx, "[%p] Async Curl HTTP: [%p] received %llu bytes (%llu so far).",
-			curlReq->client, curlReq,
-			(unsigned long long)bytesCount, (unsigned long long)curlReq->len);
+	KSI_LOG_debug(curlReq->client->ctx, "0x%p: Async Curl HTTP received %llu bytes (%llu so far).", curlReq,
+			(unsigned long long)bytesReceived, (unsigned long long)curlReq->len);
 
-	bytesCount = bytesReceived;
+	totalCount = bytesReceived;
 cleanup:
 	KSI_free(tmp_buffer);
-	return bytesCount;
+	return totalCount;
 }
 
 static void reqQueue_clearWithError(KSI_AsyncHandleList *reqQueue, int err, long ext, const char *msg) {
@@ -327,7 +365,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG,
 						"[%p] Async Curl HTTP: Preparing request", req->raw, req->len, clientCtx);
 
-				res = curlAsyncRequest_new(clientCtx, &curlRequest);
+				res = CurlAsyncRequest_new(clientCtx, &curlRequest);
 				if (res != KSI_OK) {
 					KSI_pushError(clientCtx->ctx, res, NULL);
 					goto cleanup;
@@ -351,19 +389,8 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 				if (clientCtx->userAgent != NULL) {
 					curl_easy_setopt(curlRequest->easyHandle, CURLOPT_USERAGENT, clientCtx->userAgent);
 				}
-
-				if (clientCtx->mimeType != NULL) {
-					char header[1024];
-					struct curl_slist *slist = NULL;
-
-					KSI_snprintf(header, sizeof(header), "Content-Type: %s", clientCtx->mimeType);
-					slist = curl_slist_append(curlRequest->httpHeaders, header);
-					if (slist == NULL) {
-						KSI_pushError(clientCtx->ctx, res = KSI_INVALID_STATE, "Failed to set mime type.");
-						goto cleanup;
-					}
-					curlRequest->httpHeaders = slist;
-					curl_easy_setopt(curlRequest->easyHandle, CURLOPT_HTTPHEADER, curlRequest->httpHeaders);
+				if (clientCtx->httpHeaders != NULL) {
+					curl_easy_setopt(curlRequest->easyHandle, CURLOPT_HTTPHEADER, clientCtx->httpHeaders);
 				}
 
 				if (req->raw != NULL) {
@@ -462,7 +489,7 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 					if (len) KSI_Utf8String_new(clientCtx->ctx, curlResponse->errMsg, len + 1, &handle->errMsg);
 				} else {
 					/* Process responses for all active clients. */
-					res = curlAsyncRequest_processResponse(curlResponse);
+					res = CurlAsyncRequest_processResponse(curlResponse);
 					if (res != KSI_OK) {
 						KSI_LOG_error(clientCtx->ctx, "[%p] Async Curl HTTP: unable to process curl response. Error: 0x%x.",
 								clientCtx, res);
@@ -474,17 +501,17 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 		}
 		curl_multi_remove_handle(clientCtx->curl->handle, curlMsg->easy_handle);
 		curlMsg = NULL;
-		curlAsyncRequest_free(curlResponse);
+		CurlAsyncRequest_free(curlResponse);
 		curlResponse = NULL;
 	}
 
 	res = KSI_OK;
 cleanup:
-	curlAsyncRequest_free(curlRequest);
+	CurlAsyncRequest_free(curlRequest);
 
 	if (curlResponse != NULL) {
 		curl_multi_remove_handle(clientCtx->curl->handle, curlResponse->easyHandle);
-		curlAsyncRequest_free(curlResponse);
+		CurlAsyncRequest_free(curlResponse);
 	}
 
 	KSI_OctetString_free(resp);
@@ -581,7 +608,7 @@ static void CurlMulti_free(CurlMulti *o) {
 				char *curlPriv = NULL;
 				curl_multi_remove_handle(o->handle, msg->easy_handle);
 				curl_easy_getinfo(msg->easy_handle, CURLINFO_PRIVATE, &curlPriv);
-				curlAsyncRequest_free((CurlAsyncRequest *)curlPriv);
+				CurlAsyncRequest_free((CurlAsyncRequest *)curlPriv);
 			}
 		} while (msgCount);
 		curl_multi_cleanup(_curlMulti->handle);
@@ -589,30 +616,6 @@ static void CurlMulti_free(CurlMulti *o) {
 		KSI_free(o);
 	}
 }
-
-/*
- * https://curl.haxx.se/libcurl/c/CURLOPT_SOCKOPTFUNCTION.html
-sockopt callback
-The sockopt callback is set with CURLOPT_SOCKOPTFUNCTION:
-
-curl_easy_setopt(handle, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
-The sockopt_callback function must match this prototype:
-
-int sockopt_callback(void *clientp,
-					 curl_socket_t curlfd,
-					 curlsocktype purpose);
-This callback function gets called by libcurl when a new socket has been created but before the connect call,
-to allow applications to change specific socket options.
-
-The clientp pointer points to the private data set with CURLOPT_SOCKOPTDATA:
-
-curl_easy_setopt(handle, CURLOPT_SOCKOPTDATA, custom_pointer);
-This callback should return:
-
-CURL_SOCKOPT_OK on success
-CURL_SOCKOPT_ERROR to signal an unrecoverable error to libcurl
-CURL_SOCKOPT_ALREADY_CONNECTED to signal success but also that the socket is in fact already connected to the destination
-*/
 
 static CurlMulti *curlMulti_init(void) {
 	CurlMulti *tmp = NULL;
@@ -655,13 +658,15 @@ static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
 		KSI_AsyncHandleList_free(o->reqQueue);
 		KSI_OctetStringList_free(o->respQueue);
 
-		KSI_free(o->userAgent);
-		KSI_free(o->mimeType);
+		KSI_nofree(o->userAgent);
+		if (o->httpHeaders != NULL) curl_slist_free_all(o->httpHeaders);
 
 		/* Cleanup endpoint data. */
 		KSI_free(o->url);
 		KSI_free(o->ksi_user);
 		KSI_free(o->ksi_pass);
+
+		CurlAsyncRequestList_free(o->reqRecycle);
 
 		KSI_free(o);
 	}
@@ -686,7 +691,7 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 
 	tmp->options = NULL;
 	tmp->userAgent = NULL;
-	tmp->mimeType = NULL;
+	tmp->httpHeaders = NULL;
 	tmp->roundStartAt = 0;
 	tmp->roundCount = 0;
 
@@ -698,6 +703,9 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 	tmp->ksi_user = NULL;
 	tmp->ksi_pass = NULL;
 	tmp->url = NULL;
+
+	/* Recycling. */
+	tmp->reqRecycle = NULL;
 
 	res = KSI_Http_init(ctx);
 	if (res != KSI_OK) {
@@ -718,10 +726,14 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 	res = KSI_OctetStringList_new(&tmp->respQueue);
 	if (res != KSI_OK) goto cleanup;
 
-	/* TODO: move to options. */
-	res = KSI_strdup("KSI HTTP Client", &tmp->userAgent);
-	if (res != KSI_OK) goto cleanup;
-	res = KSI_strdup("application/ksi-request", &tmp->mimeType);
+	tmp->userAgent = "KSI HTTP Client";
+	tmp->httpHeaders = curl_slist_append(tmp->httpHeaders,  "Content-Type: application/ksi-request");
+	if (tmp->httpHeaders == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Curl: Failed to set mime type.");
+		goto cleanup;
+	}
+
+	res = CurlAsyncRequestList_new(&tmp->reqRecycle);
 	if (res != KSI_OK) goto cleanup;
 
 	*clientCtx = tmp;
