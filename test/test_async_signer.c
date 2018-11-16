@@ -41,7 +41,7 @@
 #include "support_tests.h"
 
 /*#define REQ_ADD_LEVEL*/
-/*#define CREATE_SIGNATURE*/
+#define CREATE_SIGNATURE
 /*#define SIGNATURE_FROM_RESPONSE*/
 /*#define USE_CONNECTION_STATE_CALLBACK*/
 #define REQUEST_CONFIG
