@@ -155,9 +155,7 @@ void Test_AsyncSingningService_verifyOptions(CuTest* tc) {
 	KSI_AsyncService_free(as);
 }
 
-static int dummyCallback(KSI_CTX *ctx, KSI_Config *cnf) {
-	if (ctx);
-	if (cnf);
+static int dummyCallback(KSI_CTX KSI_UNUSED(*ctx), KSI_Config KSI_UNUSED(*cnf)) {
 	return KSI_OK;
 }
 
