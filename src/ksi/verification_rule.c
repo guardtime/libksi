@@ -2977,7 +2977,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 		}
 	}
 
-	if (!KSI_Integer_compare(aggregationChain->aggregationTime, extCalTime) == 0) {
+	if (KSI_Integer_compare(aggregationChain->aggregationTime, extCalTime) != 0) {
 		KSI_LOG_info(ctx, "Invalid extended signature calendar hash chain time.");
 		KSI_LOG_debug(ctx, "Calendar hash chain time:   %llu.", (unsigned long long)KSI_Integer_getUInt64(extCalTime));
 		KSI_LOG_debug(ctx, "Signature aggregation time: %llu.", (unsigned long long)KSI_Integer_getUInt64(aggregationChain->aggregationTime));
