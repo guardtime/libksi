@@ -568,31 +568,31 @@ static int KSI_HighAvailabilityService_consolidateConfig(KSI_HighAvailabilitySer
 		if (res != KSI_OK) goto cleanup;
 	}
 
-	res = KSI_Config_consolidateMaxLevel(has->consolidatedConfig, config, changed);
+	res = KSI_Config_consolidateMaxLevel(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
 	*updated |= changed;
 
-	res = KSI_Config_consolidateAggrAlgo(has->consolidatedConfig, config, changed);
+	res = KSI_Config_consolidateAggrAlgo(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
 	*updated |= changed;
 
-	res = KSI_Config_consolidateAggrPeriod(has->consolidatedConfig, config, changed);
+	res = KSI_Config_consolidateAggrPeriod(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
 	*updated |= changed;
 
-	res = KSI_Config_consolidateMaxRequests(has->consolidatedConfig, config, changed);
+	res = KSI_Config_consolidateMaxRequests(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
 	*updated |= changed;
 
-	res = KSI_Config_consolidateCalendarFirstTime(has->consolidatedConfig, config, changed);
+	res = KSI_Config_consolidateCalendarFirstTime(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
 	*updated |= changed;
 
-	res = KSI_Config_consolidateCalendarLastTime(has->consolidatedConfig, config, changed);
+	res = KSI_Config_consolidateCalendarLastTime(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
 	*updated |= changed;
 
-	res = KSI_Config_consolidateParentUri(has->consolidatedConfig, config, changed);
+	res = KSI_Config_consolidateParentUri(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
 	*updated |= changed;
 
