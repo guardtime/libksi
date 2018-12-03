@@ -253,33 +253,38 @@ static bool isCalendarTimeValid(KSI_uint64_t val) {
 	return (val >= KSI_HA_CONF_CALENDAR_BEGIN);
 }
 
-static int KSI_Config_consolidateMaxLevel(KSI_Config *conf, KSI_Config *respCfg, bool *updated) {
+static int KSI_Config_consolidateMaxLevel(KSI_Config *haCfg, KSI_Config *respCfg, bool *updated) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *a = NULL;
-	KSI_Integer *b = NULL;
+	KSI_Integer *haVal = NULL;
+	KSI_Integer *respVal = NULL;
 
-	if (conf == NULL || respCfg == NULL || updated == NULL) {
+	if (haCfg == NULL || respCfg == NULL || updated == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_Config_getMaxLevel(conf, &a);
+	res = KSI_Config_getMaxLevel(haCfg, &haVal);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_Config_getMaxLevel(respCfg, &b);
+	res = KSI_Config_getMaxLevel(respCfg, &respVal);
 	if (res != KSI_OK) goto cleanup;
 
-	if (isMaxLevelValid(KSI_Integer_getUInt64(b)) != true) {
-		KSI_LOG_info(KSI_Config_getCtx(conf), "The max level value is not in the valid range (%llu).",
-				(unsigned long long)KSI_Integer_getUInt64(b));
+	if (respVal == NULL || KSI_Integer_getUInt64(respVal) == 0) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	if (isMaxLevelValid(KSI_Integer_getUInt64(respVal)) != true) {
+		KSI_LOG_info(KSI_Config_getCtx(haCfg), "The max level value is not in the valid range (%llu).",
+				(unsigned long long)KSI_Integer_getUInt64(respVal));
 		res = KSI_OK;
 		goto cleanup;
 	}
 
 	/* The largest value should be taken. */
-	if (KSI_Integer_compare(a, b) < 0) {
-		res = KSI_Config_setMaxLevel(conf, b);
+	if (KSI_Integer_compare(haVal, respVal) < 0) {
+		res = KSI_Config_setMaxLevel(haCfg, respVal);
 		if (res != KSI_OK) goto cleanup;
-		KSI_Integer_free(a);
+		KSI_Integer_free(haVal);
 
 		res = KSI_Config_setMaxLevel(respCfg, NULL);
 		if (res != KSI_OK) goto cleanup;
@@ -292,37 +297,37 @@ cleanup:
 	return res;
 }
 
-static int KSI_Config_consolidateAggrAlgo(KSI_Config *conf, KSI_Config *respCfg, bool *updated) {
+static int KSI_Config_consolidateAggrAlgo(KSI_Config *haCfg, KSI_Config *respCfg, bool *updated) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *a = NULL;
-	KSI_Integer *b = NULL;
+	KSI_Integer *haVal = NULL;
+	KSI_Integer *respVal = NULL;
 
-	if (conf == NULL || respCfg == NULL || updated == NULL) {
+	if (haCfg == NULL || respCfg == NULL || updated == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_Config_getMaxLevel(conf, &a);
+	res = KSI_Config_getAggrAlgo(haCfg, &haVal);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_Config_getAggrAlgo(respCfg, &b);
+	res = KSI_Config_getAggrAlgo(respCfg, &respVal);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Any non-null is preferred to null. */
-	if (b == NULL) {
+	if (respVal == NULL) {
 		res = KSI_OK;
 		goto cleanup;
 	}
 
-	if (isAggrAlgoValid(KSI_Integer_getUInt64(b)) == false) {
-		KSI_LOG_info(KSI_Config_getCtx(conf), "The aggregation algorithm value is not valid (%s).",
-				KSI_getHashAlgorithmName((KSI_HashAlgorithm)KSI_Integer_getUInt64(b)));
+	if (isAggrAlgoValid(KSI_Integer_getUInt64(respVal)) == false) {
+		KSI_LOG_info(KSI_Config_getCtx(haCfg), "The aggregation algorithm value is not valid (%s).",
+				KSI_getHashAlgorithmName((KSI_HashAlgorithm)KSI_Integer_getUInt64(respVal)));
 		res = KSI_OK;
 		goto cleanup;
 	}
 
-	res = KSI_Config_setAggrAlgo(conf, b);
+	res = KSI_Config_setAggrAlgo(haCfg, respVal);
 	if (res != KSI_OK) goto cleanup;
-	KSI_Integer_free(a);
+	KSI_Integer_free(haVal);
 
 	res = KSI_Config_setAggrAlgo(respCfg, NULL);
 	if (res != KSI_OK) goto cleanup;
@@ -334,33 +339,38 @@ cleanup:
 	return res;
 }
 
-static int KSI_Config_consolidateAggrPeriod(KSI_Config *conf, KSI_Config *respCfg, bool *updated) {
+static int KSI_Config_consolidateAggrPeriod(KSI_Config *haCfg, KSI_Config *respCfg, bool *updated) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *a = NULL;
-	KSI_Integer *b = NULL;
+	KSI_Integer *haVal = NULL;
+	KSI_Integer *respVal = NULL;
 
-	if (conf == NULL || respCfg == NULL || updated == NULL) {
+	if (haCfg == NULL || respCfg == NULL || updated == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_Config_getAggrPeriod(conf, &a);
+	res = KSI_Config_getAggrPeriod(haCfg, &haVal);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_Config_getAggrPeriod(respCfg, &b);
+	res = KSI_Config_getAggrPeriod(respCfg, &respVal);
 	if (res != KSI_OK) goto cleanup;
 
-	if (isAggrPeriodValid(KSI_Integer_getUInt64(b)) != true) {
-		KSI_LOG_info(KSI_Config_getCtx(conf), "The aggregation period value is not in the valid range (%llu).",
-				(unsigned long long)KSI_Integer_getUInt64(b));
+	if (respVal == NULL || KSI_Integer_getUInt64(respVal) == 0) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	if (isAggrPeriodValid(KSI_Integer_getUInt64(respVal)) != true) {
+		KSI_LOG_info(KSI_Config_getCtx(haCfg), "The aggregation period value is not in the valid range (%llu).",
+				(unsigned long long)KSI_Integer_getUInt64(respVal));
 		res = KSI_OK;
 		goto cleanup;
 	}
 
 	/* The smallest value should be taken. */
-	if (KSI_Integer_getUInt64(a) == 0 || KSI_Integer_compare(a, b) > 0) {
-		res = KSI_Config_setAggrPeriod(conf, b);
+	if (KSI_Integer_getUInt64(haVal) == 0 || KSI_Integer_compare(haVal, respVal) > 0) {
+		res = KSI_Config_setAggrPeriod(haCfg, respVal);
 		if (res != KSI_OK) goto cleanup;
-		KSI_Integer_free(a);
+		KSI_Integer_free(haVal);
 
 		res = KSI_Config_setAggrPeriod(respCfg, NULL);
 		if (res != KSI_OK) goto cleanup;
@@ -373,33 +383,38 @@ cleanup:
 	return res;
 }
 
-static int KSI_Config_consolidateMaxRequests(KSI_Config *conf, KSI_Config *respCfg, bool *updated) {
+static int KSI_Config_consolidateMaxRequests(KSI_Config *haCfg, KSI_Config *respCfg, bool *updated) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *a = NULL;
-	KSI_Integer *b = NULL;
+	KSI_Integer *haVal = NULL;
+	KSI_Integer *respVal = NULL;
 
-	if (conf == NULL || respCfg == NULL || updated == NULL) {
+	if (haCfg == NULL || respCfg == NULL || updated == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_Config_getMaxRequests(conf, &a);
+	res = KSI_Config_getMaxRequests(haCfg, &haVal);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_Config_getMaxRequests(respCfg, &b);
+	res = KSI_Config_getMaxRequests(respCfg, &respVal);
 	if (res != KSI_OK) goto cleanup;
 
-	if (isMaxRequestsValid(KSI_Integer_getUInt64(b)) != true) {
-		KSI_LOG_info(KSI_Config_getCtx(conf), "The max requests count is not in the valid range (%llu).",
-				(unsigned long long)KSI_Integer_getUInt64(b));
+	if (respVal == NULL || KSI_Integer_getUInt64(respVal) == 0) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	if (isMaxRequestsValid(KSI_Integer_getUInt64(respVal)) != true) {
+		KSI_LOG_info(KSI_Config_getCtx(haCfg), "The max requests count is not in the valid range (%llu).",
+				(unsigned long long)KSI_Integer_getUInt64(respVal));
 		res = KSI_OK;
 		goto cleanup;
 	}
 
 	/* The largest value should be taken. */
-	if (KSI_Integer_compare(a, b) < 0) {
-		res = KSI_Config_setMaxRequests(conf, b);
+	if (KSI_Integer_compare(haVal, respVal) < 0) {
+		res = KSI_Config_setMaxRequests(haCfg, respVal);
 		if (res != KSI_OK) goto cleanup;
-		KSI_Integer_free(a);
+		KSI_Integer_free(haVal);
 
 		res = KSI_Config_setMaxRequests(respCfg, NULL);
 		if (res != KSI_OK) goto cleanup;
@@ -412,33 +427,38 @@ cleanup:
 	return res;
 }
 
-static int KSI_Config_consolidateCalendarFirstTime(KSI_Config *conf, KSI_Config *respCfg, bool *updated) {
+static int KSI_Config_consolidateCalendarFirstTime(KSI_Config *haCfg, KSI_Config *respCfg, bool *updated) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *a = NULL;
-	KSI_Integer *b = NULL;
+	KSI_Integer *haVal = NULL;
+	KSI_Integer *respVal = NULL;
 
-	if (conf == NULL || respCfg == NULL || updated == NULL) {
+	if (haCfg == NULL || respCfg == NULL || updated == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_Config_getCalendarFirstTime(conf, &a);
+	res = KSI_Config_getCalendarFirstTime(haCfg, &haVal);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_Config_getCalendarFirstTime(respCfg, &b);
+	res = KSI_Config_getCalendarFirstTime(respCfg, &respVal);
 	if (res != KSI_OK) goto cleanup;
 
-	if (isCalendarTimeValid(KSI_Integer_getUInt64(b)) != true) {
-		KSI_LOG_info(KSI_Config_getCtx(conf), "The calendar first time is not in the valid range (%llu).",
-				(unsigned long long)KSI_Integer_getUInt64(b));
+	if (respVal == NULL || KSI_Integer_getUInt64(respVal) == 0) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	if (isCalendarTimeValid(KSI_Integer_getUInt64(respVal)) != true) {
+		KSI_LOG_info(KSI_Config_getCtx(haCfg), "The calendar first time is not in the valid range (%llu).",
+				(unsigned long long)KSI_Integer_getUInt64(respVal));
 		res = KSI_OK;
 		goto cleanup;
 	}
 
 	/* The earliest value should be taken. */
-	if (KSI_Integer_compare(a, b) > 0) {
-		res = KSI_Config_setCalendarFirstTime(conf, b);
+	if (KSI_Integer_getUInt64(haVal) == 0 || KSI_Integer_compare(haVal, respVal) > 0) {
+		res = KSI_Config_setCalendarFirstTime(haCfg, respVal);
 		if (res != KSI_OK) goto cleanup;
-		KSI_Integer_free(a);
+		KSI_Integer_free(haVal);
 
 		res = KSI_Config_setCalendarFirstTime(respCfg, NULL);
 		if (res != KSI_OK) goto cleanup;
@@ -451,37 +471,42 @@ cleanup:
 	return res;
 }
 
-static int KSI_Config_consolidateCalendarLastTime(KSI_Config *conf, KSI_Config *respCfg, bool *updated) {
+static int KSI_Config_consolidateCalendarLastTime(KSI_Config *haCfg, KSI_Config *respCfg, bool *updated) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Integer *a = NULL;
-	KSI_Integer *b = NULL;
-	KSI_Integer *aFirst = NULL;
+	KSI_Integer *haVal = NULL;
+	KSI_Integer *respVal = NULL;
+	KSI_Integer *haValFirst = NULL;
 
-	if (conf == NULL || respCfg == NULL || updated == NULL) {
+	if (haCfg == NULL || respCfg == NULL || updated == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_Config_getCalendarLastTime(conf, &a);
+	res = KSI_Config_getCalendarLastTime(haCfg, &haVal);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_Config_getCalendarLastTime(respCfg, &b);
-	if (res != KSI_OK) goto cleanup;
-
-	res = KSI_Config_getCalendarFirstTime(conf, &aFirst);
+	res = KSI_Config_getCalendarLastTime(respCfg, &respVal);
 	if (res != KSI_OK) goto cleanup;
 
-	if (KSI_Integer_compare(aFirst, b) > 0 && isCalendarTimeValid(KSI_Integer_getUInt64(b)) != true) {
-		KSI_LOG_info(KSI_Config_getCtx(conf), "The calendar last time is not in the valid range (%llu).",
-				(unsigned long long)KSI_Integer_getUInt64(b));
+	if (respVal == NULL || KSI_Integer_getUInt64(respVal) == 0) {
+		res = KSI_OK;
+		goto cleanup;
+	}
+
+	res = KSI_Config_getCalendarFirstTime(haCfg, &haValFirst);
+	if (res != KSI_OK) goto cleanup;
+
+	if (KSI_Integer_compare(haValFirst, respVal) > 0 && isCalendarTimeValid(KSI_Integer_getUInt64(respVal)) != true) {
+		KSI_LOG_info(KSI_Config_getCtx(haCfg), "The calendar last time is not in the valid range (%llu).",
+				(unsigned long long)KSI_Integer_getUInt64(respVal));
 		res = KSI_OK;
 		goto cleanup;
 	}
 
 	/* The latest value should be taken. */
-	if (KSI_Integer_compare(a, b) < 0) {
-		res = KSI_Config_setCalendarLastTime(conf, b);
+	if (KSI_Integer_compare(haVal, respVal) < 0) {
+		res = KSI_Config_setCalendarLastTime(haCfg, respVal);
 		if (res != KSI_OK) goto cleanup;
-		KSI_Integer_free(a);
+		KSI_Integer_free(haVal);
 
 		res = KSI_Config_setCalendarLastTime(respCfg, NULL);
 		if (res != KSI_OK) goto cleanup;
@@ -494,32 +519,35 @@ cleanup:
 	return res;
 }
 
-static int KSI_Config_consolidateParentUri(KSI_Config *conf, KSI_Config *respCfg, bool *updated) {
+static int KSI_Config_consolidateParentUri(KSI_Config *haCfg, KSI_Config *respCfg, bool *updated) {
 	int res = KSI_UNKNOWN_ERROR;
-	KSI_Utf8StringList *a = NULL;
-	KSI_Utf8StringList *b = NULL;
+	KSI_Utf8StringList *haVal = NULL;
+	KSI_Utf8StringList *respVal = NULL;
 
-	if (conf == NULL || respCfg == NULL || updated == NULL) {
+	if (haCfg == NULL || respCfg == NULL || updated == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
-	res = KSI_Config_getParentUri(conf, &a);
+	res = KSI_Config_getParentUri(haCfg, &haVal);
 	if (res != KSI_OK) goto cleanup;
-	res = KSI_Config_getParentUri(respCfg, &b);
+	res = KSI_Config_getParentUri(respCfg, &respVal);
 	if (res != KSI_OK) goto cleanup;
 
-	/* Any non-null value is preferred to null. */
-	if (b != NULL) {
-		res = KSI_Config_setParentUri(conf, b);
-		if (res != KSI_OK) goto cleanup;
-		KSI_Utf8StringList_free(a);
-
-		res = KSI_Config_setParentUri(respCfg, NULL);
-		if (res != KSI_OK) goto cleanup;
-
-		*updated = true;
+	/* Any non-null is preferred to null. */
+	if (respVal == NULL) {
+		res = KSI_OK;
+		goto cleanup;
 	}
+
+	res = KSI_Config_setParentUri(haCfg, respVal);
+	if (res != KSI_OK) goto cleanup;
+	KSI_Utf8StringList_free(haVal);
+
+	res = KSI_Config_setParentUri(respCfg, NULL);
+	if (res != KSI_OK) goto cleanup;
+
+	*updated = true;
 
 	res = KSI_OK;
 cleanup:
@@ -528,8 +556,9 @@ cleanup:
 
 static int KSI_HighAvailabilityService_consolidateConfig(KSI_HighAvailabilityService *has, KSI_Config *config, bool *updated) {
 	int res = KSI_UNKNOWN_ERROR;
+	bool changed = false;
 
-	if (has == NULL || config == NULL) {
+	if (has == NULL || config == NULL || updated  == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -539,26 +568,33 @@ static int KSI_HighAvailabilityService_consolidateConfig(KSI_HighAvailabilitySer
 		if (res != KSI_OK) goto cleanup;
 	}
 
-	res = KSI_Config_consolidateMaxLevel(has->consolidatedConfig, config, updated);
+	res = KSI_Config_consolidateMaxLevel(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
+	*updated |= changed;
 
-	res = KSI_Config_consolidateAggrAlgo(has->consolidatedConfig, config, updated);
+	res = KSI_Config_consolidateAggrAlgo(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
+	*updated |= changed;
 
-	res = KSI_Config_consolidateAggrPeriod(has->consolidatedConfig, config, updated);
+	res = KSI_Config_consolidateAggrPeriod(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
+	*updated |= changed;
 
-	res = KSI_Config_consolidateMaxRequests(has->consolidatedConfig, config, updated);
+	res = KSI_Config_consolidateMaxRequests(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
+	*updated |= changed;
 
-	res = KSI_Config_consolidateCalendarFirstTime(has->consolidatedConfig, config, updated);
+	res = KSI_Config_consolidateCalendarFirstTime(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
+	*updated |= changed;
 
-	res = KSI_Config_consolidateCalendarLastTime(has->consolidatedConfig, config, updated);
+	res = KSI_Config_consolidateCalendarLastTime(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
+	*updated |= changed;
 
-	res = KSI_Config_consolidateParentUri(has->consolidatedConfig, config, updated);
+	res = KSI_Config_consolidateParentUri(has->consolidatedConfig, config, &changed);
 	if (res != KSI_OK) goto cleanup;
+	*updated |= changed;
 
 	res = KSI_OK;
 cleanup:
