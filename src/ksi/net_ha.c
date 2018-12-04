@@ -30,20 +30,30 @@
 
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 
-typedef struct KSI_HighAvailabilityRequest_st KSI_HighAvailabilityRequest;
 
 
-static void KSI_HighAvailabilityRequest_free(KSI_HighAvailabilityRequest *o) {
-	if (o != NULL && --o->ref == 0) {
-		KSI_AsyncHandle_free(o->asyncHandle);
+void KSI_HighAvailabilityRequest_free(KSI_HighAvailabilityRequest *o) {
+	if (o == NULL) return;
 
+	if (o->ref == 0) {
 		KSI_free(o);
+		return;
+	}
+
+	if (--o->ref == 0) {
+		KSI_AsyncHandle_free(o->asyncHandle);
+		o->asyncHandle = NULL;
+
+		if (o->ctx == NULL || KSI_HighAvailabilityRequestList_append(o->ctx->haRequestRecycle, o) != KSI_OK) {
+			KSI_free(o);
+		}
 	}
 }
 
-static int KSI_HighAvailabilityRequest_new(KSI_CTX *ctx, KSI_AsyncHandle *asyncHandle, KSI_HighAvailabilityRequest **o) {
+int KSI_HighAvailabilityRequest_new(KSI_CTX *ctx, KSI_AsyncHandle *asyncHandle, KSI_HighAvailabilityRequest **o) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HighAvailabilityRequest *tmp = NULL;
+	size_t len;
 
 	if (ctx == NULL || o == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -51,10 +61,15 @@ static int KSI_HighAvailabilityRequest_new(KSI_CTX *ctx, KSI_AsyncHandle *asyncH
 	}
 	KSI_ERR_clearErrors(ctx);
 
-	tmp = KSI_new(KSI_HighAvailabilityRequest);
-	if (tmp == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
-		goto cleanup;
+	if ((len =  KSI_HighAvailabilityRequestList_length(ctx->haRequestRecycle)) > 0) {
+		res =  KSI_HighAvailabilityRequestList_remove(ctx->haRequestRecycle, len - 1, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		tmp = KSI_new(KSI_HighAvailabilityRequest);
+		if (tmp == NULL) {
+			KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+			goto cleanup;
+		}
 	}
 
 	tmp->ctx = ctx;

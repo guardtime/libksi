@@ -107,6 +107,7 @@ extern "C" {
 
 		/* This list is used to recycle #KSI_AsyncHandle objects to reduce the number of allocs. */
 		KSI_LIST(KSI_AsyncHandle) *asyncHandleRecycle;
+		KSI_LIST(KSI_HighAvailabilityRequest) *haRequestRecycle;
 	};
 
 #ifdef __cplusplus

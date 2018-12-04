@@ -237,6 +237,7 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->lastFailedSignature = NULL;
 	ctx->dataHashRecycle = NULL;
 	ctx->asyncHandleRecycle = NULL;
+	ctx->haRequestRecycle = NULL;
 	KSI_ERR_clearErrors(ctx);
 
 	/* Init options. */
@@ -266,10 +267,12 @@ int KSI_CTX_new(KSI_CTX **context) {
 	res = KSI_PKITruststore_registerGlobals(ctx);
 	if (res != KSI_OK) goto cleanup;
 
+	/* Garbage collection. */
 	res = KSI_DataHashList_new(&ctx->dataHashRecycle);
 	if (res != KSI_OK) goto cleanup;
-
 	res = KSI_AsyncHandleList_new(&ctx->asyncHandleRecycle);
+	if (res != KSI_OK) goto cleanup;
+	res = KSI_HighAvailabilityRequestList_new(&ctx->haRequestRecycle);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Return the context. */
@@ -360,6 +363,7 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 
 		KSI_DataHashList_free(ctx->dataHashRecycle);
 		KSI_AsyncHandleList_free(ctx->asyncHandleRecycle);
+		KSI_HighAvailabilityRequestList_free(ctx->haRequestRecycle);
 
 		KSI_free(ctx);
 	}
