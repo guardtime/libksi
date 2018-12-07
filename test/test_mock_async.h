@@ -34,4 +34,6 @@
  */
 int KSITest_MockAsyncService_setEndpoint(KSI_AsyncService *service, const char **paths, size_t nofPaths, const char *loginId, const char *key);
 
+int KSITest_MockAsyncService_addEndpoint(KSI_AsyncService *service, const char **paths, size_t nofPaths, const char *loginId, const char *key);
+
 #endif /* TEST_MOCK_ASYNC_H_ */

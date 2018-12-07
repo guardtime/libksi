@@ -377,8 +377,21 @@ extern "C" {
 	 * \param[in]		userp			Contains whatever user-defined value set using the KSI_ASYNC_OPT_CALLBACK_USERDATA.
 	 * \param[in]		connected		Boolean value indication connection state.
 	 * \return Implementation must return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK for setting up the callback.
 	 */
 	typedef int (*KSI_AsyncServiceCallback_ConnectState)(KSI_CTX *ctx, size_t id, void *userp, const char *host, int connected);
+
+	/**
+	 * High availability #KSI_AsyncService configuration consolidation callback.
+	 * \param[in]		ctx				KSI context object.
+	 * \param[in]		id				Unique async service id.
+	 * \param[in]		userp			Contains whatever user-defined value set using the KSI_ASYNC_OPT_CALLBACK_USERDATA.
+	 * \param[in,out]	haConfig		Configuration instance where the new value should be merged into.
+	 * \param[in]		respConfig		Sub-service configuration response.
+	 * \return Implementation must return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see #KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK for setting up the callback.
+	 */
+	typedef int (*KSI_AsyncServiceCallback_configConsolidate)(KSI_CTX *ctx, size_t id, void *userp, KSI_Config *haConfig, KSI_Config *respConfig);
 
 	/**
 	 * Enum defining async service options. Pay attention to the used parameter type.
@@ -444,7 +457,7 @@ extern "C" {
 		/**
 		 * If configured, on reception of #KSI_Config the callback is invoked instead of returning the configuration via
 		 * #KSI_AsyncHandle with the state #KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED.
-		 * \param		p_func		Paramer of type #KSI_Config_Callback.
+		 * \param		p_func			Paramer of type #KSI_Config_Callback.
 		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
 		 * and casted to #KSI_Config_Callback before use.
 		 * \note The #KSI_CTX push config callback configuration will be overriden by current setting.
@@ -454,8 +467,20 @@ extern "C" {
 		KSI_ASYNC_OPT_PUSH_CONF_CALLBACK,
 
 		/**
+		 * Enables the user to define a alternative method for consolidating high availability sub-service
+		 * configuration responses.
+		 * \param		p_func			Paramer of type #KSI_AsyncServiceCallback_configConsolidate.
+		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
+		 * and casted to #KSI_AsyncServiceCallback_configConsolidate before use.
+		 * \note The default consolidation handling will be disabled.
+		 * \note Only applicable to a high availability #KSI_AsyncService created via
+		 * #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new.
+		 */
+		KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK,
+
+		/**
 		 * Get the list of high availability service subservices.
-		 * \param[out]	p_list		Paramer of type #KSI_AsyncServiceList.
+		 * \param[out]	p_list			Paramer of type #KSI_AsyncServiceList.
 		 * \note Only functioning as option getter on a high availability service.
 		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
 		 * and casted to #KSI_AsyncServiceList before use.
@@ -465,7 +490,7 @@ extern "C" {
 
 		/**
 		 * The callback is invoked when the network connection state to a server has changed.
-		 * \param		p_func		Paramer of type #KSI_AsyncServiceConnectState_Callback.
+		 * \param		p_func			Paramer of type #KSI_AsyncServiceConnectState_Callback.
 		 * \note Only applicable in case of TCP client.
 		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
 		 * and casted to #KSI_AsyncServiceConnectState_Callback before use.
@@ -474,7 +499,7 @@ extern "C" {
 
 		/**
 		 * Custom pointer to be passed to callbacks. The pointer nor its data is processed internally.
-		 * \param		pdata		Paramer of type void*.
+		 * \param		pdata			Paramer of type void*.
 		 */
 		KSI_ASYNC_OPT_CALLBACK_USERDATA,
 
@@ -491,6 +516,8 @@ extern "C" {
 	 * \see #KSI_AsyncOption defines supported options and parameter types.
 	 * \see #KSI_AsyncService_getOption for extracting option values.
 	 * \note Before appling any options the service endpoint has to be configured.
+	 * \note Pay attention to the service type the option is intended to be used with. If not stated explicitly, there
+	 * are no limitation. However, if used wrongly #KSI_INVALID_ARGUMENT will be returned.
 	 */
 	int KSI_AsyncService_setOption(KSI_AsyncService *s, const int option, void *value);
 
