@@ -82,6 +82,7 @@ extern "C" {
 
 		/* List of cleanup functions to be called when the #KSI_CTX_free is called. */
 		KSI_List *cleanupFnList;
+		KSI_List *globalObjList;
 
 		/** User defined function to be called on the request pdu header before sending it. */
 		KSI_RequestHeaderCallback requestHeaderCB;

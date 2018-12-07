@@ -474,6 +474,21 @@ void KSI_CTX_free(KSI_CTX *ctx);
 int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)(void));
 
 /**
+ * This function is used to initialize global objects and register the appropriate
+ * cleanup method. The obj_new function will be called only once per KSI context and
+ * the cleanup method will be called when #KSI_CTX_free is called on the context object,
+ * thus the object instance will be available for the whole period of #KSI_CTX life.
+ *
+ * \param[in]	ctx			KSI context.
+ * \param[in] 	obj_new		Object construstor.
+ * \param[in]	obj_free	Object destructor.
+ * \param[out]	obj			Global object instance.
+ *
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+int KSI_CTX_registerGlobalObject(KSI_CTX *ctx, int (*obj_new)(KSI_CTX*, void**), void (*obj_free)(void*), void **obj);
+
+/**
  * Dump error stack trace to stream.
  * \param[in]		ctx		KSI context object.
  * \param[in]		f		Output stream.
