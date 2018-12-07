@@ -1,3 +1,5 @@
+* BUGFIX: Fixed possible crash when using multiple KSI_AsyncService instances with HTTP endpoints in different threads.
+* FEATURE: Added support for registering global objects with KSI_CTX_registerGlobalObject.
 * IMPROVEMENT: Added async request recycle handling for reducing memory allocations.
 * BUGFIX: Fixed high availability server aggregation persion configuration consolodation.
 * IMPROVEMENT: Helper interface for creating signing KSI_AsyncHandle.
