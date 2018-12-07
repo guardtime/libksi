@@ -683,7 +683,8 @@ cleanup:
 	return res;
 }
 
-static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncService *sub, KSI_AsyncHandle *respHndl, KSI_Config_Callback confCallback) {
+static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncService *from,
+		KSI_AsyncHandle *respHndl,	KSI_Config_Callback confCallback) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HighAvailabilityRequest *haRequest = NULL;
 	KSI_Config *pushConf = NULL;
@@ -728,8 +729,24 @@ static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncServi
 		goto cleanup;
 	}
 
+	/* Check if user config consolidation callback is configured. */
 	if (has->confConsolidateCallback != NULL) {
-		res = has->confConsolidateCallback(has->ctx, (size_t)sub->impl, has->consolidatedConfig, pushConf);
+		size_t id = 0;
+		void *userp = NULL;
+
+		res = KSI_AsyncService_getOption(from, KSI_ASYNC_PRIVOPT_ENDPOINT_ID, &id);
+		if (res != KSI_OK) {
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = KSI_AsyncService_getOption(from, KSI_ASYNC_OPT_CALLBACK_USERDATA, &userp);
+		if (res != KSI_OK) {
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
+
+		res = has->confConsolidateCallback(has->ctx, id, userp, has->consolidatedConfig, pushConf);
 		if (res != KSI_OK) {
 			KSI_pushError(has->ctx, res, "HA config consolidate callback returned error.");
 			goto cleanup;
@@ -1040,8 +1057,8 @@ static int KSI_HighAvailabilityService_setOption(KSI_HighAvailabilityService *ha
 		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
 			has->confCallback = (KSI_Config_Callback)value;
 			break;
-		case KSI_ASYNC_OPT_HA_CONF_CONSOLIDATE_CALLBACK:
-			has->confConsolidateCallback = (KSI_AsyncServiceCallback_haConfigConsolidate)value;
+		case KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK:
+			has->confConsolidateCallback = (KSI_AsyncServiceCallback_configConsolidate)value;
 			break;
 
 		case KSI_ASYNC_OPT_HA_SUBSERVICE_LIST:
@@ -1094,7 +1111,7 @@ static int KSI_HighAvailabilityService_getOption(const KSI_HighAvailabilityServi
 		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
 			tmp = (size_t)has->confCallback;
 			break;
-		case KSI_ASYNC_OPT_HA_CONF_CONSOLIDATE_CALLBACK:
+		case KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK:
 			tmp = (size_t)has->confConsolidateCallback;
 			break;
 
@@ -1178,6 +1195,12 @@ static int KSI_AbstractHighAvailabilityService_new(KSI_CTX *ctx, KSI_HighAvailab
 	}
 
 	res = KSI_AsyncHandleList_new(&tmp->respQueue);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_Config_new(ctx, &tmp->consolidatedConfig);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;

@@ -110,11 +110,11 @@ static int dispatch(KSITest_FileAsyncClientCtx *clientCtx) {
 
 		res = KSI_AsyncHandleList_elementAt(clientCtx->reqQueue, 0, &req);
 		if (res != KSI_OK) {
-			KSI_LOG_error(clientCtx->ctx, "Async FILE. Unable to extract async handle from request queue. Error: 0x%x.", res);
+			KSI_LOG_error(clientCtx->ctx, "[%p] Async FILE. Unable to extract async handle from request queue. Error: 0x%x.", clientCtx, res);
 			res = KSI_OK;
 			goto cleanup;
 		}
-		KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async FILE. Sending request", req->raw, req->len);
+		KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "[%p] Async FILE. Sending request", req->raw, req->len, clientCtx);
 
 		if (req->state == KSI_ASYNC_STATE_WAITING_FOR_DISPATCH) {
 			clientCtx->roundCount++;
@@ -141,7 +141,7 @@ static int dispatch(KSITest_FileAsyncClientCtx *clientCtx) {
 		const char *path = getFullResourcePath(clientCtx->paths[clientCtx->pathCount]);
 
 		if (clientCtx->file == NULL) {
-			KSI_LOG_debug(clientCtx->ctx, "Async FILE. Reading from: %s", path);
+			KSI_LOG_debug(clientCtx->ctx, "[%p] Async FILE. Reading from: %s", clientCtx, path);
 			clientCtx->file = fopen(path, "rb");
 			/* Check if the file has been opened. */
 			if (clientCtx->file == NULL) {
@@ -160,7 +160,7 @@ static int dispatch(KSITest_FileAsyncClientCtx *clientCtx) {
 			res = KSI_FTLV_fileRead(clientCtx->file, buf, KSI_TLV_MAX_SIZE,  &count, &ftlv);
 			if (res != KSI_OK && count != 0) {
 				reqQueue_clearWithError(clientCtx->reqQueue, res, 0);
-				KSI_LOG_error(clientCtx->ctx, "Unable to read TLV from file. Error: 0x%x.", res);
+				KSI_LOG_error(clientCtx->ctx, "[%p] Unable to read TLV from file. Error: 0x%x.", clientCtx, res);
 				res = KSI_OK;
 				goto cleanup;
 			}
@@ -168,24 +168,24 @@ static int dispatch(KSITest_FileAsyncClientCtx *clientCtx) {
 			if (count != 0) {
 				if (count > KSI_TLV_MAX_SIZE){
 					reqQueue_clearWithError(clientCtx->reqQueue, res = KSI_BUFFER_OVERFLOW, 0);
-					KSI_LOG_error(clientCtx->ctx, "Too much data read from file. Error: 0x%x.", res);
+					KSI_LOG_error(clientCtx->ctx, "[%p] Too much data read from file. Error: 0x%x.", clientCtx, res);
 					res = KSI_OK;
 					goto cleanup;
 				}
 
-				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "Async FILE received response", buf, count);
+				KSI_LOG_logBlob(clientCtx->ctx, KSI_LOG_DEBUG, "[%p] Async FILE received response", buf, count, clientCtx);
 
 				/* A complete PDU is in cache. Move it into the receive queue. */
 				res = KSI_OctetString_new(clientCtx->ctx, buf, count, &resp);
 				if (res != KSI_OK) {
-					KSI_LOG_error(clientCtx->ctx, "Async FILE unable to create new KSI_OctetString object. Error: 0x%x.", res);
+					KSI_LOG_error(clientCtx->ctx, "[%p] Async FILE unable to create new KSI_OctetString object. Error: 0x%x.", clientCtx, res);
 					res = KSI_OK;
 					goto cleanup;
 				}
 
 				res = KSI_OctetStringList_append(clientCtx->respQueue, resp);
 				if (res != KSI_OK) {
-					KSI_LOG_error(clientCtx->ctx, "Async FILE unable to add new response to queue. Error: 0x%x.", res);
+					KSI_LOG_error(clientCtx->ctx, "[%p] Async FILE unable to add new response to queue. Error: 0x%x.", clientCtx, res);
 					res = KSI_OK;
 					goto cleanup;
 				}
@@ -361,6 +361,7 @@ static int FileAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 
 	tmp->clientImpl_free = (void (*)(void*))FileAsyncCtx_free;
 	tmp->clientImpl = clientImpl;
+	tmp->options[KSI_ASYNC_PRIVOPT_ENDPOINT_ID] = (size_t)clientImpl;
 	clientImpl = NULL;
 
 	*c = tmp;
@@ -390,6 +391,42 @@ int KSITest_MockAsyncService_setEndpoint(KSI_AsyncService *service, const char *
 
 	res = FileAsyncClient_setService(service->impl, paths, nofPaths, loginId, key);
 	if (res != KSI_OK) goto cleanup;
+
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
+int KSITest_MockAsyncService_addEndpoint(KSI_AsyncService *service, const char **paths, size_t nofPaths, const char *loginId, const char *key) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AsyncService *tmp = NULL;
+	KSI_HighAvailabilityService *has = NULL;
+
+	if (service == NULL || service->impl == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	has = (KSI_HighAvailabilityService *)service->impl;
+
+	res = has->subservice_new(service->ctx, &tmp);
+	if (res != KSI_OK) goto cleanup;
+
+	res = KSITest_MockAsyncService_setEndpoint(tmp, paths, nofPaths, loginId, key);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Disable callbacks. Will be handled by the HA service itself. */
+	res = KSI_AsyncService_setOption(tmp, KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK, (void*)false);
+	if (res != KSI_OK) {
+		KSI_pushError(service->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AsyncServiceList_append(has->services, tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(service->ctx, res, NULL);
+		goto cleanup;
+	}
+	tmp = NULL;
 
 	res = KSI_OK;
 cleanup:

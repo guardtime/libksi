@@ -385,12 +385,13 @@ extern "C" {
 	 * High availability #KSI_AsyncService configuration consolidation callback.
 	 * \param[in]		ctx				KSI context object.
 	 * \param[in]		id				Unique async service id.
-	 * \param[in/out]	haConfig		Configuration instance where the new value should be merged into.
+	 * \param[in]		userp			Contains whatever user-defined value set using the KSI_ASYNC_OPT_CALLBACK_USERDATA.
+	 * \param[in,out]	haConfig		Configuration instance where the new value should be merged into.
 	 * \param[in]		respConfig		Sub-service configuration response.
 	 * \return Implementation must return status code (#KSI_OK, when operation succeeded, otherwise an error code).
-	 * \see #KSI_ASYNC_OPT_HA_CONF_CONSOLIDATE_CALLBACK for setting up the callback.
+	 * \see #KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK for setting up the callback.
 	 */
-	typedef int (*KSI_AsyncServiceCallback_haConfigConsolidate)(KSI_CTX *ctx, size_t id, KSI_Config *haConfig, KSI_Config *respConfig);
+	typedef int (*KSI_AsyncServiceCallback_configConsolidate)(KSI_CTX *ctx, size_t id, void *userp, KSI_Config *haConfig, KSI_Config *respConfig);
 
 	/**
 	 * Enum defining async service options. Pay attention to the used parameter type.
@@ -468,14 +469,14 @@ extern "C" {
 		/**
 		 * Enables the user to define a alternative method for consolidating high availability sub-service
 		 * configuration responses.
-		 * \param		p_func			Paramer of type #KSI_AsyncServiceCallback_haConfigConsolidate.
+		 * \param		p_func			Paramer of type #KSI_AsyncServiceCallback_configConsolidate.
 		 * \note For reading the stored value via #KSI_AsyncService_getOption a parameter of type size_t should be used,
-		 * and casted to #KSI_Config_Callback before use.
+		 * and casted to #KSI_AsyncServiceCallback_configConsolidate before use.
 		 * \note The default consolidation handling will be disabled.
 		 * \note Only applicable to a high availability #KSI_AsyncService created via
 		 * #KSI_SigningHighAvailabilityService_new or #KSI_ExtendingHighAvailabilityService_new.
 		 */
-		KSI_ASYNC_OPT_HA_CONF_CONSOLIDATE_CALLBACK,
+		KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK,
 
 		/**
 		 * Get the list of high availability service subservices.
