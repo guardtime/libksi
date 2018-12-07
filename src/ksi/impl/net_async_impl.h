@@ -205,6 +205,8 @@ extern "C" {
 
 		/** Intercepted #KSI_ASYNC_OPT_PUSH_CONF_CALLBACK configuration. */
 		KSI_Config_Callback confCallback;
+		/** Intercepted #KSI_ASYNC_OPT_HA_CONF_CONSOLIDATE_CALLBACK option for overring default handling. */
+		KSI_AsyncServiceCallback_haConfigConsolidate confConsolidateCallback;
 		/** Consolidated configuration based on the responses from individual subservices. */
 		KSI_Config *consolidatedConfig;
 

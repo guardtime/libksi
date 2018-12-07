@@ -683,7 +683,7 @@ cleanup:
 	return res;
 }
 
-static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandle *respHndl, KSI_Config_Callback confCallback) {
+static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncService *sub, KSI_AsyncHandle *respHndl, KSI_Config_Callback confCallback) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_HighAvailabilityRequest *haRequest = NULL;
 	KSI_Config *pushConf = NULL;
@@ -728,12 +728,20 @@ static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandl
 		goto cleanup;
 	}
 
-	res = KSI_HighAvailabilityService_consolidateConfig(has, pushConf, &updated);
-	if (res != KSI_OK) {
-		KSI_pushError(has->ctx, res, NULL);
-		goto cleanup;
+	if (has->confConsolidateCallback != NULL) {
+		res = has->confConsolidateCallback(has->ctx, (size_t)sub->impl, has->consolidatedConfig, pushConf);
+		if (res != KSI_OK) {
+			KSI_pushError(has->ctx, res, "HA config consolidate callback returned error.");
+			goto cleanup;
+		}
+	} else {
+		res = KSI_HighAvailabilityService_consolidateConfig(has, pushConf, &updated);
+		if (res != KSI_OK) {
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
+		if (updated == false) goto cleanup;
 	}
-	if (updated == false) goto cleanup;
 
 	if (confCallback) {
 		res = confCallback(has->ctx, has->consolidatedConfig);
@@ -927,7 +935,7 @@ static int responseHandler(KSI_HighAvailabilityService *has, KSI_Config_Callback
 
 		switch (respState) {
 			case KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED:
-				handleConfigResponse(has, respHndl, confCallback);
+				handleConfigResponse(has, as, respHndl, confCallback);
 				break;
 
 			case KSI_ASYNC_STATE_RESPONSE_RECEIVED:
@@ -1032,6 +1040,9 @@ static int KSI_HighAvailabilityService_setOption(KSI_HighAvailabilityService *ha
 		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
 			has->confCallback = (KSI_Config_Callback)value;
 			break;
+		case KSI_ASYNC_OPT_HA_CONF_CONSOLIDATE_CALLBACK:
+			has->confConsolidateCallback = (KSI_AsyncServiceCallback_haConfigConsolidate)value;
+			break;
 
 		case KSI_ASYNC_OPT_HA_SUBSERVICE_LIST:
 			res = KSI_INVALID_ARGUMENT;
@@ -1082,6 +1093,9 @@ static int KSI_HighAvailabilityService_getOption(const KSI_HighAvailabilityServi
 	switch (option) {
 		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
 			tmp = (size_t)has->confCallback;
+			break;
+		case KSI_ASYNC_OPT_HA_CONF_CONSOLIDATE_CALLBACK:
+			tmp = (size_t)has->confConsolidateCallback;
 			break;
 
 		case KSI_ASYNC_OPT_HA_SUBSERVICE_LIST:
@@ -1153,6 +1167,7 @@ static int KSI_AbstractHighAvailabilityService_new(KSI_CTX *ctx, KSI_HighAvailab
 	tmp->respQueue = NULL;
 	tmp->consolidatedConfig = NULL;
 	tmp->confCallback = NULL;
+	tmp->confConsolidateCallback = NULL;
 
 	tmp->subservice_new = NULL;
 
