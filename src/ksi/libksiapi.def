@@ -156,7 +156,6 @@ EXPORTS
 	KSI_CTX_new
 	KSI_CTX_free
 	KSI_CTX_registerGlobals
-	KSI_CTX_registerGlobalObject
 	KSI_ERR_statusDump
 	KSI_ERR_toString
 	KSI_ERR_getBaseErrorMessage
