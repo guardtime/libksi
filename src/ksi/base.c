@@ -205,6 +205,43 @@ static void initOptions(KSI_CTX *ctx) {
 	KSI_CTX_setOption(ctx, KSI_OPT_HA_SAFEGUARD, (void*)KSI_CTX_HA_MAX_SUBSERVICES);
 }
 
+static int registerGlobalObject(KSI_CTX *ctx, int (*obj_new)(KSI_CTX*, void**), void (*obj_free)(void*), void **obj) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t pos;
+	int found = 0;
+	void *tmp = NULL;
+
+	if (ctx == NULL || obj_new == NULL || obj_free == NULL || obj == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_List_find(ctx->cleanupFnList, (void *)obj_free, &found, &pos);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Only run the init function if the cleanup function is not found. */
+	if (!found) {
+		res = obj_new(ctx, &tmp);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_List_append(ctx->cleanupFnList, (void *)obj_free);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_List_append(ctx->globalObjList, (void *)tmp);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		res = KSI_List_elementAt(ctx->globalObjList, pos, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*obj = tmp;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -237,6 +274,10 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->lastFailedSignature = NULL;
 	ctx->dataHashRecycle = NULL;
 	ctx->asyncHandleRecycle = NULL;
+	ctx->cleanupFnList = NULL;
+	ctx->globalObjList = NULL;
+	ctx->registerGlobalObject = registerGlobalObject;
+
 	KSI_ERR_clearErrors(ctx);
 
 	/* Init options. */
@@ -285,43 +326,6 @@ cleanup:
 	KSI_NetworkClient_free(client);
 
 	KSI_CTX_free(ctx);
-
-	return res;
-}
-
-int KSI_CTX_registerGlobalObject(KSI_CTX *ctx, int (*obj_new)(KSI_CTX*, void**), void (*obj_free)(void*), void **obj) {
-	int res = KSI_UNKNOWN_ERROR;
-	size_t pos;
-	int found = 0;
-	void *tmp = NULL;
-
-	if (ctx == NULL || obj_new == NULL || obj_free == NULL || obj == NULL) {
-		res = KSI_INVALID_ARGUMENT;
-		goto cleanup;
-	}
-
-	res = KSI_List_find(ctx->cleanupFnList, (void *)obj_free, &found, &pos);
-	if (res != KSI_OK) goto cleanup;
-
-	/* Only run the init function if the cleanup function is not found. */
-	if (!found) {
-		res = obj_new(ctx, &tmp);
-		if (res != KSI_OK) goto cleanup;
-
-		res = KSI_List_append(ctx->cleanupFnList, (void *)obj_free);
-		if (res != KSI_OK) goto cleanup;
-
-		res = KSI_List_append(ctx->globalObjList, (void *)tmp);
-		if (res != KSI_OK) goto cleanup;
-	} else {
-		res = KSI_List_elementAt(ctx->globalObjList, pos, &tmp);
-		if (res != KSI_OK) goto cleanup;
-	}
-
-	*obj = tmp;
-	res = KSI_OK;
-
-cleanup:
 
 	return res;
 }

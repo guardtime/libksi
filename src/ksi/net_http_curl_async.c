@@ -27,6 +27,7 @@
 #include <curl/curl.h>
 
 #include "net_http.h"
+#include "impl/ctx_impl.h"
 #include "impl/net_async_impl.h"
 #include "net_async.h"
 #include "tlv.h"
@@ -648,7 +649,7 @@ cleanup:
 
 static int CurlMulti_init(KSI_CTX *ctx, CurlMulti **multi) {
 	if (ctx == NULL || multi == NULL) return KSI_INVALID_ARGUMENT;
-	return KSI_CTX_registerGlobalObject(ctx,
+	return ctx->registerGlobalObject(ctx,
 			(int(*)(KSI_CTX*, void**))CurlMulti_new, (void(*)(void*))CurlMulti_free,
 			(void**)multi);
 }
