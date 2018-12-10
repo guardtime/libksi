@@ -379,6 +379,9 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_WRITEFUNCTION, curlCallback_receive);
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_NOPROGRESS, 1);
 
+				/* Make connection get closed at once after use. */
+				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_FORBID_REUSE, 1L);
+
 				/* Make sure cURL won't use signals. */
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_NOSIGNAL, 1);
 
