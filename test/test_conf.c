@@ -271,6 +271,7 @@ int KSITest_Conf_load(const char *confFile, KSITest_Conf *conf) {
 	res = conf_control(conf);
 
 cleanup:
+	if (file != NULL) fclose(file);
 
 	return res;
 }
