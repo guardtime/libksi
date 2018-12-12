@@ -613,6 +613,9 @@ int KSI_MetaData_setRequestTimeInMicros(KSI_MetaData *t, KSI_Integer *reqTime);
 
 KSI_DEFINE_REF(KSI_MetaData);
 
+int KSI_Pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
+		int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**), void *pdu);
+
 /*
  * KSI_ExtendPdu
  */

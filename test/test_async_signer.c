@@ -163,7 +163,6 @@ int main(int argc, char **argv) {
 	KSITest_Conf conf;
 	KSI_Signature *signature = NULL;
 	time_t start;
-	size_t i;
 
 	time(&start);
 
@@ -208,7 +207,8 @@ int main(int argc, char **argv) {
 
 	/* Create new async service provider. */
 	if (argc > _NOF_MANDATORY_ARGS) {
-		int nofHaSs = 0;
+		KSI_AsyncServiceList *ssList = NULL;
+		size_t i;
 
 		if (strcmp(argv[ARGV_SIGNER_TYPE], SIGNER_TYPE_HA)) {
 			fprintf(stderr, "Unknown signer type: %s\n", argv[ARGV_SIGNER_TYPE]);
@@ -234,11 +234,34 @@ int main(int argc, char **argv) {
 				KSI_LOG_info(ksi, "  URI:  %s", KSITest_composeUri(argv[ARGV_PROTOCOL], &conf.ha.aggregator[i]));
 				KSI_LOG_info(ksi, "  user: %s", conf.ha.aggregator[i].user);
 				KSI_LOG_info(ksi, "  pass: %s", conf.ha.aggregator[i].pass);
-				nofHaSs++;
+
+				/* HMAC algorithm configuration. */
+				if (strlen(conf.ha.aggregator[i].hmac)) {
+					KSI_HashAlgorithm algId = KSI_getHashAlgorithmByName(conf.ha.aggregator[i].hmac);
+					if (algId == KSI_HASHALG_INVALID) {
+						fprintf(stderr, "Invalid hash algorithm for aggregator HMAC: '%s'\n", conf.ha.aggregator[i].hmac);
+						exit(EXIT_FAILURE);
+					}
+
+					res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_HMAC_ALGORITHM, (void*)algId);
+					if (res != KSI_OK) {
+						fprintf(stderr, "Unable to set endpoint HMAC algorithm.\n");
+						goto cleanup;
+					}
+					KSI_LOG_info(ksi, "  HMAC: %s", KSI_getHashAlgorithmName(algId));
+				}
 			}
 		}
-		if (!nofHaSs) {
+
+		res = KSI_AsyncService_getOption(as, KSI_ASYNC_OPT_HA_SUBSERVICE_LIST, (void *)&ssList);
+		if (res != KSI_OK) {
+			fprintf(stderr, "Unable to extract sub-service list.\n");
+			goto cleanup;
+		}
+
+		if (KSI_AsyncServiceList_length(ssList) == 0) {
 			fprintf(stderr, "No subservices defined.\n");
+			res = KSI_INVALID_STATE;
 			goto cleanup;
 		}
 	} else {
@@ -259,6 +282,7 @@ int main(int argc, char **argv) {
 		KSI_LOG_info(ksi, "  pass: %s", conf.aggregator.pass);
 	}
 
+	/* Round max request count confguration. */
 	{
 		size_t count = atoi(argv[ARGV_MAX_REQUEST_COUNT]);
 		KSI_LOG_info(ksi, "Setting max request count to: %llu", (unsigned long long)count);
@@ -271,6 +295,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
+	/* Request cache size configturation. */
 	{
 		size_t size = atoi(argv[ARGV_REQUEST_CACHE_SIZE]);
 		KSI_LOG_info(ksi, "Setting request cache size to: %llu", (unsigned long long)size);
@@ -280,7 +305,6 @@ int main(int argc, char **argv) {
 				fprintf(stderr, "Unable to set request cache size.\n");
 				goto cleanup;
 			}
-
 		}
 	}
 

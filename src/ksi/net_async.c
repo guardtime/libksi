@@ -662,6 +662,7 @@ cleanup:
 
 static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 			bool hasRequest, bool hasConfig,
+			KSI_HashAlgorithm defaultHmacAlg,
 			int (*req_new)(KSI_CTX *ctx, void **req),
 			void (*req_free)(void *req),
 			int (*req_getRequestId)(const void *req, KSI_Integer **requestId),
@@ -670,6 +671,9 @@ static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 			int (*req_setConfig)(void *req, KSI_Config *config),
 			void* (*req_ref)(void *req),
 			int (*req_encloseWithHeader)(void *req, KSI_Header *hdr, const char *key, void **pdu),
+			int (*pdu_getHmac)(const void *pdu, KSI_DataHash **hmac),
+			int (*pdu_setHmac)(void *pdu, KSI_DataHash *hmac),
+			int (*pdu_updateHmac)(void *pdu, KSI_HashAlgorithm algo_id, const char *key),
 			int (*pdu_serialize)(const void *pdu, unsigned char **raw, size_t *len),
 			void (*pdu_free)(void *pdu),
 			int (*asyncHandle_new)(KSI_CTX *ctx, void *req, KSI_AsyncHandle **handle)) {
@@ -687,6 +691,8 @@ static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 	KSI_Header *hdr = NULL;
 	KSI_AsyncHandle *confHandle = NULL;
 	void *tmpReq = NULL;
+	KSI_HashAlgorithm clientHmacAlg = KSI_HASHALG_INVALID;
+	KSI_DataHash *hmac = NULL;
 
 	if (c == NULL || handle == NULL || req == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -746,6 +752,28 @@ static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 		goto cleanup;
 	}
 	hdr = NULL;
+	/* Update HMAC if a different algorithm is configured. */
+	clientHmacAlg = (KSI_HashAlgorithm)c->options[KSI_ASYNC_OPT_HMAC_ALGORITHM];
+	if (clientHmacAlg != KSI_HASHALG_INVALID && clientHmacAlg != defaultHmacAlg) {
+		res = pdu_getHmac(pdu, &hmac);
+		if (res != KSI_OK) goto cleanup;
+		KSI_DataHash_free(hmac);
+		hmac = NULL;
+		res = pdu_setHmac(pdu, NULL);
+		if (res != KSI_OK) goto cleanup;
+
+		/* Create and append initial empty HMAC. */
+		res = KSI_DataHash_createZero(c->ctx, clientHmacAlg, &hmac);
+		if (res != KSI_OK) goto cleanup;
+
+		res = pdu_setHmac(pdu, hmac);
+		if (res != KSI_OK) goto cleanup;
+		hmac = NULL;
+
+		/* Calculate the HMAC using the provided key and the default hash algorithm. */
+		res = pdu_updateHmac(pdu, clientHmacAlg, pass);
+		if (res != KSI_OK) goto cleanup;
+	}
 
 	res = pdu_serialize(pdu, &raw, &len);
 	if (res != KSI_OK) goto cleanup;
@@ -815,6 +843,7 @@ cleanup:
 	KSI_free(raw);
 	KSI_Integer_free(reqId);
 	pdu_free(pdu);
+	KSI_DataHash_free(hmac);
 
 	return res;
 }
@@ -836,6 +865,7 @@ static int asyncClient_addAggregatorRequest(KSI_AsyncClient *c, KSI_AsyncHandle 
 	if (res != KSI_OK) goto cleanup;
 
 	res = addRequest(c, handle, handle->aggrReq, (reqHash != NULL), (reqConfig != NULL),
+			(KSI_HashAlgorithm)c->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM],
 			(int (*)(KSI_CTX *ctx, void **req))KSI_AggregationReq_new,
 			(void (*)(void *req))KSI_AggregationReq_free,
 			(int (*)(const void *req, KSI_Integer **requestId))KSI_AggregationReq_getRequestId,
@@ -844,6 +874,9 @@ static int asyncClient_addAggregatorRequest(KSI_AsyncClient *c, KSI_AsyncHandle 
 			(int (*)(void *req, KSI_Config *config))KSI_AggregationReq_setConfig,
 			(void* (*)(void *req))KSI_AggregationReq_ref,
 			(int (*)(void *req, KSI_Header *hdr, const char *key, void **pdu))KSI_AggregationReq_encloseWithHeader,
+			(int (*)(const void *pdu, KSI_DataHash **hmac))KSI_AggregationPdu_getHmac,
+			(int (*)(void *pdu, KSI_DataHash *hmac))KSI_AggregationPdu_setHmac,
+			(int (*)(void *pdu, KSI_HashAlgorithm algo_id, const char *key))KSI_AggregationPdu_updateHmac,
 			(int (*)(const void *pdu, unsigned char **raw, size_t *len))KSI_AggregationPdu_serialize,
 			(void (*)(void *pdu))KSI_AggregationPdu_free,
 			(int (*)(KSI_CTX *ctx, void *req, KSI_AsyncHandle **handle))KSI_AsyncAggregationHandle_new);
@@ -871,6 +904,7 @@ static int asyncClient_addExtenderRequest(KSI_AsyncClient *c, KSI_AsyncHandle *h
 	if (res != KSI_OK) goto cleanup;
 
 	res = addRequest(c, handle, handle->extReq, (reqAggrTime != NULL), (reqConfig != NULL),
+			(KSI_HashAlgorithm)c->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM],
 			(int (*)(KSI_CTX *ctx, void **req))KSI_ExtendReq_new,
 			(void (*)(void *req))KSI_ExtendReq_free,
 			(int (*)(const void *req, KSI_Integer **requestId))KSI_ExtendReq_getRequestId,
@@ -879,6 +913,9 @@ static int asyncClient_addExtenderRequest(KSI_AsyncClient *c, KSI_AsyncHandle *h
 			(int (*)(void *req, KSI_Config *config))KSI_ExtendReq_setConfig,
 			(void* (*)(void *req))KSI_ExtendReq_ref,
 			(int (*)(void *req, KSI_Header *hdr, const char *key, void **pdu))KSI_ExtendReq_encloseWithHeader,
+			(int (*)(const void *pdu, KSI_DataHash **hmac))KSI_ExtendPdu_getHmac,
+			(int (*)(void *pdu, KSI_DataHash *hmac))KSI_ExtendPdu_setHmac,
+			(int (*)(void *pdu, KSI_HashAlgorithm algo_id, const char *key))KSI_ExtendPdu_updateHmac,
 			(int (*)(const void *pdu, unsigned char **raw, size_t *len))KSI_ExtendPdu_serialize,
 			(void (*)(void *pdu))KSI_ExtendPdu_free,
 			(int (*)(KSI_CTX *ctx, void *req, KSI_AsyncHandle **handle))KSI_AsyncExtendHandle_new);
@@ -1133,11 +1170,14 @@ cleanup:
 }
 
 static int processResponseQueue(KSI_AsyncClient *c,
+		KSI_HashAlgorithm defaultHmacAlg,
 		int (*pdu_parse)(KSI_CTX *ctx, const unsigned char *raw, size_t len, void **t),
+		int (*pdu_getHeader)(const void *pdu, KSI_Header **header),
+		int (*pdu_getHmac)(const void *pdu, KSI_DataHash **hmac),
 		void (*pdu_free)(void *pdu),
 		int (*pdu_getError)(const void *pdu, KSI_ErrorPdu **error),
 		int (*pdu_setError)(void *pdu, KSI_ErrorPdu *error),
-		int (*pdu_verify)(const void *pdu, const char *pass),
+		int (*pdu_calculateHmac)(const void*, int, const char*, KSI_DataHash**),
 		int (*pdu_getConfResponse)(const void *pdu, KSI_Config **confResponse),
 		int (*convertStatusCode)(const KSI_Integer *statusCode),
 		int (*asyncClient_handleResponse)(KSI_AsyncClient *c, void *pdu),
@@ -1181,6 +1221,9 @@ static int processResponseQueue(KSI_AsyncClient *c,
 			const char *pass = NULL;
 			const unsigned char *raw = NULL;
 			size_t len = 0;
+			KSI_HashAlgorithm clientHmacAlg = (KSI_HashAlgorithm)c->options[KSI_ASYNC_OPT_HMAC_ALGORITHM];
+			KSI_Header *header = NULL;
+			KSI_DataHash *hmac = NULL;
 
 			res = KSI_OctetString_extract(resp, &raw, &len);
 			if (res != KSI_OK) {
@@ -1223,7 +1266,30 @@ static int processResponseQueue(KSI_AsyncClient *c,
 				goto cleanup;
 			}
 
-			res = pdu_verify(pdu, pass);
+			/* Verify PDU consistency. */
+			res = pdu_getHeader(pdu, &header);
+			if (res != KSI_OK) {
+				KSI_pushError(c->ctx, res, NULL);
+				goto cleanup;
+			}
+			if (header == NULL){
+				KSI_pushError(c->ctx, res = KSI_INVALID_FORMAT, "A successful Extend response must have a Header.");
+				goto cleanup;
+			}
+
+			res = pdu_getHmac(pdu, &hmac);
+			if (res != KSI_OK) {
+				KSI_pushError(c->ctx, res, NULL);
+				goto cleanup;
+			}
+			if (hmac == NULL){
+				KSI_pushError(c->ctx, res = KSI_INVALID_FORMAT, "A successful Extend response must have a HMAC.");
+				goto cleanup;
+			}
+
+			res = KSI_Pdu_verifyHmac(c->ctx, hmac, pass,
+					(clientHmacAlg != KSI_HASHALG_INVALID ? clientHmacAlg : defaultHmacAlg),
+					pdu_calculateHmac, pdu);
 			if (res != KSI_OK) {
 				KSI_pushError(c->ctx, res, NULL);
 				goto cleanup;
@@ -1279,11 +1345,14 @@ cleanup:
 
 static int asyncClient_processAggregationResponseQueue(KSI_AsyncClient *c) {
 	return processResponseQueue(c,
+			(KSI_HashAlgorithm)c->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM],
 			(int (*)(KSI_CTX *, const unsigned char *, size_t, void **))KSI_AggregationPdu_parse,
+			(int (*)(const void *pdu, KSI_Header **header))KSI_AggregationPdu_getHeader,
+			(int (*)(const void *pdu, KSI_DataHash **hmac))KSI_AggregationPdu_getHmac,
 			(void (*)(void *))KSI_AggregationPdu_free,
 			(int (*)(const void *, KSI_ErrorPdu **))KSI_AggregationPdu_getError,
 			(int (*)(void *, KSI_ErrorPdu *))KSI_AggregationPdu_setError,
-			(int (*)(const void *, const char *))KSI_AggregationPdu_verify,
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(int (*)(const void *, KSI_Config **))KSI_AggregationPdu_getConfResponse,
 			(int (*)(const KSI_Integer *))KSI_convertAggregatorStatusCode,
 			(int (*)(KSI_AsyncClient *, void *))asyncClient_handleAggregationResp,
@@ -1294,11 +1363,14 @@ static int asyncClient_processAggregationResponseQueue(KSI_AsyncClient *c) {
 
 static int asyncClient_processExtenderResponseQueue(KSI_AsyncClient *c) {
 	return processResponseQueue(c,
+			(KSI_HashAlgorithm)c->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM],
 			(int (*)(KSI_CTX *, const unsigned char *, size_t, void **))KSI_ExtendPdu_parse,
+			(int (*)(const void *pdu, KSI_Header **header))KSI_ExtendPdu_getHeader,
+			(int (*)(const void *pdu, KSI_DataHash **hmac))KSI_ExtendPdu_getHmac,
 			(void (*)(void *))KSI_ExtendPdu_free,
 			(int (*)(const void *, KSI_ErrorPdu **))KSI_ExtendPdu_getError,
 			(int (*)(void *, KSI_ErrorPdu *))KSI_ExtendPdu_setError,
-			(int (*)(const void *, const char *))KSI_ExtendPdu_verify,
+			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
 			(int (*)(const void *, KSI_Config **))KSI_ExtendPdu_getConfResponse,
 			(int (*)(const KSI_Integer *))KSI_convertExtenderStatusCode,
 			(int (*)(KSI_AsyncClient *, void *))asyncClient_handleExtendResp,
@@ -1524,6 +1596,7 @@ static int asyncClient_setOption(KSI_AsyncClient *c, const int opt, void *param)
 		case KSI_ASYNC_OPT_SND_TIMEOUT:
 		case KSI_ASYNC_OPT_MAX_REQUEST_COUNT:
 		case KSI_ASYNC_OPT_CALLBACK_USERDATA:
+		case KSI_ASYNC_OPT_HMAC_ALGORITHM:
 			c->options[opt] = (size_t)param;
 			break;
 
@@ -1569,6 +1642,7 @@ static int asyncClient_getOption(KSI_AsyncClient *c, const int opt, void *param)
 		case KSI_ASYNC_OPT_SND_TIMEOUT:
 		case KSI_ASYNC_OPT_MAX_REQUEST_COUNT:
 		case KSI_ASYNC_OPT_CALLBACK_USERDATA:
+		case KSI_ASYNC_OPT_HMAC_ALGORITHM:
 			*(size_t*)param = c->options[opt];
 			break;
 		case KSI_ASYNC_OPT_PUSH_CONF_CALLBACK:
@@ -1609,6 +1683,7 @@ static int asyncClient_setDefaultOptions(KSI_AsyncClient *c) {
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)NULL)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK, (void *)NULL)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_CALLBACK_USERDATA, (void *)NULL)) != KSI_OK) goto cleanup;
+	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_HMAC_ALGORITHM, (void *)KSI_HASHALG_INVALID)) != KSI_OK) goto cleanup;
 	/* Private options. */
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_PRIVOPT_ROUND_DURATION, (void *)KSI_ASYNC_ROUND_DURATION_SEC)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK, (void *)true)) != KSI_OK) goto cleanup;

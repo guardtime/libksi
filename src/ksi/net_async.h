@@ -503,6 +503,14 @@ extern "C" {
 		 */
 		KSI_ASYNC_OPT_CALLBACK_USERDATA,
 
+		/**
+		 * HMAC algorithm to be used for securing transactions. In not set, the #KSI_CTX default HMAC algorithm is used.
+		 * \param		algorithm		Paramer of type #KSI_HashAlgorithm.
+		 * \note In case of a high availability #KSI_AsyncService the option is applied to the latest configured
+		 * endpoint. For reading HA sub-service configured HMAC algorithms use #KSI_ASYNC_OPT_HA_SUBSERVICE_LIST first.
+		 */
+		KSI_ASYNC_OPT_HMAC_ALGORITHM,
+
 		__KSI_ASYNC_OPT_COUNT
 	} KSI_AsyncOption;
 

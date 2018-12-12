@@ -1065,6 +1065,28 @@ static int KSI_HighAvailabilityService_setOption(KSI_HighAvailabilityService *ha
 			res = KSI_INVALID_ARGUMENT;
 			goto cleanup;
 
+		case KSI_ASYNC_OPT_HMAC_ALGORITHM: {
+				KSI_AsyncService *ss = NULL;
+				size_t nofss = KSI_AsyncServiceList_length(has->services);
+
+				if (nofss == 0) {
+					res = KSI_INVALID_STATE;
+					goto cleanup;
+				}
+				res = KSI_AsyncServiceList_elementAt(has->services, nofss - 1, &ss);
+				if (res != KSI_OK) {
+					KSI_pushError(has->ctx, res, NULL);
+					goto cleanup;
+				}
+
+				res = KSI_AsyncService_setOption(ss, option, value);
+				if (res != KSI_OK) {
+					KSI_pushError(has->ctx, res, NULL);
+					goto cleanup;
+				}
+			}
+			break;
+
 		/* All other options route to the subservices. */
 		default:
 			for (i = 0; i < KSI_AsyncServiceList_length(has->services); i++) {
@@ -1118,6 +1140,10 @@ static int KSI_HighAvailabilityService_getOption(const KSI_HighAvailabilityServi
 		case KSI_ASYNC_OPT_HA_SUBSERVICE_LIST:
 			tmp = (size_t)has->services;
 			break;
+
+		case KSI_ASYNC_OPT_HMAC_ALGORITHM:
+			res = KSI_INVALID_STATE;
+			goto cleanup;
 
 		default:
 			for (i = 0; i < KSI_AsyncServiceList_length(has->services); i++) {
