@@ -110,7 +110,7 @@ static void verifyOption(CuTest* tc, KSI_AsyncService *s, int opt, size_t defVal
 	CuAssert(tc, "Async service option value mismatch.", res == KSI_OK && optVal == newVal);
 }
 
-static void asyncSigning_verifyOptions(CuTest* tc, const char *scheme) {
+static void asyncSigning_verifyOptions(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
 
@@ -130,16 +130,18 @@ static void asyncSigning_verifyOptions(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaSign_verifyOptions_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_verifyOptions(tc, TEST_SCHEME_TCP);
+	asyncSigning_verifyOptions(tc, scheme);
 }
 
 void Test_HaSign_verifyOptions_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_verifyOptions(tc, TEST_SCHEME_HTTP);
+	asyncSigning_verifyOptions(tc, scheme);
 }
 
-static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char *scheme) {
+static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
 	size_t optVal = 0;
@@ -166,13 +168,15 @@ static void asyncSigning_verifyCacheSizeOption(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaSign_verifyCacheSizeOption_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_verifyCacheSizeOption(tc, TEST_SCHEME_TCP);
+	asyncSigning_verifyCacheSizeOption(tc, scheme);
 }
 
 void Test_HaSign_verifyCacheSizeOption_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_verifyCacheSizeOption(tc, TEST_SCHEME_HTTP);
+	asyncSigning_verifyCacheSizeOption(tc, scheme);
 }
 
 static void asyncSigning_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
@@ -338,12 +342,13 @@ static void asyncSigning_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
 
 void Test_HaSign_loop_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -354,12 +359,13 @@ void Test_HaSign_loop_tcp(CuTest* tc) {
 
 void Test_HaSign_loop_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -370,12 +376,13 @@ void Test_HaSign_loop_http(CuTest* tc) {
 
 void Test_HaSign_loopResetServiceLoop_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -393,12 +400,13 @@ void Test_HaSign_loopResetServiceLoop_tcp(CuTest* tc) {
 
 void Test_HaSign_loopResetServiceLoop_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -416,34 +424,14 @@ void Test_HaSign_loopResetServiceLoop_http(CuTest* tc) {
 
 void Test_HaSign_loop_http_tcp_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, TEST_SCHEME_TCP, TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	if (strlen(conf.ha.aggregator[0].host) == 0) {
-		KSI_LOG_debug(ctx, "%s: testing with common aggregator conf.", __FUNCTION__);
-
-		res = KSI_AsyncService_addEndpoint(has,
-				KSITest_composeUri(TEST_SCHEME_HTTP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
-		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-	} else {
-		res = KSI_AsyncService_addEndpoint(has,
-				KSITest_composeUri(TEST_SCHEME_HTTP, &conf.ha.aggregator[0]), conf.ha.aggregator[0].user, conf.ha.aggregator[0].pass);
-		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-		if (strlen(conf.ha.aggregator[1].host) != 0) {
-			res = KSI_AsyncService_addEndpoint(has,
-					KSITest_composeUri(TEST_SCHEME_TCP, &conf.ha.aggregator[1]), conf.ha.aggregator[1].user, conf.ha.aggregator[1].pass);
-			CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-		}
-
-		if (strlen(conf.ha.aggregator[2].host) != 0) {
-			res = KSI_AsyncService_addEndpoint(has,
-					KSITest_composeUri(TEST_SCHEME_HTTP, &conf.ha.aggregator[2]), conf.ha.aggregator[2].user, conf.ha.aggregator[2].pass);
-			CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-		}
-	}
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_loop_getResponse(tc, has);
@@ -453,34 +441,14 @@ void Test_HaSign_loop_http_tcp_http(CuTest* tc) {
 
 void Test_HaSign_loop_tcp_http_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, TEST_SCHEME_HTTP, TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	if (strlen(conf.ha.aggregator[0].host) == 0) {
-		KSI_LOG_debug(ctx, "%s: testing with common aggregator conf.", __FUNCTION__);
-
-		res = KSI_AsyncService_addEndpoint(has,
-				KSITest_composeUri(TEST_SCHEME_TCP, &conf.aggregator), conf.aggregator.user, conf.aggregator.pass);
-		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-	} else {
-		res = KSI_AsyncService_addEndpoint(has,
-				KSITest_composeUri(TEST_SCHEME_TCP, &conf.ha.aggregator[0]), conf.ha.aggregator[0].user, conf.ha.aggregator[0].pass);
-		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-		if (strlen(conf.ha.aggregator[1].host) != 0) {
-			res = KSI_AsyncService_addEndpoint(has,
-					KSITest_composeUri(TEST_SCHEME_HTTP, &conf.ha.aggregator[1]), conf.ha.aggregator[1].user, conf.ha.aggregator[1].pass);
-			CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-		}
-
-		if (strlen(conf.ha.aggregator[2].host) != 0) {
-			res = KSI_AsyncService_addEndpoint(has,
-					KSITest_composeUri(TEST_SCHEME_TCP, &conf.ha.aggregator[2]), conf.ha.aggregator[2].user, conf.ha.aggregator[2].pass);
-			CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-		}
-	}
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncSigning_loop_getResponse(tc, has);
@@ -489,7 +457,7 @@ void Test_HaSign_loop_tcp_http_tcp(CuTest* tc) {
 }
 
 
-static void asyncSigning_collect_getResponse(CuTest* tc, const char *scheme) {
+static void asyncSigning_collect_getResponse(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	time_t startTime;
@@ -633,16 +601,18 @@ static void asyncSigning_collect_getResponse(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaSign_collect_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_collect_getResponse(tc, TEST_SCHEME_TCP);
+	asyncSigning_collect_getResponse(tc, scheme);
 }
 
 void Test_HaSign_collect_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_collect_getResponse(tc, TEST_SCHEME_HTTP);
+	asyncSigning_collect_getResponse(tc, scheme);
 }
 
-static void asyncSigning_getError(CuTest* tc, const char *scheme, KSITest_ServiceConf *srvCfg, KSITest_ServiceConf *haCfg, int expected, long external) {
+static void asyncSigning_getError(CuTest* tc, const char **scheme, KSITest_ServiceConf *srvCfg, KSITest_ServiceConf *haCfg, int expected, long external) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
@@ -726,13 +696,15 @@ static void asyncSigning_getError(CuTest* tc, const char *scheme, KSITest_Servic
 
 
 void Test_HaSign_useExtender_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_getError(tc, TEST_SCHEME_TCP, &conf.extender, conf.ha.extender, KSI_INVALID_FORMAT, 0);
+	asyncSigning_getError(tc, scheme, &conf.extender, conf.ha.extender, KSI_INVALID_FORMAT, 0);
 }
 
 void Test_HaSign_useExtender_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_getError(tc, TEST_SCHEME_HTTP, &conf.extender, conf.ha.extender, KSI_HTTP_ERROR, 400);
+	asyncSigning_getError(tc, scheme, &conf.extender, conf.ha.extender, KSI_HTTP_ERROR, 400);
 }
 
 static int createDummyAggrAsyncRequest(KSI_AsyncHandle **ah) {
@@ -764,7 +736,7 @@ cleanup:
 	return res;
 }
 
-static void asyncSigning_fillupCache(CuTest* tc, const char *scheme) {
+static void asyncSigning_fillupCache(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *hndl = NULL;
@@ -805,16 +777,18 @@ static void asyncSigning_fillupCache(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaSign_fillupCache_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_fillupCache(tc, TEST_SCHEME_TCP);
+	asyncSigning_fillupCache(tc, scheme);
 }
 
 void Test_HaSign_fillupCache_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_fillupCache(tc, TEST_SCHEME_HTTP);
+	asyncSigning_fillupCache(tc, scheme);
 }
 
-static void asyncSigning_addEmptyReq(CuTest* tc, const char *scheme) {
+static void asyncSigning_addEmptyReq(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
@@ -843,13 +817,15 @@ static void asyncSigning_addEmptyReq(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaSign_addEmptyRequest_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_addEmptyReq(tc, TEST_SCHEME_TCP);
+	asyncSigning_addEmptyReq(tc, scheme);
 }
 
 void Test_HaSign_addEmptyRequest_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_addEmptyReq(tc, TEST_SCHEME_HTTP);
+	asyncSigning_addEmptyReq(tc, scheme);
 }
 
 static void Test_HaSign_noEndpoint_addRequest(CuTest* tc) {
@@ -905,7 +881,7 @@ void Test_HaSign_exceedMaxNofSubservices(CuTest* tc) {
 	KSI_AsyncService_free(has);
 }
 
-static void asyncSigning_runEmpty(CuTest* tc, const char *scheme) {
+static void asyncSigning_runEmpty(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *hndl = NULL;
@@ -929,13 +905,15 @@ static void asyncSigning_runEmpty(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaSign_runEmpty_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_runEmpty(tc, TEST_SCHEME_TCP);
+	asyncSigning_runEmpty(tc, scheme);
 }
 
 void Test_HaSign_runEmpty_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_runEmpty(tc, TEST_SCHEME_HTTP);
+	asyncSigning_runEmpty(tc, scheme);
 }
 
 static void asyncSigning_requestConfigOnly(CuTest* tc, KSI_AsyncService *as) {
@@ -1011,6 +989,7 @@ static void asyncSigning_requestConfigOnly(CuTest* tc, KSI_AsyncService *as) {
 
 void Test_HaSign_requestConfigOnly_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1018,7 +997,7 @@ void Test_HaSign_requestConfigOnly_tcp(CuTest* tc) {
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	asyncSigning_requestConfigOnly(tc, has);
@@ -1028,6 +1007,7 @@ void Test_HaSign_requestConfigOnly_tcp(CuTest* tc) {
 
 void Test_HaSign_requestConfigOnly_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1035,7 +1015,7 @@ void Test_HaSign_requestConfigOnly_http(CuTest* tc) {
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	asyncSigning_requestConfigOnly(tc, has);
@@ -1111,6 +1091,7 @@ static void asyncSigning_requestConfigOnlyUseCallback(CuTest* tc, KSI_AsyncServi
 
 void Test_HaSign_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1118,7 +1099,7 @@ void Test_HaSign_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)dummyCallback);
@@ -1131,6 +1112,7 @@ void Test_HaSign_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 
 void Test_HaSign_requestConfigOnlyUseCallback_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1138,7 +1120,7 @@ void Test_HaSign_requestConfigOnlyUseCallback_http(CuTest* tc) {
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.aggregator, conf.ha.aggregator);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.aggregator, conf.ha.aggregator);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)dummyCallback);
@@ -1149,13 +1131,13 @@ void Test_HaSign_requestConfigOnlyUseCallback_http(CuTest* tc) {
 	KSI_AsyncService_free(has);
 }
 
-static void asyncSigning_verifySubserviceCallbacksDisabled(CuTest* tc, const char *scheme) {
+static void asyncSigning_verifySubserviceCallbacksDisabled(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
 	size_t i;
 	KSI_AsyncServiceList *list = NULL;
 
-	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_SigningHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
@@ -1195,16 +1177,18 @@ static void asyncSigning_verifySubserviceCallbacksDisabled(CuTest* tc, const cha
 }
 
 static void Test_HaSign_verifySubserviceCallbacksDisabled_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_verifySubserviceCallbacksDisabled(tc, TEST_SCHEME_TCP);
+	asyncSigning_verifySubserviceCallbacksDisabled(tc, scheme);
 }
 
 static void Test_HaSign_verifySubserviceCallbacksDisabled_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_verifySubserviceCallbacksDisabled(tc, TEST_SCHEME_HTTP);
+	asyncSigning_verifySubserviceCallbacksDisabled(tc, scheme);
 }
 
-static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *scheme) {
+static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
@@ -1328,16 +1312,18 @@ static void asyncSigning_requestConfigWithAggrReq(CuTest* tc, const char *scheme
 }
 
 void Test_HaSign_requestConfigWithAggrReq_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_requestConfigWithAggrReq(tc, TEST_SCHEME_TCP);
+	asyncSigning_requestConfigWithAggrReq(tc, scheme);
 }
 
 void Test_HaSign_requestConfigWithAggrReq_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_requestConfigWithAggrReq(tc, TEST_SCHEME_HTTP);
+	asyncSigning_requestConfigWithAggrReq(tc, scheme);
 }
 
-static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char *scheme) {
+static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
 	time_t startTime;
@@ -1485,13 +1471,15 @@ static void asyncSigning_requestConfigAndAggrRequest_loop(CuTest* tc, const char
 }
 
 void Test_HaSign_requestConfigAndAggrRequest_loop_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_requestConfigAndAggrRequest_loop(tc, TEST_SCHEME_TCP);
+	asyncSigning_requestConfigAndAggrRequest_loop(tc, scheme);
 }
 
 void Test_HaSign_requestConfigAndAggrRequest_loop_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncSigning_requestConfigAndAggrRequest_loop(tc, TEST_SCHEME_HTTP);
+	asyncSigning_requestConfigAndAggrRequest_loop(tc, scheme);
 }
 
 static void preTest(void) {

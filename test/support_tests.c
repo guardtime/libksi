@@ -283,27 +283,57 @@ const char *KSITest_composeUri(const char *scheme, const KSITest_ServiceConf *se
 	return buf;
 }
 
-int KSITest_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const char *scheme,
+int KSITest_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const char **scheme,
 		KSITest_ServiceConf *srvConf, KSITest_ServiceConf *haConf) {
 	int res = KSI_UNKNOWN_ERROR;
-	size_t i;
 
-	if (service == NULL || scheme == NULL || srvConf == NULL) {
+	if (service == NULL || scheme == NULL || scheme[0] == NULL || srvConf == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
 
 	if (haConf == NULL || strlen(haConf[0].host) == 0) {
 		res = KSI_AsyncService_addEndpoint(service,
-				KSITest_composeUri(scheme, srvConf),
+				KSITest_composeUri(scheme[0], srvConf),
 				srvConf->user, srvConf->pass);
 		if (res != KSI_OK) goto cleanup;
+
+		if (strlen(srvConf->hmac)) {
+			KSI_HashAlgorithm algId = KSI_getHashAlgorithmByName(srvConf->hmac);
+			if (algId == KSI_HASHALG_INVALID) {
+				res = KSI_INVALID_ARGUMENT;
+				goto cleanup;
+			}
+			res = KSI_AsyncService_setOption(service, KSI_ASYNC_OPT_HMAC_ALGORITHM, (void*)algId);
+			if (res != KSI_OK) goto cleanup;
+		}
 	} else {
+		size_t i = 0;
+		const char *schm = NULL;
+
+		while (scheme[i++]);
+		if (i-1 == 1) {
+			schm = scheme[0];
+		} else if (i-1 != CONF_MAX_HA_SERVICES) {
+			res = KSI_INVALID_ARGUMENT;
+			goto cleanup;
+		}
+
 		for (i = 0; i < CONF_MAX_HA_SERVICES; i++) {
 			if (strlen(haConf[i].host)) {
 				res = KSI_AsyncService_addEndpoint(service,
-						KSITest_composeUri(scheme, &haConf[i]),
+						KSITest_composeUri((schm != NULL ? schm : scheme[i]), &haConf[i]),
 						haConf[i].user, haConf[i].pass);
+				if (res != KSI_OK) goto cleanup;
+			}
+
+			if (strlen(haConf[i].hmac)) {
+				KSI_HashAlgorithm algId = KSI_getHashAlgorithmByName(haConf[i].hmac);
+				if (algId == KSI_HASHALG_INVALID) {
+					res = KSI_INVALID_ARGUMENT;
+					goto cleanup;
+				}
+				res = KSI_AsyncService_setOption(service, KSI_ASYNC_OPT_HMAC_ALGORITHM, (void*)algId);
 				if (res != KSI_OK) goto cleanup;
 			}
 		}
