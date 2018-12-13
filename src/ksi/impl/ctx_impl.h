@@ -82,6 +82,9 @@ extern "C" {
 
 		/* List of cleanup functions to be called when the #KSI_CTX_free is called. */
 		KSI_List *cleanupFnList;
+		KSI_List *globalObjList;
+		/** Pointer to function for initializing global objects and register the appropriate cleanup method. */
+		int (*registerGlobalObject)(KSI_CTX *ctx, int (*obj_new)(KSI_CTX*, void**), void (*obj_free)(void*), const void **obj);
 
 		/** User defined function to be called on the request pdu header before sending it. */
 		KSI_RequestHeaderCallback requestHeaderCB;

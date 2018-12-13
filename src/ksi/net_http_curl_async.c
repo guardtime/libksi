@@ -27,6 +27,7 @@
 #include <curl/curl.h>
 
 #include "net_http.h"
+#include "impl/ctx_impl.h"
 #include "impl/net_async_impl.h"
 #include "net_async.h"
 #include "tlv.h"
@@ -62,7 +63,7 @@ struct HttpAsyncCtx_st {
 	KSI_CTX *ctx;
 
 	/* Curl multi handle. */
-	CurlMulti *curl;
+	const CurlMulti *curl;
 
 	/* Output queue. */
 	KSI_LIST(KSI_AsyncHandle) *reqQueue;
@@ -378,6 +379,9 @@ static int dispatch(HttpAsyncCtx *clientCtx) {
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_WRITEFUNCTION, curlCallback_receive);
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_NOPROGRESS, 1);
 
+				/* Make connection get closed at once after use. */
+				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_FORBID_REUSE, 1L);
+
 				/* Make sure cURL won't use signals. */
 				curl_easy_setopt(curlRequest->easyHandle, CURLOPT_NOSIGNAL, 1);
 
@@ -594,8 +598,6 @@ static int getCredentials(HttpAsyncCtx *asyncCtx, const char **user, const char 
 	return KSI_OK;
 }
 
-static CurlMulti *_curlMulti = NULL;
-
 static void CurlMulti_free(CurlMulti *o) {
 	if (o != NULL) {
 		int msgCount = 0;
@@ -611,53 +613,57 @@ static void CurlMulti_free(CurlMulti *o) {
 				CurlAsyncRequest_free((CurlAsyncRequest *)curlPriv);
 			}
 		} while (msgCount);
-		curl_multi_cleanup(_curlMulti->handle);
+		curl_multi_cleanup(o->handle);
 
 		KSI_free(o);
 	}
 }
 
-static CurlMulti *curlMulti_init(void) {
+static int CurlMulti_new(KSI_CTX *ctx, CurlMulti **o) {
+	int res = KSI_UNKNOWN_ERROR;
 	CurlMulti *tmp = NULL;
 
-	if (_curlMulti == NULL) {
-		tmp = KSI_new(CurlMulti);
-		if (tmp == NULL) goto cleanup;
+	if (ctx == NULL || o == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
 
-		tmp->handle = NULL;
-		tmp->initCount = 0;
+	tmp = KSI_new(CurlMulti);
+	if (tmp == NULL) goto cleanup;
 
-		if ((tmp->handle = curl_multi_init()) == NULL) goto cleanup;
+	tmp->handle = NULL;
+	tmp->initCount = 0;
+
+	if ((tmp->handle = curl_multi_init()) == NULL) goto cleanup;
 
 #ifdef LIMIT_MAXCONNS
-		/* Limit the total amount of connections this multi handle uses. */
-		curl_multi_setopt(curlMulti->handle, CURLMOPT_MAXCONNECTS, (long)count);
+	/* Limit the total amount of connections this multi handle uses. */
+	curl_multi_setopt(curlMulti->handle, CURLMOPT_MAXCONNECTS, (long)count);
 #endif
 
-		_curlMulti = tmp;
-		tmp = NULL;
-	}
-	_curlMulti->initCount++;
+	*o = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
 cleanup:
 	CurlMulti_free(tmp);
-	return _curlMulti;
+	return res;
 }
 
-static void curlMulti_cleanup(void) {
-	if (_curlMulti != NULL && --_curlMulti->initCount == 0) {
-		CurlMulti_free(_curlMulti);
-		_curlMulti = NULL;
-	}
+static int CurlMulti_init(KSI_CTX *ctx, const CurlMulti **multi) {
+	if (ctx == NULL || multi == NULL) return KSI_INVALID_ARGUMENT;
+	return ctx->registerGlobalObject(ctx,
+			(int(*)(KSI_CTX*, void**))CurlMulti_new, (void(*)(void*))CurlMulti_free,
+			(const void**)multi);
 }
 
 static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
 	if (o != NULL) {
-		curlMulti_cleanup();
-
 		/* Cleanup queues. */
 		KSI_AsyncHandleList_free(o->reqQueue);
 		KSI_OctetStringList_free(o->respQueue);
 
+		KSI_nofree(o->curl);
 		KSI_nofree(o->userAgent);
 		if (o->httpHeaders != NULL) curl_slist_free_all(o->httpHeaders);
 
@@ -713,11 +719,8 @@ static int HttpAsyncCtx_new(KSI_CTX *ctx, HttpAsyncCtx **clientCtx) {
 		goto cleanup;
 	}
 
-	tmp->curl = curlMulti_init();
-	if (tmp->curl == NULL) {
-		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, "Curl: Unable to init multi handle.");
-		goto cleanup;
-	}
+	res = CurlMulti_init(ctx, &tmp->curl);
+	if (res != KSI_OK) goto cleanup;
 
 	/* Initialize io queues. */
 	res = KSI_AsyncHandleList_new(&tmp->reqQueue);
