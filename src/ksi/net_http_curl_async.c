@@ -63,7 +63,7 @@ struct HttpAsyncCtx_st {
 	KSI_CTX *ctx;
 
 	/* Curl multi handle. */
-	CurlMulti *curl;
+	const CurlMulti *curl;
 
 	/* Output queue. */
 	KSI_LIST(KSI_AsyncHandle) *reqQueue;
@@ -650,11 +650,11 @@ cleanup:
 	return res;
 }
 
-static int CurlMulti_init(KSI_CTX *ctx, CurlMulti **multi) {
+static int CurlMulti_init(KSI_CTX *ctx, const CurlMulti **multi) {
 	if (ctx == NULL || multi == NULL) return KSI_INVALID_ARGUMENT;
 	return ctx->registerGlobalObject(ctx,
 			(int(*)(KSI_CTX*, void**))CurlMulti_new, (void(*)(void*))CurlMulti_free,
-			(void**)multi);
+			(const void**)multi);
 }
 
 static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
@@ -663,6 +663,7 @@ static void HttpAsyncCtx_free(HttpAsyncCtx *o) {
 		KSI_AsyncHandleList_free(o->reqQueue);
 		KSI_OctetStringList_free(o->respQueue);
 
+		KSI_nofree(o->curl);
 		KSI_nofree(o->userAgent);
 		if (o->httpHeaders != NULL) curl_slist_free_all(o->httpHeaders);
 

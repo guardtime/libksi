@@ -205,7 +205,18 @@ static void initOptions(KSI_CTX *ctx) {
 	KSI_CTX_setOption(ctx, KSI_OPT_HA_SAFEGUARD, (void*)KSI_CTX_HA_MAX_SUBSERVICES);
 }
 
-static int registerGlobalObject(KSI_CTX *ctx, int (*obj_new)(KSI_CTX*, void**), void (*obj_free)(void*), void **obj) {
+/**
+ * This function is used to initialize global objects and register the appropriate
+ * cleanup method. The obj_new function will be called only once per KSI context and
+ * the cleanup method will be called when #KSI_CTX_free is called on the context object,
+ * thus the object instance will be available for the whole period of #KSI_CTX life.
+ * \param[in]	ctx			KSI context.
+ * \param[in] 	obj_new		Object construstor.
+ * \param[in]	obj_free	Object destructor.
+ * \param[out]	obj			Global object instance.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+static int registerGlobalObject(KSI_CTX *ctx, int (*obj_new)(KSI_CTX*, void**), void (*obj_free)(void*), const void **obj) {
 	int res = KSI_UNKNOWN_ERROR;
 	size_t pos;
 	int found = 0;
