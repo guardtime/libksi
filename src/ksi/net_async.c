@@ -125,6 +125,8 @@ int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o) {
 	tmp->errExt = 0L;
 	tmp->errMsg = NULL;
 
+	tmp->parentId = 0;
+
 	*o = tmp;
 	tmp = NULL;
 
@@ -323,6 +325,7 @@ KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, const void *, userCtx, RequestCtx)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_uint64_t, id, RequestId)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_AggregationReq *, aggrReq, AggregationReq)
 KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, KSI_ExtendReq *, extReq, ExtendReq)
+KSI_IMPLEMENT_GETTER(KSI_AsyncHandle, size_t, parentId, ParentId)
 
 int KSI_AsyncHandle_getAggregationResp(const KSI_AsyncHandle *h, KSI_AggregationResp **resp) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -709,6 +712,9 @@ static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 	handle->respCtx = NULL;
 	handle->id = 0;
 
+	/* Update the request handler. */
+	handle->parentId = c->options[KSI_ASYNC_PRIVOPT_ENDPOINT_ID];
+
 	/* Update request id only in case of ksi service request. */
 	if (hasRequest) {
 		res = req_getRequestId(req, &reqId);
@@ -937,10 +943,12 @@ static int handleResponse(KSI_AsyncClient *c, void *resp,
 		goto cleanup;
 	}
 
+	/* Get handle from the cache. */
 	id = KSI_Integer_getUInt64(reqId) & KSI_ASYNC_REQUEST_ID_MASK;
 	if (c->options[KSI_ASYNC_OPT_REQUEST_CACHE_SIZE] <= id ||
 			(handle = c->reqCache[id]) == NULL || handle->id != KSI_Integer_getUInt64(reqId)) {
 		KSI_LOG_warn(c->ctx, "Unexpected async response received.");
+		res = KSI_OK;
 		goto cleanup;
 	}
 

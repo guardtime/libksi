@@ -264,6 +264,7 @@ EXPORTS
 	KSI_AsyncHandle_setRequestCtx
 	KSI_AsyncHandle_getRequestCtx
 	KSI_AsyncHandle_getRequestId
+	KSI_AsyncHandle_getParentId
 	KSI_AsyncHandle_getState
 	KSI_AsyncHandle_getError
 	KSI_AsyncHandle_getExtError

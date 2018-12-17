@@ -183,6 +183,17 @@ extern "C" {
 	int KSI_AsyncHandle_getRequestId(const KSI_AsyncHandle *h, KSI_uint64_t *id);
 
 	/**
+	 * Get the request handler ID. This is the unique async service id that is provided also to the configured callbacks
+	 * (see KSI_AsyncServiceCallback) and seen in the logs.
+	 * \param[in]		h				Async handle.
+	 * \param[out]		parentId		Unique async service id.
+	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note The value is only valid after a successful call to #KSI_AsyncService_addRequest.
+	 * \see #KSI_AsyncService_addRequest for adding asynchronous request to the output queue.
+	 */
+	int KSI_AsyncHandle_getParentId(const KSI_AsyncHandle *h, size_t *parentId);
+
+	/**
 	 * Getter for the aggregation request.
 	 * \param[in]		h				Async handle.
 	 * \param[out]		req				Pointer to the receiving pointer.

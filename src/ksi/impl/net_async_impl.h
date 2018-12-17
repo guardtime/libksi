@@ -67,6 +67,9 @@ extern "C" {
 		long errExt;
 		KSI_Utf8String *errMsg;
 
+		/** Async client id who has handled the request. */
+		size_t parentId;
+
 		/** Time when the query has been added to the request queue. */
 		time_t reqTime;
 		/** Time when the query has been sent out. */
