@@ -51,7 +51,7 @@ extern "C" {
 	/**
 	 * Constructor for the abstract async handle.
 	 * \param[in]		ctx		KSI context.
-	 * \param[out]		client	Abstract async handle.
+	 * \param[out]		o		Abstract async handle.
 	 * \return Status code (#KSI_OK, when operation succeeded, otherwise an error code).
 	 */
 	int KSI_AbstractAsyncHandle_new(KSI_CTX *ctx, KSI_AsyncHandle **o);
@@ -321,36 +321,84 @@ extern "C" {
 
 	/**
 	 * Enum defining async handle state.
+	 * \note User must process only those handles that have reached there final states.
 	 */
 	typedef enum KSI_AsyncHandleState_en {
 		/** The state of the request is undefined. */
 		KSI_ASYNC_STATE_UNDEFINED = 0,
+
+		/*
+		 * Handle internal states.
+		 */
 
 		/** The request is cached in the output queue. */
 		KSI_ASYNC_STATE_WAITING_FOR_DISPATCH,
 		/** The request has been dispathed. */
 		KSI_ASYNC_STATE_WAITING_FOR_RESPONSE,
 
+
+		/*
+		 * Request final states.
+		 */
+
 		/**
-		 * The response has been received and is ready to be read. This is the final state of a request.
+		 * The response has been received and is ready to be read.
 		 * \see #KSI_AsyncHandle_getAggregationResp for extracting aggregation response.
+		 * \see #KSI_AsyncHandle_getExtendResp for extracting extening response.
 		 * \see #KSI_AsyncHandle_getSignature for extracting KSI signature.
 		 * \see #KSI_AsyncHandle_free for cleaning up resources.
+		 * \note This is the final state of a request.
 		 */
 		KSI_ASYNC_STATE_RESPONSE_RECEIVED,
 		/**
-		 * Push configuration has been received from the server. This is the final state of a request.
+		 * Configuration has been received from the server.
 		 * \see #KSI_AsyncHandle_getConfig for extracting server configuration response.
 		 * \see #KSI_AsyncHandle_free for cleaning up resources.
+		 * \note This is the final state of a request.
 		 */
 		KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED,
 		/**
-		 * An error has occured while the request was in process. This is the final state of a request.
+		 * An error has occured while the request was in process.
 		 * \see #KSI_AsyncHandle_getError for reading the error code.
 		 * \see #KSI_AsyncHandle_free for cleaning up resources.
 		 * \see #KSI_AsyncService_addRequest for re-adding the request back into the request queue.
+		 * \note This is the final state of a request.
 		 */
-		KSI_ASYNC_STATE_ERROR
+		KSI_ASYNC_STATE_ERROR,
+
+		/*
+		 * Handle final states.
+		 */
+
+		/**
+		 * An error has occured while a request is/was processed.
+		 * There are following scenarious when the error cound have occured:
+		 * - while the request is waiting for a valid response, any of the underlying enpoint services could have
+		 * encountered eg. network connection issues;
+		 * - a valid response has been already returned to the user with a handle in
+		 * #KSI_ASYNC_STATE_RESPONSE_RECEIVED, or #KSI_ASYNC_STATE_PUSH_CONFIG_RECEIVED state from any unterlying
+		 * endpoint. Meanwhile, other endpoint(s) could have been waiting for receive timeout.
+		 *
+		 * The difference between #KSI_ASYNC_STATE_ERROR is that a handle is set into the state when no valid response
+		 * can be returned to the user.
+		 *
+		 * The handle in current state contains only the error information and a reference to the original request:
+		 * - error information can be extracted in same manner as in case of #KSI_ASYNC_STATE_ERROR;
+		 * - reference to original request handle, that has encountered the error, can be extracted by incoking
+		 * #KSI_AsyncHandle_getRequestCtx.
+		 *
+		 * \see #KSI_AsyncHandle_getError for reading the error code.
+		 * \see #KSI_AsyncHandle_getRequestCtx for extracting the original request handle.
+		 * \see #KSI_AsyncHandle_free for cleaning up resources.
+		 *
+		 * \note This is the final state for a handle.
+		 * \note #KSI_AsyncService_addRequest can not be used direcly on a request this state references to. However,
+		 * the original handle can be used for this purpose.
+		 * \note The attached request handle (returned via #KSI_AsyncHandle_getRequestCtx) is owned by the handle
+		 * returned in currect state, thus it may not be freed by the user. In order to keep a refecence of a handle
+		 * use #KSI_AsyncHandle_ref.
+		 */
+		KSI_ASYNC_STATE_ERROR_NOTICE
 	} KSI_AsyncHandleState;
 
 	/**
