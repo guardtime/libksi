@@ -382,7 +382,8 @@ extern "C" {
 		 */
 
 		/**
-		 * An error has occured while a request is/was processed.
+		 * An error has occured while a request is/was processed. As such, it is not an error response, however, it is
+		 * an indication that not all sub systems are functioning errorless.
 		 * There are following scenarious when the error cound have occured:
 		 * - while the request is waiting for a valid response, any of the underlying enpoint services could have
 		 * encountered eg. network connection issues;
