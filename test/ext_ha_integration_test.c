@@ -171,7 +171,6 @@ void Test_HaExtend_verifyCacheSizeOption_http(CuTest* tc) {
 static void asyncExtending_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
 	int res;
 	time_t startTime;
-	const size_t nofReqs = 10;
 	size_t reqNo = 0;
 	size_t onHold = 0;
 	size_t received = 0;
@@ -191,7 +190,7 @@ static void asyncExtending_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
 		KSI_AsyncHandle *respHandle = NULL;
 		int state = KSI_ASYNC_STATE_UNDEFINED;
 
-		if (reqNo < nofReqs) {
+		if (reqNo < NOF_TEST_REQUESTS) {
 			const size_t reqTime = 1435740789 + reqNo;
 			size_t pendingCount = 0;
 			KSI_AsyncHandle *reqHandle = NULL;
@@ -296,7 +295,7 @@ static void asyncExtending_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
 
 		KSI_AsyncHandle_free(respHandle);
 	} while (onHold);
-	CuAssert(tc, "Response count mismatch.", nofReqs == received);
+	CuAssert(tc, "Response count mismatch.", NOF_TEST_REQUESTS == received);
 
 	KSI_LOG_debug(ctx, "%s: CLEANUP.", __FUNCTION__);
 
