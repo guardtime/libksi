@@ -1535,6 +1535,7 @@ static int asyncClient_setOption(KSI_AsyncClient *c, const int opt, void *param)
 		/* Private options. */
 		case KSI_ASYNC_PRIVOPT_ROUND_DURATION:
 		case KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK:
+		case KSI_ASYNC_PRIVOPT_ENDPOINT_ID:
 			c->options[opt] = (size_t)param;
 			break;
 
@@ -1581,6 +1582,7 @@ static int asyncClient_getOption(KSI_AsyncClient *c, const int opt, void *param)
 		/* Private options. */
 		case KSI_ASYNC_PRIVOPT_ROUND_DURATION:
 		case KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK:
+		case KSI_ASYNC_PRIVOPT_ENDPOINT_ID:
 			*(size_t*)param = c->options[opt];
 			break;
 

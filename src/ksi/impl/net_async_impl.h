@@ -96,6 +96,12 @@ extern "C" {
 		 */
 		KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK,
 
+		/**
+		 * Endpoint client unique id.
+		 * \param		id				Paramer of type size_t.
+		 */
+		KSI_ASYNC_PRIVOPT_ENDPOINT_ID,
+
 		__NOF_KSI_ASYNC_OPT
 	};
 
@@ -205,6 +211,8 @@ extern "C" {
 
 		/** Intercepted #KSI_ASYNC_OPT_PUSH_CONF_CALLBACK configuration. */
 		KSI_Config_Callback confCallback;
+		/** Intercepted #KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK option for overring default handling. */
+		KSI_AsyncServiceCallback_configConsolidate confConsolidateCallback;
 		/** Consolidated configuration based on the responses from individual subservices. */
 		KSI_Config *consolidatedConfig;
 

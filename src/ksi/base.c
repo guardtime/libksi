@@ -205,6 +205,54 @@ static void initOptions(KSI_CTX *ctx) {
 	KSI_CTX_setOption(ctx, KSI_OPT_HA_SAFEGUARD, (void*)KSI_CTX_HA_MAX_SUBSERVICES);
 }
 
+/**
+ * This function is used to initialize global objects and register the appropriate
+ * cleanup method. The obj_new function will be called only once per KSI context and
+ * the cleanup method will be called when #KSI_CTX_free is called on the context object,
+ * thus the object instance will be available for the whole period of #KSI_CTX life.
+ * \param[in]	ctx			KSI context.
+ * \param[in] 	obj_new		Object construstor.
+ * \param[in]	obj_free	Object destructor.
+ * \param[out]	obj			Global object instance.
+ * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+ */
+static int registerGlobalObject(KSI_CTX *ctx, int (*obj_new)(KSI_CTX*, void**), void (*obj_free)(void*), const void **obj) {
+	int res = KSI_UNKNOWN_ERROR;
+	size_t pos;
+	int found = 0;
+	void *tmp = NULL;
+
+	if (ctx == NULL || obj_new == NULL || obj_free == NULL || obj == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	res = KSI_List_find(ctx->cleanupFnList, (void *)obj_free, &found, &pos);
+	if (res != KSI_OK) goto cleanup;
+
+	/* Only run the init function if the cleanup function is not found. */
+	if (!found) {
+		res = obj_new(ctx, &tmp);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_List_append(ctx->cleanupFnList, (void *)obj_free);
+		if (res != KSI_OK) goto cleanup;
+
+		res = KSI_List_append(ctx->globalObjList, (void *)tmp);
+		if (res != KSI_OK) goto cleanup;
+	} else {
+		res = KSI_List_elementAt(ctx->globalObjList, pos, &tmp);
+		if (res != KSI_OK) goto cleanup;
+	}
+
+	*obj = tmp;
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
 int KSI_CTX_new(KSI_CTX **context) {
 	int res = KSI_UNKNOWN_ERROR;
 
@@ -238,6 +286,10 @@ int KSI_CTX_new(KSI_CTX **context) {
 	ctx->dataHashRecycle = NULL;
 	ctx->asyncHandleRecycle = NULL;
 	ctx->haRequestRecycle = NULL;
+	ctx->cleanupFnList = NULL;
+	ctx->globalObjList = NULL;
+	ctx->registerGlobalObject = registerGlobalObject;
+
 	KSI_ERR_clearErrors(ctx);
 
 	/* Init options. */
@@ -246,6 +298,8 @@ int KSI_CTX_new(KSI_CTX **context) {
 
 	/* Create global cleanup list as the first thing. */
 	res = KSI_List_new(NULL, &ctx->cleanupFnList);
+	if (res != KSI_OK) goto cleanup;
+	res = KSI_List_new(NULL, &ctx->globalObjList);
 	if (res != KSI_OK) goto cleanup;
 
 	/* Create and set the logger. */
@@ -310,6 +364,10 @@ int KSI_CTX_registerGlobals(KSI_CTX *ctx, int (*initFn)(void), void (*cleanupFn)
 
 		res = KSI_List_append(ctx->cleanupFnList, (void *)cleanupFn);
 		if (res != KSI_OK) goto cleanup;
+
+		/* Just add a dummy placeholder. */
+		res = KSI_List_append(ctx->globalObjList, (void *)NULL);
+		if (res != KSI_OK) goto cleanup;
 	}
 
 	res = KSI_OK;
@@ -322,21 +380,34 @@ cleanup:
 static void globalCleanup(KSI_CTX *ctx) {
 	int res;
 	size_t pos;
-	void (*fn)(void);
 
 	for (pos = 0; pos < KSI_List_length(ctx->cleanupFnList); pos++) {
+		void *fn = NULL;
+		void *obj = NULL;
+
 		res = KSI_List_elementAt(ctx->cleanupFnList, pos, (void **)&fn);
 		if (res != KSI_OK) {
 			KSI_LOG_error(ctx, "Unable to retrieve cleanup function - possible MEMORY CURRUPTION.");
 			break;
 		}
-
 		if (fn == NULL) {
 			KSI_LOG_error(ctx, "Got NULL as global cleanup method - possible MEMORY CURRUPTION.");
 			break;
 		}
 
-		fn();
+		res = KSI_List_elementAt(ctx->globalObjList, pos, (void **)&obj);
+		if (res != KSI_OK) {
+			KSI_LOG_error(ctx, "Unable to retrieve cleanup object - possible MEMORY CURRUPTION.");
+			break;
+		}
+
+		if (obj != NULL) {
+			void (*obj_free)(void*) = (void (*)(void*))fn;
+			obj_free(obj);
+		} else {
+			void (*cleanup_func)(void) = (void (*)(void))fn;
+			cleanup_func();
+		}
 	}
 }
 
@@ -349,6 +420,7 @@ void KSI_CTX_free(KSI_CTX *ctx) {
 		globalCleanup(ctx);
 
 		KSI_List_free(ctx->cleanupFnList);
+		KSI_List_free(ctx->globalObjList);
 
 		KSI_free(ctx->errors);
 

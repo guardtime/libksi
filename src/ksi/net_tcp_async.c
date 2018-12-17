@@ -624,6 +624,7 @@ int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c) {
 
 	tmp->clientImpl_free = (void (*)(void*))TcpAsyncCtx_free;
 	tmp->clientImpl = netImpl;
+	tmp->options[KSI_ASYNC_PRIVOPT_ENDPOINT_ID] = (size_t)netImpl;
 	netImpl = NULL;
 
 	*c = tmp;

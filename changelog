@@ -1,3 +1,5 @@
+* FEATURE: Added new option KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK for overriding default consolidation handling.
+* BUGFIX: Fixed possible crash when using multiple KSI_AsyncService instances with HTTP endpoints in different threads.
 * IMPROVEMENT: Added async request recycle handling for reducing memory allocations.
 * BUGFIX: Fixed high availability server aggregation persion configuration consolodation.
 * IMPROVEMENT: Helper interface for creating signing KSI_AsyncHandle.
