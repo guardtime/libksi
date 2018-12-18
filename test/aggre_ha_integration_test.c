@@ -703,6 +703,14 @@ static void asyncSigning_getError(CuTest* tc, const char *scheme, KSITest_Servic
 
 		res = KSI_AsyncHandle_getState(handle, &state);
 		CuAssert(tc, "Unable to get request state.", res == KSI_OK && state != KSI_ASYNC_STATE_UNDEFINED);
+
+		/* Ignore error notice. */
+		if (state == KSI_ASYNC_STATE_ERROR_NOTICE) {
+			KSI_LOG_debug(ctx, "%s: ERROR NOTICE.", __FUNCTION__);
+			KSI_AsyncHandle_free(handle);
+			continue;
+		}
+
 		CuAssert(tc, "Requests must fail.", state == KSI_ASYNC_STATE_ERROR);
 
 		KSI_LOG_debug(ctx, "%s: ERROR.", __FUNCTION__);

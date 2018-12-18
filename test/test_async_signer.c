@@ -513,8 +513,8 @@ int main(int argc, char **argv) {
 								succeeded++;
 							}
 
-							KSI_Signature_free(signature);    signature = NULL;
-							KSI_AsyncHandle_free(respHandle); respHandle = NULL;
+							KSI_Signature_free(signature);
+							signature = NULL;
 						}
 						break;
 
@@ -548,8 +548,6 @@ int main(int argc, char **argv) {
 									(unsigned long long)KSI_Integer_getUInt64(maxReq),
 									(unsigned long long)KSI_Integer_getUInt64(aggrAlg),
 									(unsigned long long)KSI_Integer_getUInt64(aggrPer));
-
-							KSI_AsyncHandle_free(respHandle); respHandle = NULL;
 						}
 						break;
 
@@ -587,8 +585,71 @@ int main(int argc, char **argv) {
 
 							KSI_LOG_error(ksi, "Error: [0x%x:%ld] %s (%s).", err, extErr, KSI_getErrorString(err), KSI_Utf8String_cstr(errMsg));
 							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash.", reqCtxHash);
+						}
+						break;
 
-							KSI_AsyncHandle_free(respHandle);  respHandle = NULL;
+					case KSI_ASYNC_STATE_ERROR_NOTICE: {
+							KSI_AsyncHandle *origHandle = NULL;
+							int origState = KSI_ASYNC_STATE_UNDEFINED;
+							KSI_DataHash *reqCtxHash = NULL;
+							int err = KSI_UNKNOWN_ERROR;
+							long extErr = 0L;
+							KSI_Utf8String *errMsg = NULL;
+							size_t parentId = 0;
+
+							KSI_LOG_info(ksi, "Handle error notice.");
+
+							res = KSI_AsyncHandle_getError(respHandle, &err);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request error.\n");
+								goto cleanup;
+							}
+
+							res = KSI_AsyncHandle_getErrorMessage(respHandle, &errMsg);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request error message.\n");
+								goto cleanup;
+							}
+
+							res = KSI_AsyncHandle_getExtError(respHandle, &extErr);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request external error.\n");
+								goto cleanup;
+							}
+
+							res = KSI_AsyncHandle_getRequestCtx(respHandle, (const void**)&origHandle);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request context.\n");
+								goto cleanup;
+							}
+
+							res = KSI_AsyncHandle_getState(origHandle, &origState);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request state.\n");
+								goto cleanup;
+							}
+
+							res = KSI_AsyncHandle_getParentId(respHandle, &parentId);
+							if (res != KSI_OK) {
+								fprintf(stderr, "Unable to get request state.\n");
+								goto cleanup;
+							}
+
+							KSI_LOG_error(ksi, "Error notice: [0x%x:%ld] %s (%s). Request handle state: %d. Parent %p.",
+									err, extErr, KSI_getErrorString(err), KSI_Utf8String_cstr(errMsg),
+									(int)origState, (void*)parentId);
+
+							res = KSI_AsyncHandle_getRequestCtx(origHandle, (const void**)&reqCtxHash);
+							if (res != KSI_OK && reqCtxHash != NULL) {
+								fprintf(stderr, "Unable to get request context.\n");
+								goto cleanup;
+							}
+
+							/* It might be config request. It does not contain a req context. */
+							if (reqCtxHash != NULL) {
+								KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash.", reqCtxHash);
+							}
+
 						}
 						break;
 
@@ -597,6 +658,8 @@ int main(int argc, char **argv) {
 						break;
 				}
 			}
+			KSI_AsyncHandle_free(respHandle);
+			respHandle = NULL;
 
 			res = KSI_AsyncService_getReceivedCount(as, &received);
 			if (res != KSI_OK) {

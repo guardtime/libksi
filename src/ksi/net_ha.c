@@ -683,6 +683,53 @@ cleanup:
 	return res;
 }
 
+static int KSI_HighAvailabilityService_reportErrorNotice(KSI_HighAvailabilityService *has,
+		KSI_AsyncHandle *reqHndl, size_t origin,
+		int err, long errExt, KSI_Utf8String *errMsg) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_AsyncHandle *noticeHandle = NULL;
+	KSI_AsyncHandle *ref = NULL;
+
+	if (has == NULL || reqHndl == NULL || err == KSI_OK) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(has->ctx);
+
+	res = KSI_AbstractAsyncHandle_new(has->ctx, &noticeHandle);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+	noticeHandle->state = KSI_ASYNC_STATE_ERROR_NOTICE;
+	noticeHandle->err = err;
+	noticeHandle->errExt = errExt;
+	noticeHandle->errMsg = KSI_Utf8String_ref(errMsg);
+
+	noticeHandle->parentId = origin;
+
+	res = KSI_AsyncHandle_setRequestCtx(noticeHandle,
+			(void*)(ref = KSI_AsyncHandle_ref(reqHndl)), (void (*)(void*))KSI_AsyncHandle_free);
+	if (res != KSI_OK) {
+		KSI_AsyncHandle_free(ref);
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_AsyncHandleList_append(has->respQueue, noticeHandle);
+	if (res != KSI_OK) {
+		KSI_pushError(has->ctx, res, NULL);
+		goto cleanup;
+	}
+	noticeHandle = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_AsyncHandle_free(noticeHandle);
+
+	return res;
+}
+
 static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncService *from,
 		KSI_AsyncHandle *respHndl,	KSI_Config_Callback confCallback) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -716,6 +763,14 @@ static int handleConfigResponse(KSI_HighAvailabilityService *has, KSI_AsyncServi
 
 		/* Clear error response, if it has been received from any subservice. */
 		if (haRequest->hasReq == false && reqState == KSI_ASYNC_STATE_ERROR) {
+			/* First report an error notice. */
+			res = KSI_HighAvailabilityService_reportErrorNotice(has, reqHndl, reqHndl->parentId,
+					reqHndl->err, reqHndl->errExt, reqHndl->errMsg);
+			if (res != KSI_OK) {
+				KSI_pushError(has->ctx, res, NULL);
+				goto cleanup;
+			}
+			/* Clear the error from the handle. */
 			reqHndl->err = KSI_OK;
 			reqHndl->errExt = 0L;
 			KSI_Utf8String_free(reqHndl->errMsg);
@@ -817,6 +872,16 @@ static int handleReqResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandle *
 		goto cleanup;
 	}
 
+	/* Report currently set error. */
+	if (reqState == KSI_ASYNC_STATE_ERROR) {
+		res = KSI_HighAvailabilityService_reportErrorNotice(has, reqHndl, reqHndl->parentId,
+				reqHndl->err, reqHndl->errExt, reqHndl->errMsg);
+		if (res != KSI_OK) {
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
+	}
+
 	/* Update request handle. */
 	if (reqState == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE || reqState == KSI_ASYNC_STATE_ERROR) {
 		KSI_AsyncHandle *hndlRef = NULL;
@@ -842,6 +907,8 @@ static int handleReqResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandle *
 		respHndl->respCtx = NULL;
 		reqHndl->respCtx_free = respHndl->respCtx_free;
 		respHndl->respCtx_free = NULL;
+
+		reqHndl->parentId = respHndl->parentId;
 
 		res = KSI_AsyncHandleList_append(has->respQueue, (hndlRef = KSI_AsyncHandle_ref(reqHndl)));
 		if (res != KSI_OK) {
@@ -886,14 +953,20 @@ static int handleErrorResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandle
 		goto cleanup;
 	}
 
-	/* Only set the error in case there have been no responses received yet. */
+	/* Only set the error in case there have been no responses received yet. Otherwise report error notice. */
 	if (reqState == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
-
 		reqHndl->state = KSI_ASYNC_STATE_ERROR;
-
 		reqHndl->err = respHndl->err;
 		reqHndl->errExt = respHndl->errExt;
 		reqHndl->errMsg = KSI_Utf8String_ref(respHndl->errMsg);
+		reqHndl->parentId = respHndl->parentId;
+	} else {
+		res = KSI_HighAvailabilityService_reportErrorNotice(has, reqHndl, respHndl->parentId,
+				respHndl->err, respHndl->errExt, respHndl->errMsg);
+		if (res != KSI_OK) {
+			KSI_pushError(has->ctx, res, NULL);
+			goto cleanup;
+		}
 	}
 
 	/* In case all of the relevant subservices have returned an error,
