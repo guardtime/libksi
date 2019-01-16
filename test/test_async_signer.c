@@ -160,6 +160,7 @@ int main(int argc, char **argv) {
 	size_t nof_requests = 0;
 	size_t req_no = 0;
 	size_t succeeded = 0;
+	size_t failed = 0;
 	KSITest_Conf conf;
 	KSI_Signature *signature = NULL;
 	time_t start;
@@ -585,6 +586,8 @@ int main(int argc, char **argv) {
 
 							KSI_LOG_error(ksi, "Error: [0x%x:%ld] %s (%s).", err, extErr, KSI_getErrorString(err), KSI_Utf8String_cstr(errMsg));
 							KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash.", reqCtxHash);
+
+							failed++;
 						}
 						break;
 
@@ -649,7 +652,6 @@ int main(int argc, char **argv) {
 							if (reqCtxHash != NULL) {
 								KSI_LOG_logDataHash(ksi, KSI_LOG_ERROR, "...Context hash.", reqCtxHash);
 							}
-
 						}
 						break;
 
@@ -673,7 +675,7 @@ int main(int argc, char **argv) {
 cleanup:
 	if (nof_requests) {
 		printf("Succeeded request: %llu.\n", (unsigned long long)succeeded);
-		printf("Failed request   : %llu.\n", (unsigned long long)(nof_requests - succeeded));
+		printf("Failed request   : %llu (errors %llu).\n", (unsigned long long)(nof_requests - succeeded), (unsigned long long)failed);
 		printf("Spent time (sec) : %.0f.\n", difftime(time(NULL), start));
 	}
 
