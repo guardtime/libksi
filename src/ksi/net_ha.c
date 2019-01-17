@@ -955,7 +955,9 @@ static int handleErrorResponse(KSI_HighAvailabilityService *has, KSI_AsyncHandle
 
 	/* Only set the error in case there have been no responses received yet. Otherwise report error notice. */
 	if (reqState == KSI_ASYNC_STATE_WAITING_FOR_RESPONSE) {
-		reqHndl->state = KSI_ASYNC_STATE_ERROR;
+		reqState = KSI_ASYNC_STATE_ERROR;
+
+		reqHndl->state = reqState;
 		reqHndl->err = respHndl->err;
 		reqHndl->errExt = respHndl->errExt;
 		reqHndl->errMsg = KSI_Utf8String_ref(respHndl->errMsg);
