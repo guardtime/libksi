@@ -1,27 +1,23 @@
+Version 3.19
+
+2019-29-01 release(3.19.2914)
 * FEATURE: Added new async handle state KSI_ASYNC_STATE_ERROR_NOTICE for returning errors that whould be otherwise resolved internally (eg. in case of high availability where one of the configured endpoint encounter connection issues).
 * FEATURE: Added new option KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK for overriding default consolidation handling.
-* BUGFIX: Fixed possible crash when using multiple KSI_AsyncService instances with HTTP endpoints in different threads.
-* IMPROVEMENT: Added async request recycle handling for reducing memory allocations.
-* BUGFIX: Fixed high availability server aggregation persion configuration consolodation.
-* IMPROVEMENT: Helper interface for creating signing KSI_AsyncHandle.
 * FEATURE: Added async service option KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK for setting connection state listener.
 * FEATURE: Added prefix string format support to KSI_LOG_logBlob. Interface remains fully backwards compatible.
+* FEATURE: Added find function to KSI_List interface.
+* IMPROVEMENT: Helper interface for creating signing KSI_AsyncHandle.
+* IMPROVEMENT: Added async request recycle handling for reducing memory allocations.
 * IMPROVEMENT: Enhanced async client logging, by adding client and request id's. Provides more distinguishable log entries in case of high availability service.
 * IMPROVEMENT: Added async TCP peer connection POLLHUP signal handling. Requests will return immediately with error state instead of waiting for timeout.
 * IMPROVEMENT: Failing test TestPKICertificateToString fixed with corrections made to the expired certificates.
-* BUGFIX: Made URI schemes case insensitive.
-
-Version 3.19
-
-* FEATURE: Added find function to KSI_List interface.
-
-Version 3.18
 * IMPROVEMENT: Function KSI_CTX_getLastFailedSignature is deprecated. See KSI_VERIFICATION_POLICY_EMPTY for replacement.
+* BUGFIX: Fixed high availability server aggregation persion configuration consolodation.
+* BUGFIX: Fixed possible crash when using multiple KSI_AsyncService instances with HTTP endpoints in different threads.
 * BUGFIX: Made URI schemes case insensitive.
+* BUGFIX: Negative enum value is not ISO standard.
 
 Version 3.18
-
-* BUGFIX: Negative enum value is not ISO standard.
 
 2018-08-27 release(3.18.2836)
 * FEATURE: High Availability add-on to the non-blocking network interface.
