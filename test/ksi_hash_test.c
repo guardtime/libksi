@@ -364,7 +364,7 @@ static void testHashGetAlgByName(CuTest* tc) {
 	CuAssert(tc, "Algorithm must be trusted.", KSI_checkHashAlgorithmAt(algo, t0) == KSI_OK && KSI_checkHashAlgorithmAt(algo, t1) == KSI_OK);
 	CuAssert(tc, "Algorithm must be trusted.", KSI_isHashAlgorithmTrusted(algo));
 
-	CuAssertIntEquals_Msg(tc, "Sha3 algorithm", KSI_HASHALG_INVALID, algo = KSI_getHashAlgorithmByName("SHA3"));
+	CuAssertIntEquals_Msg(tc, "Sha3 algorithm", KSI_HASHALG_INVALID_VALUE, algo = KSI_getHashAlgorithmByName("SHA3"));
 	CuAssert(tc, "Algorithm must be trusted.", KSI_checkHashAlgorithmAt(algo, t0) == KSI_UNKNOWN_HASH_ALGORITHM_ID && KSI_checkHashAlgorithmAt(algo, t1) == KSI_UNKNOWN_HASH_ALGORITHM_ID);
 	CuAssert(tc, "Algorithm must be trusted.", !KSI_isHashAlgorithmTrusted(algo));
 
@@ -372,13 +372,13 @@ static void testHashGetAlgByName(CuTest* tc) {
 	CuAssert(tc, "Algorithm must be trusted.", KSI_checkHashAlgorithmAt(algo, t0) == KSI_OK && KSI_checkHashAlgorithmAt(algo, t1) == KSI_OK);
 	CuAssert(tc, "Algorithm must be trusted.", KSI_isHashAlgorithmTrusted(algo));
 
-	CuAssertIntEquals_Msg(tc, "SHA2,SHA-2 algorithm", KSI_HASHALG_INVALID, algo = KSI_getHashAlgorithmByName("SHA2,SHA-2"));
+	CuAssertIntEquals_Msg(tc, "SHA2,SHA-2 algorithm", KSI_HASHALG_INVALID_VALUE, algo = KSI_getHashAlgorithmByName("SHA2,SHA-2"));
 	CuAssert(tc, "Algorithm must be trusted.", KSI_checkHashAlgorithmAt(algo, t0) == KSI_UNKNOWN_HASH_ALGORITHM_ID && KSI_checkHashAlgorithmAt(algo, t1) == KSI_UNKNOWN_HASH_ALGORITHM_ID);
 	CuAssert(tc, "Algorithm must be trusted.", !KSI_isHashAlgorithmTrusted(algo));
 }
 
 static void testHashAlgorithmDeprecatedDates(CuTest *tc) {
-	CuAssert(tc, "Invalid algorithm has no valid date.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_INVALID) < 0);
+	CuAssert(tc, "Invalid algorithm has no valid date.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_INVALID_VALUE) < 0);
 
 	CuAssert(tc, "SHA1 is deprecated as of  01.07.2016T00:00 UTC.", KSI_HashAlgorithm_getDeprecatedFrom(KSI_HASHALG_SHA1) == 1467331200);
 
@@ -394,7 +394,7 @@ static void testHashAlgorithmDeprecatedDates(CuTest *tc) {
 }
 
 static void testHashAlgorithmObsoleteDates(CuTest *tc) {
-	CuAssert(tc, "Invalid algorithm has no valid date.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_INVALID) < 0);
+	CuAssert(tc, "Invalid algorithm has no valid date.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_INVALID_VALUE) < 0);
 
 	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA1) == 0);
 	CuAssert(tc, "No obsolete algorithm defined.", KSI_HashAlgorithm_getObsoleteFrom(KSI_HASHALG_SHA2_256) == 0);

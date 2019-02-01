@@ -63,7 +63,7 @@ static int RunAllTests() {
 	int res;
 	CuSuite* suite = initSuite();
 	FILE *logFile = NULL;
-	KSI_HashAlgorithm alg_id = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm alg_id = KSI_HASHALG_INVALID_VALUE;
 
 	/* Create the context. */
 	res = KSI_CTX_new(&ctx);
@@ -73,7 +73,7 @@ static int RunAllTests() {
 	}
 
 	if (*conf.aggregator.hmac) {
-		if ((alg_id = KSI_getHashAlgorithmByName(conf.aggregator.hmac)) == KSI_HASHALG_INVALID) {
+		if ((alg_id = KSI_getHashAlgorithmByName(conf.aggregator.hmac)) == KSI_HASHALG_INVALID_VALUE) {
 			fprintf(stderr, "Invalid hash algorithm for aggregator HMAC: '%s'\n", conf.aggregator.hmac);
 			exit(EXIT_FAILURE);
 		}
@@ -81,7 +81,7 @@ static int RunAllTests() {
 	}
 
 	if (*conf.extender.hmac) {
-		if ((alg_id = KSI_getHashAlgorithmByName(conf.extender.hmac)) == KSI_HASHALG_INVALID) {
+		if ((alg_id = KSI_getHashAlgorithmByName(conf.extender.hmac)) == KSI_HASHALG_INVALID_VALUE) {
 			fprintf(stderr, "Invalid hash algorithm for extender HMAC: '%s'\n", conf.extender.hmac);
 			exit(EXIT_FAILURE);
 		}

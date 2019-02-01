@@ -762,7 +762,7 @@ int pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_
 	}
 
 	/* If configured, check if HMAC algorithm matches. */
-	if (conf_alg != KSI_HASHALG_INVALID && algo_id != conf_alg)	{
+	if (conf_alg != KSI_HASHALG_INVALID_VALUE && algo_id != conf_alg)	{
 		KSI_LOG_debug(ctx, "HMAC algorithm mismatch. Expected %s, received %s.",
 				KSI_getHashAlgorithmName(conf_alg), KSI_getHashAlgorithmName(algo_id));
 		KSI_pushError(ctx, res = KSI_HMAC_ALGORITHM_MISMATCH, "HMAC algorithm mismatch.");
@@ -1165,7 +1165,7 @@ int KSI_ExtendReq_encloseWithHeader(KSI_ExtendReq *req, KSI_Header *hdr, const c
 
 	/* Get HMAC algorithm ID. */
 	alg_id = (KSI_HashAlgorithm)ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM];
-	if (alg_id == KSI_HASHALG_INVALID) {
+	if (alg_id == KSI_HASHALG_INVALID_VALUE) {
 		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Extender HMAC algorithm not configured.");
 		goto cleanup;
 	}
@@ -1579,7 +1579,7 @@ int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hd
 
 	/* Get HMAC algorithm ID. */
 	alg_id = (KSI_HashAlgorithm)ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM];
-	if (alg_id == KSI_HASHALG_INVALID) {
+	if (alg_id == KSI_HASHALG_INVALID_VALUE) {
 		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Aggregation HMAC algorithm not configured.");
 		goto cleanup;
 	}
