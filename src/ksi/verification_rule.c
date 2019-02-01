@@ -182,7 +182,7 @@ int KSI_VerificationRule_AggregationChainInputHashAlgorithmVerification(KSI_Veri
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 	KSI_DataHash *inputHash = NULL;
 	KSI_Integer *signTime = NULL;
-	KSI_HashAlgorithm algId = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm algId = KSI_HASHALG_INVALID_VALUE;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -318,7 +318,7 @@ int KSI_VerificationRule_Rfc3161RecordOutputHashAlgorithmVerification(KSI_Verifi
 	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_AGGRCHAIN_INTERNALLY;
 	KSI_Integer *aggrTime = NULL;
-	KSI_HashAlgorithm algorithm = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm algorithm = KSI_HASHALG_INVALID_VALUE;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -711,7 +711,7 @@ static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **output
 	size_t imprint_len = 0;
 	KSI_HashAlgorithm tstInfoAlgoId;
 	KSI_HashAlgorithm sigAttrAlgoId;
-	KSI_HashAlgorithm algorithm = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm algorithm = KSI_HASHALG_INVALID_VALUE;
 
 	if (sig == NULL || sig->rfc3161 == NULL || outputHash == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -1740,7 +1740,7 @@ static int calendarChainAggrAlgorithmState(KSI_CTX *ctx, const KSI_CalendarHashC
 	for (;;) {
 		KSI_HashChainLink *rlink = NULL;
 		KSI_DataHash *imprint = NULL;
-		KSI_HashAlgorithm algId = KSI_HASHALG_INVALID;
+		KSI_HashAlgorithm algId = KSI_HASHALG_INVALID_VALUE;
 
 		res = getNextLeftLink(chainList, &pos, &rlink);
 		if (res != KSI_OK) {
@@ -2153,8 +2153,8 @@ int KSI_VerificationRule_InputHashAlgorithmVerification(KSI_VerificationContext 
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *hsh = NULL;
 	KSI_CTX *ctx = NULL;
-	KSI_HashAlgorithm docHshAlg = KSI_HASHALG_INVALID;
-	KSI_HashAlgorithm infHshAlg = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm docHshAlg = KSI_HASHALG_INVALID_VALUE;
+	KSI_HashAlgorithm infHshAlg = KSI_HASHALG_INVALID_VALUE;
 	const KSI_Signature *sig = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_DOCUMENT;
 

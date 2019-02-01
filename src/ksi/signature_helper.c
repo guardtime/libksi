@@ -148,7 +148,7 @@ cleanup:
 int KSI_Signature_verifyDocument(KSI_Signature *sig, KSI_CTX *ctx, const void *doc, size_t doc_len) {
 	int res;
 	KSI_DataHash *hsh = NULL;
-	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID_VALUE;
 
 	KSI_ERR_clearErrors(ctx);
 	if (sig == NULL || ctx == NULL || doc == NULL) {
