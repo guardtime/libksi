@@ -312,7 +312,7 @@ const char *KSI_getHashAlgorithmName(KSI_HashAlgorithm algo_id) {
 
 KSI_HashAlgorithm KSI_getHashAlgorithmByName(const char *name) {
 	size_t i;
-	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID_VALUE;
 	int alias_id;
 
 	const char *alias = NULL;

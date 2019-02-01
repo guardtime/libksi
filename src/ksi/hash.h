@@ -56,7 +56,7 @@ extern "C" {
 	 * instances of #KSI_DataHasher and #KSI_DataHash.
 	 */
 	typedef enum KSI_HashAlgorithm_en {
-		KSI_VAR_DEPRECATED(KSI_HASHALG_INVALID, Use #KSI_isHashAlgorithmSupported instead.) = -1,
+		KSI_VAR_DEPRECATED(KSI_HASHALG_INVALID, Use KSI_isHashAlgorithmSupported instead.) = -1,
 		/** The SHA-1 algorithm. */
 		KSI_HASHALG_SHA1 = 0x00,
 		/** The SHA-256 algorithm. */
