@@ -26,6 +26,9 @@
 #include "tlv.h"
 #include "impl/ctx_impl.h"
 
+
+const int KSI_HASHALG_INVALID = -1;
+
 #define HASH_ALGO(id, bitcount, blocksize, deprecatedFrom, obsoleteFrom) {(id), (bitcount), (blocksize), id##_names, (deprecatedFrom), (obsoleteFrom)}
 
 /* Remove this when release > 3.20 and >= 2019! */
@@ -312,7 +315,7 @@ const char *KSI_getHashAlgorithmName(KSI_HashAlgorithm algo_id) {
 
 KSI_HashAlgorithm KSI_getHashAlgorithmByName(const char *name) {
 	size_t i;
-	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID_VALUE;
+	KSI_HashAlgorithm algo_id = -1;
 	int alias_id;
 
 	const char *alias = NULL;
