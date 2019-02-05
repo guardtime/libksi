@@ -86,7 +86,8 @@ echo %{_docdir}/%{name}/changelog >> %{libfiles}
 echo %{_docdir}/%{name}/license.txt >> %{libfiles}
 # Shared library objects.
 echo %{_libdir}/libksi.so >> %{libfiles}
-for sofile in %{_libdir}/libksi.so.* ; do echo $sofile >> %{libfiles}; done;
+echo %{_libdir}/libksi.so.\* >> %{libfiles}
+
 
 %files -f %{libfiles}
 %defattr(644,root,root,755)

@@ -10,6 +10,7 @@
 * IMPROVEMENT: Added async TCP peer connection POLLHUP signal handling. Requests will return immediately with error state instead of waiting for timeout.
 * IMPROVEMENT: Failing test TestPKICertificateToString fixed with corrections made to the expired certificates.
 * BUGFIX: Made URI schemes case insensitive.
+* BUGFIX: RPM build fixed when there is libksi already installed with different binary interface version.
 
 Version 3.19
 
