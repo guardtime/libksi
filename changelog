@@ -11,6 +11,14 @@ Version 3.19
 * IMPROVEMENT: Enhanced async client logging, by adding client and request id's. Provides more distinguishable log entries in case of high availability service.
 * IMPROVEMENT: Added async TCP peer connection POLLHUP signal handling. Requests will return immediately with error state instead of waiting for timeout.
 * IMPROVEMENT: Failing test TestPKICertificateToString fixed with corrections made to the expired certificates.
+* BUGFIX: Made URI schemes case insensitive.
+* BUGFIX: RPM build fixed when there is libksi already installed with different binary interface version.
+
+Version 3.19
+
+* FEATURE: Added find function to KSI_List interface.
+
+Version 3.18
 * IMPROVEMENT: Function KSI_CTX_getLastFailedSignature is deprecated. See KSI_VERIFICATION_POLICY_EMPTY for replacement.
 * BUGFIX: Fixed high availability server aggregation persion configuration consolodation.
 * BUGFIX: Fixed possible crash when using multiple KSI_AsyncService instances with HTTP endpoints in different threads.
