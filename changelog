@@ -1,6 +1,7 @@
 Version 3.19
 
 2019-02-01 release(3.19.2924)
+2019-02-01 release(3.19.2929)
 * FEATURE: Added new async handle state KSI_ASYNC_STATE_ERROR_NOTICE for returning errors that whould be otherwise resolved internally (eg. in case of high availability where one of the configured endpoint encounter connection issues).
 * FEATURE: Added new option KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK for overriding default consolidation handling.
 * BUGFIX: Fixed possible crash when using multiple KSI_AsyncService instances with HTTP endpoints in different threads.
