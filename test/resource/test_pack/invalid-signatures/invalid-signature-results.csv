@@ -117,7 +117,7 @@ rfc3161-record/invalid-signature-rfc3161-tst-info-suffix-multiple-tags.tlv;parsi
 rfc3161-record/invalid-signature-rfc3161-tst-info-suffix-missing-tag.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-tst-info-algo-text-value.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-tst-info-algo-datahash-value-wrong.tlv;parsing;;;0;;;;;;;false;;;;
-#rfc3161-record/invalid-signature-rfc3161-tst-info-algo-has-child-element.tlv;parsing;;;0;;;;;;;false;;;;
+rfc3161-record/invalid-signature-rfc3161-tst-info-algo-has-child-element.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-tst-info-algo-multiple-tags.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-tst-info-algo-missing-tag.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-sig-attr-prefix-multiple-tags.tlv;parsing;;;0;;;;;;;false;;;;
@@ -126,7 +126,7 @@ rfc3161-record/invalid-signature-rfc3161-sig-attr-suffix-multiple-tags.tlv;parsi
 rfc3161-record/invalid-signature-rfc3161-sig-attr-suffix-missing-tag.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-sig-attr-algo-text-value.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-sig-attr-algo-datahash-value-wrong.tlv;parsing;;;0;;;;;;;false;;;;
-#rfc3161-record/invalid-signature-rfc3161-sig-attr-algo-has-child-element.tlv;parsing;;;0;;;;;;;false;;;;
+rfc3161-record/invalid-signature-rfc3161-sig-attr-algo-has-child-element.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-sig-attr-algo-multiple-tags.tlv;parsing;;;0;;;;;;;false;;;;
 rfc3161-record/invalid-signature-rfc3161-sig-attr-algo-missing-tag.tlv;parsing;;;0;;;;;;;false;;;;
 calendar-authentication-record/invalid-signature-cal-auth-rec-pub-data-no-value.tlv;parsing;;;0;;;;;;;false;;;;
