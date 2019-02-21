@@ -1,5 +1,6 @@
 The libksi Documentation Index
 ==============================
+[libksi-3.19](http://guardtime.github.io/libksi/3.19)
 
 [libksi-3.18](http://guardtime.github.io/libksi/3.18)
 
