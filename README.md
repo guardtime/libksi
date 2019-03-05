@@ -17,17 +17,36 @@ and verifying the signatures.
 
 In order to install the `libksi` CentOS/RHEL packages directly from the Guardtime public repository, download and save the repository configuration to the `/etc/yum.repos.d/` folder:
 
+
 ```
 cd /etc/yum.repos.d
 
-# In case of RHEL/CentOS 6
+# In case of RHEL / CentOS 6
 sudo curl -O http://download.guardtime.com/ksi/configuration/guardtime.el6.repo
 
-# In case of RHEL/CentOS 7
+# In case of RHEL / CentOS 7
 sudo curl -O http://download.guardtime.com/ksi/configuration/guardtime.el7.repo
 
-yum install libksi
+sudo yum install libksi
 ```
+
+In order to install the KSI on Debian/Ubuntu:
+
+```
+# Add Guardtime pgp key.
+sudo curl http://download.guardtime.com/ksi/GUARDTIME-GPG-KEY | sudo apt-key add -
+
+# In case of Ubuntu 16 (Xenial)
+sudo curl -o /etc/apt/sources.list.d/guardtime.list http://download.guardtime.com/ksi/configuration/guardtime.xenial.list
+
+# In case of Debian 9 (Stretch)
+sudo curl -o /etc/apt/sources.list.d/guardtime.list http://download.guardtime.com/ksi/configuration/guardtime.stretch.list
+
+sudo apt update
+apt-get install libksi
+```
+
+For OS X, see [https://github.com/guardtime/homebrew-ksi](https://github.com/guardtime/homebrew-ksi)
 
 ### From Source Code
 
