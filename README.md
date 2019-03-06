@@ -47,7 +47,7 @@ sudo apt update
 apt-get install libksi
 ```
 
-For OS X, see [https://github.com/guardtime/homebrew-ksi](https://github.com/guardtime/homebrew-ksi)
+For macOS, see [https://github.com/guardtime/homebrew-ksi](https://github.com/guardtime/homebrew-ksi)
 
 ### From Source Code
 
@@ -130,31 +130,6 @@ Alternatively in the Windows registry, modify the 'HKEY_CURRENT_USER\Software\Mi
 2) Set ProxyServer to `server:port`
 
 Configuring authentication is not supported by the Windows control panel and registry.
-
-## PDU Version ##
-
-`libksi` supports two different PDU versions for aggregation and extending messages. By default, PDU version 1 is used both for aggregation and extending.
-If the configured aggregator or extender does not support the default PDU version, the PDU version can be changed in one of the following ways:
-
-1) Define a macro that will be used when building the `libksi`. The macro name must be `KSI_AGGREGATION_PDU_VERSION` or `KSI_EXTENDING_PDU_VERSION`. Possible values are `KSI_PDU_VERSION_1` or `KSI_PDU_VERSION_2`.
-
-An example of defining the macro in `WinBuild64.bat`:
-~~~
-	nmake [macros...] KSI_AGGREGATION_PDU_VERSION=KSI_PDU_VERSION_2 [targets...]
-~~~
-
-An example of defining the macro in `configure.ac`:
-~~~
-	AC_MSG_NOTICE([Setting extending PDU version])
-	AC_DEFINE(KSI_EXTENDING_PDU_VERSION, KSI_PDU_VERSION_2, [Setting extending PDU version to 2.])
-~~~
-
-2) Configure the PDU versions in your application by using the `KSI_CTX_setFlag()` interface:
-~~~
-	KSI_CTX_setFlag(ksi, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
-	KSI_CTX_setFlag(ksi, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-~~~
-
 
 ## Usage ##
 
@@ -241,9 +216,9 @@ See `license.txt` file.
 
 ## Compatibility ##
 
-| OS / Platform                              | Compatibility                                |
+| OS/Platform                              | Compatibility                                |
 | :---                                       | :---                                         |
-| CentOS / RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
+| CentOS/RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
 | Debian, ...                                | Compatible but not tested on a regular basis. |
-| OS X                                       | Compatible but not tested on a regular basis. |
+| macOS                                       | Compatible but not tested on a regular basis. |
 | Windows 7, 8, 10                           | Compatible but not tested on a regular basis. |
