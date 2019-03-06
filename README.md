@@ -1,4 +1,5 @@
 # libksi #
+
 Guardtime KSI Blockchain is an industrial scale blockchain platform that cryptographically
 ensures data integrity and proves time of existence. Its signatures, based on hash chains, link data to global
 calendar blockchain. The checkpoints of the blockchain, published in newspapers and electronic media, enable long term
@@ -11,6 +12,44 @@ and systems. It provides an API for all KSI functionality, including the core fu
 and verifying the signatures.
 
 ## Installation ##
+
+### Latest Release from Guardtime Repository
+
+In order to install the `libksi` packages directly from the Guardtime public repository, download and save the repository configuration and use appropriate system package manager. 
+
+
+```
+### On RHEL/CentOS ###
+
+cd /etc/yum.repos.d
+
+# In case of RHEL/CentOS 6
+sudo curl -O http://download.guardtime.com/ksi/configuration/guardtime.el6.repo
+
+# In case of RHEL/CentOS 7
+sudo curl -O http://download.guardtime.com/ksi/configuration/guardtime.el7.repo
+
+sudo yum install libksi
+
+
+### On Debian/Ubuntu ###
+
+# Add Guardtime pgp key.
+sudo curl http://download.guardtime.com/ksi/GUARDTIME-GPG-KEY | sudo apt-key add -
+
+# In case of Ubuntu 16 (Xenial)
+sudo curl -o /etc/apt/sources.list.d/guardtime.list http://download.guardtime.com/ksi/configuration/guardtime.xenial.list
+
+# In case of Debian 9 (Stretch)
+sudo curl -o /etc/apt/sources.list.d/guardtime.list http://download.guardtime.com/ksi/configuration/guardtime.stretch.list
+
+sudo apt update
+apt-get install libksi
+```
+
+For OS X, see [https://github.com/guardtime/homebrew-ksi](https://github.com/guardtime/homebrew-ksi)
+
+### From Source Code
 
 To build the `libksi`, you need to have the following SW components installed:
 1. A network provider
@@ -29,9 +68,6 @@ For building under Windows you need the Windows SDK.
 
 To use `libksi` in your C/C++ project, link it against the `libksi` binary and your chosen network and cryptography providers.
 
-If you do not want to build your own binaries, you can get the latest stable release from the Guardtime repository.
-To set up the repository, save this repo file in your repositories directory (e.g. `/etc/yum.repos.d/`):
-[http://download.guardtime.com/ksi/configuration/guardtime.el6.repo](http://download.guardtime.com/ksi/configuration/guardtime.el6.repo)
 
 ## Known Limitations ##
 
@@ -167,6 +203,7 @@ See `CONTRIBUTING.md` file.
 See `license.txt` file.
 
 ## Dependencies ##
+
 | Dependency        | Version                           | License type | Source                         | Notes |
 | :---              | :---                              | :---         | :---                           |:---   |
 | OpenSSL           | Latest stable for target platform | BSD          | https://www.openssl.org/       | This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com). |
@@ -178,6 +215,7 @@ See `license.txt` file.
 | Nginx             | n/a                               | MIT          |                                | Modified version of code based on src/http/ngx_http_parse.c from NGINX embedded in KSI code base. |
 
 ## Compatibility ##
+
 | OS / Platform                              | Compatibility                                |
 | :---                                       | :---                                         |
 | CentOS/RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
