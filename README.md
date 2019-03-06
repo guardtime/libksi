@@ -47,7 +47,7 @@ sudo apt update
 apt-get install libksi
 ```
 
-For OS X, see [https://github.com/guardtime/homebrew-ksi](https://github.com/guardtime/homebrew-ksi)
+For macOS, see [https://github.com/guardtime/homebrew-ksi](https://github.com/guardtime/homebrew-ksi)
 
 ### From Source Code
 
@@ -216,9 +216,9 @@ See `license.txt` file.
 
 ## Compatibility ##
 
-| OS / Platform                              | Compatibility                                |
+| OS/Platform                              | Compatibility                                |
 | :---                                       | :---                                         |
 | CentOS/RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
 | Debian, ...                                | Compatible but not tested on a regular basis. |
-| OS X                                       | Compatible but not tested on a regular basis. |
+| macOS                                       | Compatible but not tested on a regular basis. |
 | Windows 7, 8, 10                           | Compatible but not tested on a regular basis. |
