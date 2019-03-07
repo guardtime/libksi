@@ -60,6 +60,7 @@ EXPORTS
 
 ;hash.h
 EXPORTS
+	KSI_HASHALG_INVALID DATA
 	KSI_DataHasher_open
 	KSI_DataHasher_reset
 	KSI_DataHasher_add
