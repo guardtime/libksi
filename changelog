@@ -1,3 +1,5 @@
+(KSICAPI-528)* BUGFIX: Initialization of KSI_HashAlgorithm is done with KSI_HASHALG_INVALID_VALUE instead of -1.
+
 Version 3.19
 
 2019-02-01 release(3.19.2938)

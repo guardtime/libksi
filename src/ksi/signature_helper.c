@@ -26,7 +26,7 @@
 int KSI_Signature_getHashAlgorithm(const KSI_Signature *sig, KSI_HashAlgorithm *algo_id) {
 	KSI_DataHash *hsh = NULL;
 	int res;
-	KSI_HashAlgorithm tmp = -1;
+	KSI_HashAlgorithm tmp = KSI_HASHALG_INVALID_VALUE;
 
 	if (sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -61,7 +61,7 @@ cleanup:
 int KSI_Signature_createDataHasher(const KSI_Signature *sig, KSI_DataHasher **hsr) {
 	int res;
 	KSI_DataHasher *tmp = NULL;
-	KSI_HashAlgorithm algo_id = -1;
+	KSI_HashAlgorithm algo_id = KSI_HASHALG_INVALID_VALUE;
 
 	if (sig == NULL || hsr == NULL) {
 		res = KSI_INVALID_ARGUMENT;
