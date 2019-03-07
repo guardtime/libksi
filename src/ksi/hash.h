@@ -51,7 +51,7 @@ extern "C" {
 	 */
 	typedef struct KSI_DataHash_st KSI_DataHash;
 
-	extern const int KSI_VAR_DEPRECATED(KSI_HASHALG_INVALID, Use #KSI_isHashAlgorithmSupported instead.);
+	KSI_DEFINE_EXTERN(const int KSI_VAR_DEPRECATED(KSI_HASHALG_INVALID, Use #KSI_isHashAlgorithmSupported instead.));
 
 	/**
 	 * The Guardtime representation of hash algorithms, necessary to calculate
