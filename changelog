@@ -1,4 +1,5 @@
 (KSICAPI-528)* BUGFIX: Initialization of KSI_HashAlgorithm is done with KSI_HASHALG_INVALID_VALUE instead of -1.
+(KSICAPI-529)* BUGFIX: Constant variable KSI_HASHALG_INVALID is exported with DLL.
 
 Version 3.19
 
