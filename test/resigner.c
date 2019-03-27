@@ -260,7 +260,7 @@ cleanup:
 	return ret;
 }
 
-static void callback(int p, int n, void *arg) {
+static int callback(int p, int n, BN_GENCB *arg) {
 	char c = 'B';
 
 	if (p == 0) c = '.';
@@ -268,17 +268,46 @@ static void callback(int p, int n, void *arg) {
 	if (p == 2) c = '*';
 	if (p == 3) c = '\n';
 	fputc(c, stderr);
+
+	return 1;
+}
+
+static RSA *generate_key(int bits, BN_ULONG e_val) {
+	RSA *rsa = NULL;
+	RSA *tmp = RSA_new();
+	BIGNUM *e = BN_new();
+	BN_GENCB *cb = BN_GENCB_new();
+
+	if (tmp == NULL || e == NULL || cb == NULL) {
+		goto cleanup;
+	}
+
+	if (!BN_set_word(e, e_val)) {
+		goto cleanup;
+	}
+
+	BN_GENCB_set(cb, callback, NULL);
+
+	if (!RSA_generate_key_ex(tmp, bits, e, cb)) {
+		goto cleanup;
+	}
+	rsa = tmp;
+	tmp = NULL;
+cleanup:
+	RSA_free(tmp);
+	BN_free(e);
+	BN_GENCB_free(cb);
+	return rsa;
 }
 
 /*
  * The following helper functions are based on OpenSSL demo code.
  * See <openssl_dir>/demos/x509/mkcert.c
  */
-
 int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
 	X509 *x;
 	EVP_PKEY *pk;
-	RSA *rsa;
+	RSA *rsa = NULL;
 	X509_NAME *name = NULL;
 	const unsigned char country[] = "EE";
 	const unsigned char orgName[] = "Guardtime AS";
@@ -301,7 +330,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
 		x = *x509p;
 	}
 
-	rsa = RSA_generate_key(bits, RSA_F4, callback, NULL);
+	rsa = generate_key(bits, RSA_F4);
 	if (!EVP_PKEY_assign_RSA(pk, rsa)) {
 		abort();
 		goto err;
