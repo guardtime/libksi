@@ -269,7 +269,7 @@ static void aggrReqPduHmacVerify(CuTest* tc, KSI_HashAlgorithm hmacAlg) {
 	KSI_AggregationPdu *pdu = NULL;
 	KSI_DataHash *hash = NULL;
 	KSI_DataHash *hmac = NULL;
-	KSI_HashAlgorithm algo = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm algo = KSI_HASHALG_INVALID_VALUE;
 	KSI_Integer *intVal = NULL;
 
 	KSI_ERR_clearErrors(ctx);
@@ -322,7 +322,7 @@ static void extReqPduHmacVerify(CuTest* tc, KSI_HashAlgorithm hmacAlg) {
 	KSI_ExtendPdu *pdu = NULL;
 	KSI_DataHash *hmac = NULL;
 	KSI_Integer *intVal = NULL;
-	KSI_HashAlgorithm algo = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm algo = KSI_HASHALG_INVALID_VALUE;
 
 	KSI_ERR_clearErrors(ctx);
 
