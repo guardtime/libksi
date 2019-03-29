@@ -307,8 +307,8 @@ cleanup:
  * See <openssl_dir>/demos/x509/mkcert.c
  */
 int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
-	X509 *x;
-	EVP_PKEY *pk;
+	X509 *x = NULL;
+	EVP_PKEY *pk = NULL;
 	RSA *rsa = NULL;
 	X509_NAME *name = NULL;
 	const unsigned char country[] = "EE";

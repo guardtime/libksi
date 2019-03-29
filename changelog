@@ -1,3 +1,4 @@
+(KSICAPI-531)* BUGFIX: Resolved compilation warnings.
 (KSICAPI-529)* BUGFIX: Constant variable KSI_HASHALG_INVALID is exported with DLL.
 
 Version 3.19
