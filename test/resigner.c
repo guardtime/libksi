@@ -33,6 +33,8 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
 
 #include "../src/ksi/impl/publicationsfile_impl.h"
 
@@ -260,7 +262,7 @@ cleanup:
 	return ret;
 }
 
-static int callback(int p, int n, BN_GENCB *arg) {
+static void callback(int p, int n, void *arg) {
 	char c = 'B';
 
 	if (p == 0) c = '.';
@@ -268,37 +270,37 @@ static int callback(int p, int n, BN_GENCB *arg) {
 	if (p == 2) c = '*';
 	if (p == 3) c = '\n';
 	fputc(c, stderr);
-
-	return 1;
 }
 
-static RSA *generate_key(int bits, BN_ULONG e_val) {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+static RSA *generate_key(int bits, unsigned long e) {
+	return RSA_generate_key(bits, e, callback, NULL);
+}
+#else
+static RSA *generate_key(int bits, BN_ULONG e) {
 	RSA *rsa = NULL;
 	RSA *tmp = RSA_new();
-	BIGNUM *e = BN_new();
+	BIGNUM *bn = BN_new();
 	BN_GENCB *cb = BN_GENCB_new();
 
-	if (tmp == NULL || e == NULL || cb == NULL) {
+	if (tmp == NULL || bn == NULL || cb == NULL) {
 		goto cleanup;
 	}
 
-	if (!BN_set_word(e, e_val)) {
-		goto cleanup;
-	}
+	BN_GENCB_set_old(cb, callback, NULL);
 
-	BN_GENCB_set(cb, callback, NULL);
-
-	if (!RSA_generate_key_ex(tmp, bits, e, cb)) {
+	if (!BN_set_word(bn, e) || !RSA_generate_key_ex(tmp, bits, bn, cb)) {
 		goto cleanup;
 	}
 	rsa = tmp;
 	tmp = NULL;
 cleanup:
 	RSA_free(tmp);
-	BN_free(e);
+	BN_free(bn);
 	BN_GENCB_free(cb);
 	return rsa;
 }
+#endif
 
 /*
  * The following helper functions are based on OpenSSL demo code.
