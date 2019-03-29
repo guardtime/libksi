@@ -33,6 +33,8 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/bn.h>
+#include <openssl/rsa.h>
 
 #include "../src/ksi/impl/publicationsfile_impl.h"
 
@@ -270,15 +272,44 @@ static void callback(int p, int n, void *arg) {
 	fputc(c, stderr);
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+static RSA *generate_key(int bits, unsigned long e) {
+	return RSA_generate_key(bits, e, callback, NULL);
+}
+#else
+static RSA *generate_key(int bits, BN_ULONG e) {
+	RSA *rsa = NULL;
+	RSA *tmp = RSA_new();
+	BIGNUM *bn = BN_new();
+	BN_GENCB *cb = BN_GENCB_new();
+
+	if (tmp == NULL || bn == NULL || cb == NULL) {
+		goto cleanup;
+	}
+
+	BN_GENCB_set_old(cb, callback, NULL);
+
+	if (!BN_set_word(bn, e) || !RSA_generate_key_ex(tmp, bits, bn, cb)) {
+		goto cleanup;
+	}
+	rsa = tmp;
+	tmp = NULL;
+cleanup:
+	RSA_free(tmp);
+	BN_free(bn);
+	BN_GENCB_free(cb);
+	return rsa;
+}
+#endif
+
 /*
  * The following helper functions are based on OpenSSL demo code.
  * See <openssl_dir>/demos/x509/mkcert.c
  */
-
 int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
-	X509 *x;
-	EVP_PKEY *pk;
-	RSA *rsa;
+	X509 *x = NULL;
+	EVP_PKEY *pk = NULL;
+	RSA *rsa = NULL;
 	X509_NAME *name = NULL;
 	const unsigned char country[] = "EE";
 	const unsigned char orgName[] = "Guardtime AS";
@@ -301,7 +332,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
 		x = *x509p;
 	}
 
-	rsa = RSA_generate_key(bits, RSA_F4, callback, NULL);
+	rsa = generate_key(bits, RSA_F4);
 	if (!EVP_PKEY_assign_RSA(pk, rsa)) {
 		abort();
 		goto err;

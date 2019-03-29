@@ -261,7 +261,7 @@ extern "C" {
 
 	/**
 	 * Returns the hash algorithm specified by the case insensitive string parameter \c name . If the algorithm
-	 * name is not recognized the value of KSI_HASHALG_INVALID, witch is not a
+	 * name is not recognized the value of #KSI_HASHALG_INVALID_VALUE, witch is not a
 	 * correct hashing algorithm, is returned. To verify the correctness of the returned
 	 * value #KSI_isHashAlgorithmSupported or #KSI_isHashAlgorithmTrusted function must be used.
 	 * The valid inputs are "default" for the configured default hash algorithm or one of the following:
