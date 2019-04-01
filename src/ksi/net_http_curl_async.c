@@ -260,9 +260,9 @@ static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *u
 	totalCount = curlReq->len + bytesReceived;
 	if (totalCount > UINT_MAX) {
 		KSI_LOG_debug(curlReq->client->ctx,
-				"[%p] Async Curl HTTP: [%p] too many bytes received %llu bytes (%llu so far).",
+				"[%p] Async Curl HTTP: [%p] too many bytes received %llu bytes (%llu in total).",
 				curlReq->client, curlReq,
-				(unsigned long long)curlReq->len, (unsigned long long)bytesReceived);
+				(unsigned long long)bytesReceived, (unsigned long long)totalCount);
 		goto cleanup;
 	}
 
@@ -282,7 +282,8 @@ static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *u
 	curlReq->len = totalCount;
 	tmp_buffer = NULL;
 
-	KSI_LOG_debug(curlReq->client->ctx, "0x%p: Async Curl HTTP received %llu bytes (%llu so far).", curlReq,
+	KSI_LOG_debug(curlReq->client->ctx, "[%p] Async Curl HTTP: [%p] received %llu bytes (%llu so far).",
+			curlReq->client, curlReq,
 			(unsigned long long)bytesReceived, (unsigned long long)curlReq->len);
 
 	totalCount = bytesReceived;
