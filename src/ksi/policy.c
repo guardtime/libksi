@@ -323,6 +323,7 @@ static const KSI_Rule publicationRecordRule_cal[] = {
 
 static const KSI_Rule extendToHeadRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainDoesNotExist},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
 	{KSI_RULE_TYPE_BASIC, NULL}
@@ -330,6 +331,7 @@ static const KSI_Rule extendToHeadRule[] = {
 
 static const KSI_Rule extendToCalendarChainRule[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_CalendarHashChainExistence},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime},
 	{KSI_RULE_TYPE_COMPOSITE_AND, publicationRecordRule_cal},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime},
@@ -386,6 +388,7 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_KEY_BASED = &PolicyKeyBased;
 static const KSI_Rule extendToPublication[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileContainsSuitablePublication},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendToPublication},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse},
@@ -447,6 +450,7 @@ const KSI_Policy* KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED = &PolicyPubli
 static const KSI_Rule extendToUserPublication[] = {
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendingPermittedVerification},
+	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendToPublication},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse},
 	{KSI_RULE_TYPE_BASIC, KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse},

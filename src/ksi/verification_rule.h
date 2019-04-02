@@ -321,6 +321,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime
 	 */
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -346,6 +349,46 @@ extern "C" {
 	int KSI_VerificationRule_SignaturePublicationRecordMissing(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
 	/**
+	 * This rule is used to verify that calendar hash chain extended to head can be received.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to verify that calendar hash chain extended to same publication time can be received.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to verify that calendar hash chain extended to nearest publication can be received.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_PublicationsFileExtendToPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
+	 * This rule is used to verify that calendar hash chain extended to user publication can be received.
+	 *
+	 * \param[in]	info		Verification context to be used for given rule
+	 * \param[out]	result		Verification result.
+	 *
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 */
+	int KSI_VerificationRule_UserProvidedPublicationExtendToPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
+
+	/**
 	 * This rule is used to check that reproduced calendar hash chain (reproduced by sending extension request with the
 	 * same aggregation and publication time as the attached calendar chain) matches with the already present calendar
 	 * hash chain root hash.
@@ -356,6 +399,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime
 	 */
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -378,6 +424,10 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead
+	 * \see KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime
 	 */
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -388,6 +438,10 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead
+	 * \see KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime
 	 */
 	int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -581,6 +635,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_PublicationsFileExtendToPublication
 	 */
 	int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -591,6 +648,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_PublicationsFileExtendToPublication
 	 */
 	int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -602,6 +662,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_PublicationsFileExtendToPublication
 	 */
 	int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -612,6 +675,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_PublicationsFileExtendToPublication
 	 */
 	int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -685,6 +751,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_UserProvidedPublicationExtendToPublication
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -695,6 +764,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_UserProvidedPublicationExtendToPublication
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -705,6 +777,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_UserProvidedPublicationExtendToPublication
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
@@ -715,6 +790,9 @@ extern "C" {
 	 * \param[out]	result		Verification result.
 	 *
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 *
+	 * \note The calendar hash chain from extending service must be buffered prior to verification.
+	 * \see KSI_VerificationRule_UserProvidedPublicationExtendToPublication
 	 */
 	int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result);
 
