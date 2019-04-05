@@ -57,6 +57,17 @@
 	result->ruleName         = VERIFICATION_RULE_NAME; \
 }\
 
+#define VERIFICATION_RESULT_INC(vrc, vec, step, err, ext, msg) \
+{\
+	result->resultCode       = (vrc); \
+	result->errorCode        = (vec); \
+	result->stepsPerformed  |= (step); \
+	result->ruleName         = VERIFICATION_RULE_NAME; \
+	result->status           = (err); \
+	result->statusExt        = (ext); \
+	result->statusMessage    = (msg); \
+}\
+
 #define VERIFICATION_RESULT_RULE(rule) \
 {\
 	result->ruleName         = (rule); \
@@ -67,7 +78,8 @@ static int rfc3161_verifyAggrTime(KSI_CTX *ctx, const KSI_Signature *sig);
 static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig);
 static int rfc3161_extractOutputHashAlgorithm(const KSI_Signature *sig, KSI_HashAlgorithm *algorithm);
 static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
-static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **extCalHashChain);
+static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_CalendarHashChain **extCalHashChain);
+static int isServiceFailure(int status);
 static int initPublicationsFile(KSI_VerificationContext *info);
 static int initAggregationOutputHash(KSI_VerificationContext *info);
 static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
@@ -2358,7 +2370,6 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_Verif
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
-	KSI_Integer *pubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_HashChainLinkList *sigList = NULL;
 	KSI_HashChainLinkList *extSigList = NULL;
@@ -2391,14 +2402,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch(KSI_Verif
 		goto cleanup;
 	}
 
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = getExtendedCalendarHashChain(info, pubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -2547,7 +2551,6 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_Verification
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
-	KSI_Integer *pubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_DataHash *rootHash = NULL;
 	KSI_DataHash *extRootHash = NULL;
@@ -2571,14 +2574,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainRootHash(KSI_Verification
 
 	KSI_LOG_info(info->ctx, "Verify extended signature calendar hash chain root hash.");
 
-	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = getExtendedCalendarHashChain(info, pubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -2650,7 +2646,7 @@ cleanup:
 	return res;
 }
 
-static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *endTime) {
+static int receiveCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *endTime) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
@@ -2670,7 +2666,6 @@ static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Inte
 		goto cleanup;
 	}
 
-
 	ctx = info->ctx;
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
@@ -2679,6 +2674,12 @@ static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Inte
 	if (tempData == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
 		goto cleanup;
+	}
+
+	/* Clear the available calendar in case one is attached. */
+	if (tempData->calendarChain != NULL) {
+		KSI_CalendarHashChain_free(tempData->calendarChain);
+		tempData->calendarChain = NULL;
 	}
 
 	/* Extract start time. */
@@ -2699,9 +2700,6 @@ static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Inte
 			goto cleanup;
 		}
 	}
-
-	/* Clone the start time object. */
-	KSI_Integer_ref(startTime);
 
 	res = KSI_createExtendRequest(ctx, startTime, endTime, &req);
 	if (res != KSI_OK) {
@@ -2771,16 +2769,12 @@ static int initExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Inte
 		goto cleanup;
 	}
 
-	if (tempData->calendarChain != NULL) {
-		KSI_CalendarHashChain_free(tempData->calendarChain);
-	}
 	tempData->calendarChain = tmp;
 	tmp = NULL;
 
 	res = KSI_OK;
 
 cleanup:
-	KSI_Integer_free(startTime);
 	KSI_ExtendReq_free(req);
 	KSI_RequestHandle_free(handle);
 	KSI_ExtendResp_free(resp);
@@ -2789,7 +2783,7 @@ cleanup:
 	return res;
 }
 
-static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integer *pubTime, KSI_CalendarHashChain **chain) {
+static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_CalendarHashChain **chain) {
 	int res = KSI_UNKNOWN_ERROR;
 	VerificationTempData *tempData = NULL;
 
@@ -2804,11 +2798,10 @@ static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_Integ
 		goto cleanup;
 	}
 
-	/* Check if signature has been already extended. */
+	/* Verify that the calendar has been already received. This should have been done with appropriate rule. */
 	if (tempData->calendarChain == NULL) {
-		/* Extend the signature to the publication time as attached calendar chain, or to head if time is NULL. */
-		res = initExtendedCalendarHashChain(info, pubTime);
-		if (res != KSI_OK) goto cleanup;
+		KSI_pushError(info->ctx, res = KSI_INVALID_STATE, "Calendar hash chain not present.");
+		goto cleanup;
 	}
 
 	*chain = tempData->calendarChain;
@@ -2820,14 +2813,84 @@ cleanup:
 	return res;
 }
 
-int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+static int isServiceFailure(int status) {
+	return /* What ever network error. */
+			status == KSI_NETWORK_ERROR ||
+			status == KSI_NETWORK_CONNECTION_TIMEOUT ||
+			status == KSI_NETWORK_RECIEVE_TIMEOUT ||
+			status == KSI_NETWORK_SEND_TIMEOUT ||
+			/* What ever service error. */
+			status == KSI_SERVICE_INVALID_REQUEST ||
+			status == KSI_SERVICE_AUTHENTICATION_FAILURE ||
+			status == KSI_SERVICE_INVALID_PAYLOAD ||
+			status == KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE ||
+			status == KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD ||
+			status == KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW ||
+			status == KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE ||
+			status == KSI_SERVICE_INTERNAL_ERROR ||
+			status == KSI_SERVICE_EXTENDER_DATABASE_MISSING ||
+			status == KSI_SERVICE_EXTENDER_DATABASE_CORRUPT ||
+			status == KSI_SERVICE_UPSTREAM_ERROR ||
+			status == KSI_SERVICE_UPSTREAM_TIMEOUT ||
+			status == KSI_SERVICE_UNKNOWN_ERROR;
+}
+
+int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_ONLINE;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify calendar hash chain extended to head can be received.");
+
+	res = receiveCalendarHashChain(info, NULL);
+	if (res != KSI_OK) {
+		if (isServiceFailure(res)) {
+			char buf[256];
+			char *msg = NULL;
+			int ext = 0;
+
+			KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
+			KSI_strdup(buf, &msg);
+
+			KSI_LOG_info(ctx, "Unable to get calendar hash chain from extender service (0x%x/%d: %s).", res, ext, msg);
+			VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, res, ext, msg);
+			res = KSI_OK;
+		} else {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+		}
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	KSI_Integer *pubTime = NULL;
-	KSI_CalendarHashChain *extCalHashChain = NULL;
-	KSI_DataHash *calInputHash = NULL;
-	VerificationTempData *tempData = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_ONLINE;
 
 	if (result == NULL) {
@@ -2847,6 +2910,236 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_Verificatio
 	sig = info->signature;
 	KSI_ERR_clearErrors(ctx);
 
+	KSI_LOG_info(ctx, "Verify calendar hash chain extended to same publication time can be received.");
+
+	if (sig->calendarChain == NULL) {
+		KSI_pushError(info->ctx, res = KSI_INVALID_STATE, "Calendar hash chain not present.");
+		goto cleanup;
+	}
+
+	res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = receiveCalendarHashChain(info, pubTime);
+	if (res != KSI_OK) {
+		if (isServiceFailure(res)) {
+			char buf[256];
+			char *msg = NULL;
+			int ext = 0;
+
+			KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
+			KSI_strdup(buf, &msg);
+
+			KSI_LOG_info(ctx, "Unable to get calendar hash chain from extender service (0x%x/%d: %s).", res, ext, msg);
+			VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, res, ext, msg);
+			res = KSI_OK;
+		} else {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+		}
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_PublicationsFileExtendToPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	const KSI_Signature *sig = NULL;
+	KSI_Integer *aggrTime = NULL;
+	KSI_PublicationRecord *pubRec = NULL;
+	KSI_Integer *pubTime = NULL;
+	VerificationTempData *tempData = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBFILE;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	sig = info->signature;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify calendar hash chain extended to nearest publication can be received.");
+
+	tempData = info->tempData;
+	if (tempData == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
+		goto cleanup;
+	}
+
+	res = KSI_Signature_getSigningTime(sig, &aggrTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = initPublicationsFile(info);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_PublicationsFile_getNearestPublication(tempData->publicationsFile, aggrTime, &pubRec);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	if (pubRec == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "No available publications.");
+		goto cleanup;
+	}
+	res = KSI_PublicationData_getTime(pubRec->publishedData, &pubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	if (pubTime == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication time in the publication data.");
+		goto cleanup;
+	}
+
+	res = receiveCalendarHashChain(info, pubTime);
+	if (res != KSI_OK) {
+		if (isServiceFailure(res)) {
+			char buf[256];
+			char *msg = NULL;
+			int ext = 0;
+
+			KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
+			KSI_strdup(buf, &msg);
+
+			KSI_LOG_info(ctx, "Unable to get calendar hash chain from extender service (0x%x/%d: %s).", res, ext, msg);
+			VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, res, ext, msg);
+			res = KSI_OK;
+		} else {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+		}
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+	KSI_PublicationRecord_free(pubRec);
+	return res;
+}
+
+int KSI_VerificationRule_UserProvidedPublicationExtendToPublication(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_Integer *pubTime = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	KSI_ERR_clearErrors(ctx);
+
+	KSI_LOG_info(ctx, "Verify calendar hash chain extended to user publication can be received.");
+
+	res = KSI_PublicationData_getTime(info->userPublication, &pubTime);
+	if (res != KSI_OK) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+	if (pubTime == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res = KSI_INVALID_FORMAT, "Missing publication time in the publication data.");
+		goto cleanup;
+	}
+
+	res = receiveCalendarHashChain(info, pubTime);
+	if (res != KSI_OK) {
+		if (isServiceFailure(res)) {
+			char buf[256];
+			char *msg = NULL;
+			int ext = 0;
+
+			KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
+			KSI_strdup(buf, &msg);
+
+			KSI_LOG_info(ctx, "Unable to get calendar hash chain from extender service (0x%x/%d: %s).", res, ext, msg);
+			VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, res, ext, msg);
+			res = KSI_OK;
+		} else {
+			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+			KSI_pushError(ctx, res, NULL);
+		}
+		goto cleanup;
+	}
+
+	VERIFICATION_RESULT_OK(step);
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_CTX *ctx = NULL;
+	KSI_CalendarHashChain *extCalHashChain = NULL;
+	KSI_DataHash *calInputHash = NULL;
+	VerificationTempData *tempData = NULL;
+	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_ONLINE;
+
+	if (result == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	VERIFICATION_START(step);
+
+	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	ctx = info->ctx;
+	KSI_ERR_clearErrors(ctx);
+
 	tempData = info->tempData;
 	if (tempData == NULL) {
 		KSI_pushError(ctx, res = KSI_INVALID_STATE, "Verification context not properly initialized.");
@@ -2855,18 +3148,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainInputHash(KSI_Verificatio
 
 	KSI_LOG_info(ctx, "Verify extended signature calendar hash chain input hash.");
 
-	/* If the calendar chain is available, then take the publication from calendar chain. */
-	/* Otherwice the extender will extend to head (pubTime == NULL). */
-	if (sig->calendarChain != NULL) {
-		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
-		if (res != KSI_OK) {
-			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = getExtendedCalendarHashChain(info, pubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -2911,7 +3193,6 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 	const KSI_Signature *sig = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_AggregationHashChain *aggregationChain = NULL;
-	KSI_Integer *pubTime = NULL;
 	KSI_Integer *extCalTime = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_CALCHAIN_ONLINE;
 
@@ -2933,18 +3214,7 @@ int KSI_VerificationRule_ExtendedSignatureCalendarChainAggregationTime(KSI_Verif
 
 	KSI_LOG_info(ctx, "Verify extended signature calendar hash chain aggregation time.");
 
-	/* If the calendar chain is available, then take the publication from calendar chain. */
-	/* Otherwice the extender will extend to head (pubTime == NULL). */
-	if (sig->calendarChain != NULL) {
-		res = KSI_CalendarHashChain_getPublicationTime(sig->calendarChain, &pubTime);
-		if (res != KSI_OK) {
-			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
-			goto cleanup;
-		}
-	}
-
-	res = getExtendedCalendarHashChain(info, pubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -3027,11 +3297,14 @@ cleanup:
 
 int KSI_VerificationRule_CalendarHashChainPresenceVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
+	const KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
+	VERIFICATION_START(step);
 
 	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
@@ -3043,7 +3316,7 @@ int KSI_VerificationRule_CalendarHashChainPresenceVerification(KSI_VerificationC
 
 	if (info->signature->calendarChain == NULL) {
 		KSI_LOG_info(info->ctx, "Signature calendar hash chain is missing.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -3093,11 +3366,14 @@ cleanup:
 
 int KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
+	const KSI_VerificationStep step = KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE;
 
 	if (result == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
+
+	VERIFICATION_START(step);
 
 	if (info == NULL || info->ctx == NULL || info->signature == NULL) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
@@ -3109,7 +3385,7 @@ int KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification(KSI_Ve
 
 	if (info->signature->calendarAuthRec == NULL) {
 		KSI_LOG_info(info->ctx, "Calendar authentication record is missing.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -3833,7 +4109,7 @@ int KSI_VerificationRule_PublicationsFileContainsSuitablePublication(KSI_Verific
 	}
 	if (pubRec == NULL) {
 		KSI_LOG_info(ctx, "Publication not found.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -3868,7 +4144,7 @@ static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_Rul
 
 	if (info->extendingAllowed == 0) {
 		KSI_LOG_info(info->ctx, "Extending not allowed.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -3924,7 +4200,7 @@ static int signatureCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_Verificati
 
 	if (isDeprecated) {
 		KSI_LOG_info(ctx, "Calendar hash chain link hash algorithm was deprecated at publication time.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -3950,7 +4226,6 @@ int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDepre
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	KSI_Integer *aggrTime = NULL;
-	KSI_Integer *pubDataPubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_DataHash *pubDataHash = NULL;
@@ -4015,14 +4290,7 @@ int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDepre
 		goto cleanup;
 	}
 
-	res = KSI_PublicationData_getTime(pubRec->publishedData, &pubDataPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = getExtendedCalendarHashChain(info, pubDataPubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4038,7 +4306,7 @@ int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDepre
 
 	if (isTrue) {
 		KSI_LOG_info(ctx, "Extended calendar hash chain link hash algorithm was deprecated at publication time.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -4055,7 +4323,6 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 	KSI_CTX *ctx = NULL;
 	const KSI_Signature *sig = NULL;
 	KSI_Integer *aggrTime = NULL;
-	KSI_Integer *pubDataPubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_DataHash *extCalRootHash = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
@@ -4120,14 +4387,7 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 		goto cleanup;
 	}
 
-	res = KSI_PublicationData_getTime(pubRec->publishedData, &pubDataPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = getExtendedCalendarHashChain(info, pubDataPubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4233,7 +4493,7 @@ int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(
 		goto cleanup;
 	}
 
-	res = getExtendedCalendarHashChain(info, pubDataPubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4273,7 +4533,6 @@ int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(KSI_Verifica
 	const KSI_Signature *sig = NULL;
 	KSI_Integer *aggrTime = NULL;
 	KSI_DataHash *calInputHash = NULL;
-	KSI_Integer *pubDataPubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_PublicationRecord *pubRec = NULL;
 	VerificationTempData *tempData = NULL;
@@ -4329,14 +4588,7 @@ int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(KSI_Verifica
 		goto cleanup;
 	}
 
-	res = KSI_PublicationData_getTime(pubRec->publishedData, &pubDataPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	res = getExtendedCalendarHashChain(info, pubDataPubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4504,7 +4756,7 @@ int KSI_VerificationRule_UserProvidedPublicationTimeVerification(KSI_Verificatio
 	if (KSI_Integer_compare(sigPubTime, usrPubTime) != 0) {
 		KSI_LOG_debug(ctx, "Publication time from signature publication: %llu", (unsigned long long)KSI_Integer_getUInt64(sigPubTime));
 		KSI_LOG_debug(ctx, "Publication time from user publication     : %llu", (unsigned long long)KSI_Integer_getUInt64(usrPubTime));
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -4737,7 +4989,7 @@ int KSI_VerificationRule_UserProvidedPublicationCreationTimeVerification(KSI_Ver
 	if (KSI_Integer_compare(aggregationTime, usrPubDataTime) != -1) {
 		KSI_LOG_debug(ctx, "Publication time from sig pub data : %llu", (unsigned long long)KSI_Integer_getUInt64(aggregationTime));
 		KSI_LOG_debug(ctx, "Publication time from user pub data: %llu", (unsigned long long)KSI_Integer_getUInt64(usrPubDataTime));
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -4753,7 +5005,6 @@ cleanup:
 int KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorithmDeprecatedAtPubTime(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Integer *usrPubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	const KSI_VerificationStep step = KSI_VERIFY_PUBLICATION_WITH_PUBSTRING;
 	bool isTrue = false;
@@ -4775,20 +5026,7 @@ int KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorit
 
 	KSI_LOG_info(ctx, "Verify extended to user publication calendar chain aggr algorithm state.");
 
-	res = KSI_PublicationData_getTime(info->userPublication, &usrPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (usrPubTime == NULL) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication time in user publication data.");
-		goto cleanup;
-	}
-
-	res = getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4804,7 +5042,7 @@ int KSI_VerificationRule_UserProvidedPublicationExtendedCalendarChainHashAlgorit
 
 	if (isTrue) {
 		KSI_LOG_info(ctx, "Calendar hash chain right link hash algorithm was deprecated at publication time.");
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, KSI_OK, 0, NULL);
 		res = KSI_OK;
 		goto cleanup;
 	}
@@ -4818,7 +5056,6 @@ cleanup:
 int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Integer *usrPubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_DataHash *extRootHash = NULL;
 	KSI_DataHash *usrPubDataHash = NULL;
@@ -4841,20 +5078,7 @@ int KSI_VerificationRule_UserProvidedPublicationHashMatchesExtendedResponse(KSI_
 
 	KSI_LOG_info(ctx, "Verify user publication hash with extender response.");
 
-	res = KSI_PublicationData_getTime(info->userPublication, &usrPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (usrPubTime == NULL) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, "Missing publication time in user publication data.");
-		goto cleanup;
-	}
-
-	res = getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4937,7 +5161,7 @@ int KSI_VerificationRule_UserProvidedPublicationTimeMatchesExtendedResponse(KSI_
 		goto cleanup;
 	}
 
-	res = getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4996,7 +5220,6 @@ cleanup:
 int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
-	KSI_Integer *usrPubTime = NULL;
 	KSI_CalendarHashChain *extCalHashChain = NULL;
 	KSI_DataHash *calInputHash = NULL;
 	VerificationTempData *tempData = NULL;
@@ -5025,22 +5248,7 @@ int KSI_VerificationRule_UserProvidedPublicationExtendedSignatureInputHash(KSI_V
 
 	KSI_LOG_info(ctx, "Verify signature aggregation root hash with extender response input hash.");
 
-	res = KSI_PublicationData_getTime(info->userPublication, &usrPubTime);
-	if (res != KSI_OK) {
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
-
-	if (usrPubTime == NULL) {
-		const char *msg = "Missing publication time in user publication data.";
-		KSI_LOG_info(ctx, "%s", msg);
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-		KSI_pushError(ctx, res = KSI_INVALID_VERIFICATION_INPUT, msg);
-		goto cleanup;
-	}
-
-	res = getExtendedCalendarHashChain(info, usrPubTime, &extCalHashChain);
+	res = getExtendedCalendarHashChain(info, &extCalHashChain);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);

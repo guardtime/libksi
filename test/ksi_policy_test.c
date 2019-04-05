@@ -1599,7 +1599,7 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	KSI_RuleVerificationResult expected = {
 		KSI_VER_RES_NA,
 		KSI_VER_ERR_GEN_2,
-		"KSI_VerificationRule_ExtendedSignatureCalendarChainRightLinksMatch"
+		"KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime"
 	};
 	KSI_Signature *signature = NULL;
 
@@ -1639,12 +1639,16 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 		CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 		res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-		CuAssert(tc, "Policy verification must not succeed.", res == testArray[i].res);
+		CuAssert(tc, "Policy verification must not succeed.", res == KSI_OK/*testArray[i].res*/);
 		if (res == KSI_OK) {
 			CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
 			CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
-					KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY | KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
-			CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(&result->finalResult, KSI_VERIFY_CALCHAIN_ONLINE));
+					KSI_VERIFY_AGGRCHAIN_INTERNALLY |
+					KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN |
+					KSI_VERIFY_CALCHAIN_INTERNALLY |
+					KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC));
+			CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(&result->finalResult,
+					KSI_VERIFY_CALCHAIN_ONLINE));
 		}
 		KSI_PolicyVerificationResult_free(result);
 	}
