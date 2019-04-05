@@ -74,7 +74,8 @@ static void KSITest_ruleVerifier(CuTest *tc, int (*verificationRule)(KSI_Verific
 	KSI_Signature *signature = NULL;
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -98,6 +99,7 @@ static void KSITest_ruleVerifier(CuTest *tc, int (*verificationRule)(KSI_Verific
 	}
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -124,11 +126,10 @@ static int KSITest_ExtendPdu_getResponseCalendar(KSI_CTX *ctx, const char *pduPa
 
 	if ((res = KSI_ExtendPdu_parse(ctx, raw, len, &pdu)) != KSI_OK ||
 			(res = KSI_ExtendPdu_getResponse(pdu, &resp)) != KSI_OK ||
-			(res = KSI_ExtendResp_getCalendarHashChain(resp, calendar)) != KSI_OK ||
-			(res = KSI_ExtendResp_setCalendarHashChain(resp, NULL)) != KSI_OK) {
-		*calendar = NULL;
+			(res = KSI_ExtendResp_getCalendarHashChain(resp, calendar)) != KSI_OK) {
 		goto cleanup;
 	}
+	KSI_CalendarHashChain_ref(*calendar);
 	res = KSI_OK;
 cleanup:
 	if (f != NULL) fclose(f);
@@ -150,7 +151,8 @@ static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -165,6 +167,7 @@ static void testRule_AggregationChainInputHashVerification_validRfc3161(CuTest *
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -182,7 +185,9 @@ static void testRule_AggregationChainInputHashVerification_invalidRfc3161_verify
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -214,7 +219,9 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -230,6 +237,7 @@ static void testRule_AggregationChainInputHashVerification_missingRfc3161(CuTest
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -247,7 +255,8 @@ static void testRule_AggregationChainMetaDataVerification_validMetaData(CuTest *
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -279,7 +288,9 @@ static void testRule_AggregationChainMetaDataVerification_validMetaDataNoPadding
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -294,6 +305,7 @@ static void testRule_AggregationChainMetaDataVerification_validMetaDataNoPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -311,7 +323,9 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -326,6 +340,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -343,7 +358,9 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -375,7 +392,9 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -390,6 +409,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataPadding
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -407,7 +427,9 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataLengthN
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -422,6 +444,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataLengthN
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -439,7 +462,9 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataNoPaddi
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -454,6 +479,7 @@ static void testRule_AggregationChainMetaDataVerification_invalidMetaDataNoPaddi
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -471,7 +497,9 @@ static void testRule_AggregationChainMetaDataVerification_missingMetaData(CuTest
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -486,6 +514,7 @@ static void testRule_AggregationChainMetaDataVerification_missingMetaData(CuTest
 
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -503,7 +532,10 @@ static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -519,6 +551,7 @@ static void testRule_AggregationHashChainConsistency(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -536,7 +569,10 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -552,6 +588,7 @@ static void testRule_AggregationHashChainConsistency_verifyErrorResult(CuTest *t
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -567,7 +604,10 @@ static void testRule_AggregationHashChainTimeConsistencyOk(CuTest *tc, const cha
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -583,6 +623,7 @@ static void testRule_AggregationHashChainTimeConsistencyOk(CuTest *tc, const cha
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -612,7 +653,10 @@ static void testRule_AggregationHashChainTimeConsistencyFail(CuTest *tc, const c
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -628,6 +672,7 @@ static void testRule_AggregationHashChainTimeConsistencyFail(CuTest *tc, const c
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -665,7 +710,10 @@ static void testRule_AggregationHashChainIndexConsistencyOk(CuTest *tc, const ch
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -681,6 +729,7 @@ static void testRule_AggregationHashChainIndexConsistencyOk(CuTest *tc, const ch
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -710,7 +759,10 @@ static void testRule_AggregationHashChainIndexConsistencyFail(CuTest *tc, const 
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -726,6 +778,7 @@ static void testRule_AggregationHashChainIndexConsistencyFail(CuTest *tc, const 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -763,7 +816,10 @@ static void testRule_AggregationHashChainIndexContinuationOk(CuTest *tc, const c
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -779,6 +835,7 @@ static void testRule_AggregationHashChainIndexContinuationOk(CuTest *tc, const c
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -808,7 +865,10 @@ static void testRule_AggregationHashChainIndexContinuationFail(CuTest *tc, const
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -824,6 +884,7 @@ static void testRule_AggregationHashChainIndexContinuationFail(CuTest *tc, const
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -879,7 +940,10 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -895,6 +959,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithCalHashChain(
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -912,7 +977,10 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -928,6 +996,7 @@ static void testRule_CalendarHashChainInputHashVerification_sigWithoutCalHashCha
 	TEST_ASSERT_VERIFICATION_STEP_NA_ERR(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -945,7 +1014,10 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -961,6 +1033,7 @@ static void testRule_CalendarHashChainInputHashVerification_verifyErrorResult(Cu
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -978,7 +1051,10 @@ static void testRule_CalendarHashChainAggregationTime(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -994,6 +1070,7 @@ static void testRule_CalendarHashChainAggregationTime(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1011,7 +1088,10 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1027,6 +1107,7 @@ static void testRule_CalendarHashChainAggregationTime_verifyErrorResult(CuTest *
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1044,7 +1125,10 @@ static void testRule_CalendarHashChainRegistrationTime(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1060,6 +1144,7 @@ static void testRule_CalendarHashChainRegistrationTime(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1077,7 +1162,10 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1093,6 +1181,7 @@ static void testRule_CalendarHashChainRegistrationTime_verifyErrorResult(CuTest 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_INTERNALLY);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1380,7 +1469,10 @@ static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1396,6 +1488,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1413,7 +1506,10 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1429,6 +1525,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_missingAutRec(C
 	TEST_ASSERT_VERIFICATION_STEP_NA_ERR(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1446,7 +1543,10 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1462,6 +1562,7 @@ static void testRule_CalendarAuthenticationRecordAggregationHash_verifyErrorResu
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1479,7 +1580,10 @@ static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1495,6 +1599,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1512,7 +1617,10 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1528,6 +1636,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_missingAutRec(C
 	TEST_ASSERT_VERIFICATION_STEP_NA_ERR(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1545,7 +1654,10 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1561,6 +1673,7 @@ static void testRule_CalendarAuthenticationRecordAggregationTime_verifyErrorResu
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_WITH_CALAUTHREC);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1578,7 +1691,10 @@ static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1594,6 +1710,7 @@ static void testRule_SignaturePublicationRecordPublicationHash(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1611,7 +1728,10 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1627,6 +1747,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_missingPubRec(CuT
 	TEST_ASSERT_VERIFICATION_STEP_NA_ERR(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1644,7 +1765,10 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1660,6 +1784,7 @@ static void testRule_SignaturePublicationRecordPublicationHash_verifyErrorResult
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1677,7 +1802,10 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1693,6 +1821,7 @@ static void testRule_SignaturePublicationRecordPublicationTime(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_SUCCEEDED(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1710,7 +1839,10 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1726,6 +1858,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_missingPubRec(CuT
 	TEST_ASSERT_VERIFICATION_STEP_NA_ERR(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1743,7 +1876,10 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1759,6 +1895,7 @@ static void testRule_SignaturePublicationRecordPublicationTime_verifyErrorResult
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALCHAIN_WITH_PUBLICATION);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -1774,7 +1911,10 @@ static void testRule_DocumentHashDoesNotExist(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1782,6 +1922,7 @@ static void testRule_DocumentHashDoesNotExist(CuTest *tc) {
 	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK && verCtx.documentHash == NULL);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -1797,7 +1938,10 @@ static void testRule_DocumentHashDoesNotExist_verifyErrorResult(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1813,6 +1957,7 @@ static void testRule_DocumentHashDoesNotExist_verifyErrorResult(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1829,7 +1974,10 @@ static void testRule_DocumentHashExistence(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1845,6 +1993,7 @@ static void testRule_DocumentHashExistence(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1858,7 +2007,10 @@ static void testRule_DocumentHashExistence_verifyErrorResult(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1866,6 +2018,7 @@ static void testRule_DocumentHashExistence_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Document hash should not be provided.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verCtx.documentHash == NULL);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 }
 
 static void testRule_InputHashAlgorithmVerification(CuTest *tc) {
@@ -1880,7 +2033,10 @@ static void testRule_InputHashAlgorithmVerification(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -1900,6 +2056,7 @@ static void testRule_InputHashAlgorithmVerification(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -1918,7 +2075,10 @@ static void testRule_InputHashAlgorithmVerification_verifyErrorResult(CuTest *tc
 		KSI_ERR_clearErrors(ctx);
 
 		res = KSI_VerificationContext_init(&verCtx, ctx);
-		CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 		memset(&tempData, 0, sizeof(tempData));
 		verCtx.tempData = &tempData;
 
@@ -1940,6 +2100,7 @@ static void testRule_InputHashAlgorithmVerification_verifyErrorResult(CuTest *tc
 		KSI_DataHash_free(documentHash);
 		KSI_Signature_free(signature);
 		KSI_VerificationContext_clean(&verCtx);
+		KSI_RuleVerificationResult_clean(&verRes);
 
 	#undef TEST_SIGNATURE_FILE
 	#undef TEST_MOCK_IMPRINT
@@ -1959,7 +2120,10 @@ static void testRule_InputHashAlgorithmVerificationWithDifferentHashLength_verif
 		KSI_ERR_clearErrors(ctx);
 
 		res = KSI_VerificationContext_init(&verCtx, ctx);
-		CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 		memset(&tempData, 0, sizeof(tempData));
 		verCtx.tempData = &tempData;
 
@@ -1981,6 +2145,7 @@ static void testRule_InputHashAlgorithmVerificationWithDifferentHashLength_verif
 		KSI_DataHash_free(documentHash);
 		KSI_Signature_free(signature);
 		KSI_VerificationContext_clean(&verCtx);
+		KSI_RuleVerificationResult_clean(&verRes);
 
 	#undef TEST_SIGNATURE_FILE
 	#undef TEST_MOCK_IMPRINT
@@ -1998,7 +2163,10 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2018,6 +2186,7 @@ static void testRule_DocumentHashVerification(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -2034,7 +2203,10 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2050,6 +2222,7 @@ static void testRule_DocumentHashVerification_missingDocHash(CuTest *tc) {
 	TEST_ASSERT_VERIFICATION_STEP_NA_ERR(KSI_VERIFY_DOCUMENT);
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
@@ -2069,7 +2242,10 @@ static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2091,6 +2267,7 @@ static void testRule_DocumentHashVerification_verifyErrorResult(CuTest *tc) {
 	KSI_DataHash_free(documentHash);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_MOCK_IMPRINT
@@ -2108,7 +2285,10 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2128,6 +2308,7 @@ static void testRule_DocumentHashVerification_rfc3161(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -2146,7 +2327,10 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2168,6 +2352,7 @@ static void testRule_DocumentHashVerification_rfc3161_verifyErrorResult(CuTest *
 	KSI_DataHash_free(documentHash);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_MOCK_IMPRINT
@@ -2185,7 +2370,10 @@ static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2197,6 +2385,7 @@ static void testRule_SignatureDoesNotContainPublication(CuTest *tc) {
 	CuAssert(tc, "Signature should not contain publication record.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_OK);
 
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2224,7 +2413,10 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2244,6 +2436,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -2263,7 +2456,10 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditional
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2285,6 +2481,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatchWithAdditional
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 
 #undef TEST_SIGNATURE_FILE
@@ -2305,7 +2502,10 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMism
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2327,6 +2527,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_linkCountMism
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 
 #undef TEST_SIGNATURE_FILE
@@ -2347,7 +2548,10 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDif
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2368,6 +2572,7 @@ static void testRule_ExtendedSignatureCalendarChainRightLinksMatch_rightLinksDif
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 
 #undef TEST_SIGNATURE_FILE
@@ -2386,7 +2591,10 @@ static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2399,6 +2607,7 @@ static void testRule_SignaturePublicationRecordExistence(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -2443,7 +2652,10 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2463,6 +2675,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -2482,7 +2695,10 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2504,6 +2720,7 @@ static void testRule_ExtendedSignatureCalendarChainRootHash_verifyErrorResult(Cu
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 
 #undef TEST_SIGNATURE_FILE
@@ -2522,7 +2739,10 @@ static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2535,6 +2755,7 @@ static void testRule_CalendarHashChainDoesNotExist(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -2561,7 +2782,10 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2581,6 +2805,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -2599,7 +2824,10 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2624,6 +2852,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_nokAggrOutHash_veri
 	KSI_nofree(tempData.aggregationOutputHash);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -2643,7 +2872,10 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2665,6 +2897,7 @@ static void testRule_ExtendedSignatureCalendarChainInputHash_verifyErrorResult(C
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 
 #undef TEST_SIGNATURE_FILE
@@ -2684,7 +2917,10 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2704,6 +2940,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -2723,7 +2960,10 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2745,6 +2985,7 @@ static void testRule_ExtendedSignatureCalendarChainAggregationTime_verifyErrorRe
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 
 #undef TEST_SIGNATURE_FILE
@@ -2763,7 +3004,10 @@ static void testRule_CalendarHashChainExistence(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2776,6 +3020,7 @@ static void testRule_CalendarHashChainExistence(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -2801,7 +3046,10 @@ static void testRule_CalendarAuthenticationRecordExistence(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2814,6 +3062,7 @@ static void testRule_CalendarAuthenticationRecordExistence(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -2840,7 +3089,10 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2853,6 +3105,7 @@ static void testRule_CalendarAuthenticationRecordDoesNotExist(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -2890,7 +3143,10 @@ static void testRule_CertificateExistence(CuTest *tc) {
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2928,6 +3184,7 @@ static void testRule_CertificateExistence(CuTest *tc) {
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -2959,7 +3216,10 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -2996,6 +3256,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3027,7 +3288,10 @@ static void testRule_CertificateValidity(CuTest *tc) {
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3065,6 +3329,7 @@ static void testRule_CertificateValidity(CuTest *tc) {
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3096,7 +3361,10 @@ static void testRule_CertificateValidity_verifyErrorResult(CuTest *tc) {
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3135,6 +3403,7 @@ static void testRule_CertificateValidity_verifyErrorResult(CuTest *tc) {
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3166,7 +3435,10 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3203,6 +3475,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification(CuTest *t
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3234,7 +3507,10 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3271,6 +3547,7 @@ static void testRule_CalendarAuthenticationRecordSignatureVerification_verifyErr
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3300,7 +3577,10 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
@@ -3324,6 +3604,7 @@ static void testRule_PublicationsFileContainsSignaturePublication(CuTest *tc) {
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3352,7 +3633,10 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3377,6 +3661,7 @@ static void testRule_PublicationsFileContainsSignaturePublication_verifyErrorRes
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3401,7 +3686,10 @@ static void testRule_PublicationsFileDoesNotContainSignaturePublication(CuTest *
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3423,6 +3711,7 @@ static void testRule_PublicationsFileDoesNotContainSignaturePublication(CuTest *
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3447,7 +3736,10 @@ static void testRule_PublicationsFileDoesNotContainSignaturePublication_verifyEr
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3469,6 +3761,7 @@ static void testRule_PublicationsFileDoesNotContainSignaturePublication_verifyEr
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3493,7 +3786,10 @@ static void testRule_PublicationsFileSignaturePublicationVerification(CuTest *tc
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3515,6 +3811,7 @@ static void testRule_PublicationsFileSignaturePublicationVerification(CuTest *tc
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3539,7 +3836,10 @@ static void testRule_PublicationsFileSignaturePublicationVerification_verifyErro
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3561,6 +3861,7 @@ static void testRule_PublicationsFileSignaturePublicationVerification_verifyErro
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3589,7 +3890,10 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3614,6 +3918,7 @@ static void testRule_PublicationsFileContainsPublication(CuTest *tc) {
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3642,7 +3947,10 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3667,6 +3975,7 @@ static void testRule_PublicationsFileContainsPublication_verifyErrorResult(CuTes
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3683,7 +3992,10 @@ static void testRule_ExtendingPermittedVerification(CuTest *tc) {
 	KSI_Signature *signature = NULL;
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3698,6 +4010,7 @@ static void testRule_ExtendingPermittedVerification(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -3712,7 +4025,10 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 	KSI_Signature *signature = NULL;
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3728,6 +4044,7 @@ static void testRule_ExtendingPermittedVerification_verifyErrorResult(CuTest *tc
 	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -3755,7 +4072,10 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3782,6 +4102,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse(CuTe
 
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_VerificationContext_clean(&verCtx);
 	KSI_CTX_free(ctx);
 
@@ -3824,7 +4145,10 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3855,6 +4179,7 @@ static void testRule_PublicationsFilePublicationHashMatchesExtenderResponse_veri
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 	KSI_CTX_free(ctx);
 
@@ -3885,7 +4210,10 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3913,6 +4241,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse(CuTe
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
 
 #undef TEST_EXT_RESPONSE_FILE
@@ -3955,7 +4284,9 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -3985,6 +4316,7 @@ static void testRule_PublicationsFilePublicationTimeMatchesExtenderResponse_veri
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 	KSI_CTX_free(ctx);
 
@@ -4015,7 +4347,10 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4043,7 +4378,9 @@ static void testRule_PublicationsFileExtendedSignatureInputHash(CuTest *tc, char
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_CTX_free(ctx);
+
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -4084,7 +4421,10 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4114,6 +4454,7 @@ static void testRule_PublicationsFileExtendedSignatureInputHash_verifyErrorResul
 	KSI_PublicationsFile_free(userPublicationsFile);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 	KSI_CTX_free(ctx);
 
@@ -4135,7 +4476,9 @@ static void testRule_UserProvidedPublicationExistence(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&context, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
 	memset(&tempData, 0, sizeof(tempData));
 	context.tempData = &tempData;
 
@@ -4155,6 +4498,8 @@ static void testRule_UserProvidedPublicationExistence(CuTest *tc) {
 	KSI_nofree(context.userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&context);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -4183,7 +4528,10 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4213,6 +4561,8 @@ static void testRule_UserProvidedPublicationExistence_pubHashMissing_verifyError
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -4232,7 +4582,10 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4262,6 +4615,8 @@ static void testRule_UserProvidedPublicationExistence_pubTimeMissing_verifyError
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -4278,7 +4633,10 @@ static void testRule_UserProvidedPublicationTimeVerification(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4301,6 +4659,8 @@ static void testRule_UserProvidedPublicationTimeVerification(CuTest *tc) {
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -4318,7 +4678,10 @@ static void testRule_UserProvidedPublicationTimeDoesNotSuit(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4340,6 +4703,7 @@ static void testRule_UserProvidedPublicationTimeDoesNotSuit(CuTest *tc) {
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUB_STRING
@@ -4358,7 +4722,10 @@ static void testRule_UserProvidedPublicationTimeDoesNotSuit_verifyErrorResult(Cu
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4381,6 +4748,8 @@ static void testRule_UserProvidedPublicationTimeDoesNotSuit_verifyErrorResult(Cu
 
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -4397,7 +4766,10 @@ static void testRule_UserProvidedPublicationHashVerification(CuTest *tc) {
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4421,6 +4793,8 @@ static void testRule_UserProvidedPublicationHashVerification(CuTest *tc) {
 	KSI_nofree(verCtx.userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -4442,7 +4816,10 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4485,6 +4862,8 @@ static void testRule_UserProvidedPublicationVerification_timeMismatch_verifyErro
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 #undef TEST_TIMESTAMP
 }
@@ -4507,7 +4886,10 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4547,6 +4929,8 @@ static void testRule_UserProvidedPublicationVerification_hashMismatch_verifyErro
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 #undef TEST_MOCK_IMPRINT
 }
@@ -4564,7 +4948,10 @@ static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc)
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4588,6 +4975,8 @@ static void testRule_UserProvidedPublicationCreationTimeVerification(CuTest *tc)
 	KSI_nofree(verCtx.userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 }
 
@@ -4606,7 +4995,10 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4634,6 +5026,8 @@ static void testRule_UserProvidedPublicationCreationTimeVerification_verifyError
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
+
 #undef TEST_SIGNATURE_FILE
 #undef TEST_TIMESTAMP
 }
@@ -4652,7 +5046,10 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4678,6 +5075,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse(CuTest *
 
 	KSI_nofree(verCtx.userPublication);
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -4703,7 +5101,10 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4746,6 +5147,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_verifyEr
 	KSI_DataHash_free(mockPubHash);
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -4768,7 +5170,10 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4792,6 +5197,7 @@ static void testRule_UserProvidedPublicationHashMatchesExtendedResponse_wrongCor
 
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -4813,7 +5219,10 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4839,6 +5248,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse(CuTest *
 
 	KSI_nofree(verCtx.userPublication);
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_VerificationContext_clean(&verCtx);
 
 #undef TEST_SIGNATURE_FILE
@@ -4864,7 +5274,10 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4912,6 +5325,7 @@ static void testRule_UserProvidedPublicationTimeMatchesExtendedResponse_verifyEr
 	KSI_PublicationData_free(userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(extendedSig);
 
 #undef TEST_SIGNATURE_FILE
@@ -4932,7 +5346,10 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -4959,6 +5376,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash(CuTest *t
 	KSI_nofree(verCtx.userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -4979,7 +5397,10 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -5009,6 +5430,7 @@ static void testRule_UserProvidedPublicationExtendedSignatureInputHash_verifyErr
 	KSI_nofree(verCtx.userPublication);
 	KSI_Signature_free(signature);
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
@@ -5027,7 +5449,10 @@ static void testRule_AggregationChainInputLevelVerification_sigWithRfc3161(CuTes
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -5060,6 +5485,7 @@ static void testRule_AggregationChainInputLevelVerification_sigWithRfc3161(CuTes
 	TEST_ASSERT_VERIFICATION_STEP_NA_ERR(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 }
@@ -5077,7 +5503,10 @@ static void testRule_AggregationChainInputLevelVerification_sigWithLevel(CuTest 
 	KSI_ERR_clearErrors(ctx);
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -5110,6 +5539,7 @@ static void testRule_AggregationChainInputLevelVerification_sigWithLevel(CuTest 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_AGGRCHAIN_INTERNALLY);
 
 	KSI_Signature_free(signature);
+	KSI_RuleVerificationResult_clean(&verRes);
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_AGGR_LEVEL
@@ -5126,7 +5556,10 @@ static void KSITest_verifyReceiveCalendarRule(CuTest *tc, KSI_CTX *ctx,
 	KSI_Signature *signature = NULL;
 
 	res = KSI_VerificationContext_init(&verCtx, ctx);
-	CuAssert(tc, "Unable to create verification context.", res == KSI_OK);
+	res |= KSI_RuleVerificationResult_init(&verRes);
+	CuAssert(tc, "Unable to initialize verification context.", res == KSI_OK);
+
+
 	memset(&tempData, 0, sizeof(tempData));
 	verCtx.tempData = &tempData;
 
@@ -5140,7 +5573,8 @@ static void KSITest_verifyReceiveCalendarRule(CuTest *tc, KSI_CTX *ctx,
 
 	if (userPublication != NULL) {
 		verCtx.userPublication = userPublication;
-	} else if (userPublicationsFile != NULL) {
+	}
+	if (userPublicationsFile != NULL) {
 		verCtx.userPublicationsFile = userPublicationsFile;
 	}
 
@@ -5159,6 +5593,7 @@ static void KSITest_verifyReceiveCalendarRule(CuTest *tc, KSI_CTX *ctx,
 	}
 
 	KSI_VerificationContext_clean(&verCtx);
+	KSI_RuleVerificationResult_clean(&verRes);
 	KSI_Signature_free(signature);
 }
 
@@ -5286,6 +5721,9 @@ static void testRule_PublicationsFileExtendToPublication(CuTest *tc) {
 			TEST_SIGNATURE_FILE, TEST_EXT_RESPONSE_FILE,
 			KSI_VER_RES_OK, KSI_VER_ERR_NONE);
 
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_CTX_free(ctx);
+
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
@@ -5339,6 +5777,9 @@ static void testRule_PublicationsFileExtendToPublication_serviceError(CuTest *tc
 				KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
 	} while (testArray[++i].path != NULL);
 
+	KSI_PublicationsFile_free(userPublicationsFile);
+	KSI_CTX_free(ctx);
+
 #undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
@@ -5366,6 +5807,9 @@ static void testRule_UserProvidedPublicationExtendToPublication(CuTest *tc) {
 			userPublication, NULL,
 			TEST_SIGNATURE_FILE, TEST_EXT_RESPONSE_FILE,
 			KSI_VER_RES_OK, KSI_VER_ERR_NONE);
+
+	KSI_nofree(userPublication);
+	KSI_Signature_free(signature);
 
 #undef TEST_EXT_RESPONSE_FILE
 #undef TEST_SIGNATURE_FILE
@@ -5398,7 +5842,6 @@ static void testRule_UserProvidedPublicationExtendToPublication_serviceError(CuT
 	KSI_PublicationRecord *pubRec = NULL;
 	KSI_PublicationData *userPublication = NULL;
 
-	do {
 	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 
@@ -5408,12 +5851,17 @@ static void testRule_UserProvidedPublicationExtendToPublication_serviceError(CuT
 	res = KSI_PublicationRecord_getPublishedData(pubRec, (KSI_PublicationData **)&userPublication);
 	CuAssert(tc, "Unable to read signature publication data.", res == KSI_OK && userPublication != NULL);
 
+	do {
 		KSITest_verifyReceiveCalendarRule(tc, ctx,
 				KSI_VerificationRule_UserProvidedPublicationExtendToPublication, KSI_VERIFY_PUBLICATION_WITH_PUBSTRING,
 				userPublication, NULL,
 				TEST_SIGNATURE_FILE, testArray[i].path,
 				KSI_VER_RES_NA, KSI_VER_ERR_GEN_2);
+
 	} while (testArray[++i].path != NULL);
+
+	KSI_nofree(userPublication);
+	KSI_Signature_free(signature);
 
 #undef TEST_SIGNATURE_FILE
 }

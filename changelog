@@ -1,5 +1,7 @@
 (KSICAPI-531)* BUGFIX: Resolved compilation warnings.
 (KSICAPI-529)* BUGFIX: Constant variable KSI_HASHALG_INVALID is exported with DLL.
+(KSICAPI-530)* IMPROVEMENT: New verification rules for calendar hash chain reception from extending service (returning NA(GEN-2) in case of a service failure).
+(KSICAPI-530)* IMPROVEMENT: KSI_RuleVerificationResult has additional fields with error information. Will be filled in case verification result is NA(GEN-2).
 
 Version 3.19
 

@@ -134,6 +134,12 @@ extern "C" {
 		size_t stepsSuccessful;
 		/** Bitmap of the failed steps performed. */
 		size_t stepsFailed;
+		/** Status code from #KSI_StatusCode. */
+		int status;
+		/** Context specific status code (valid in case 'status != KSI_OK'). */
+		int statusExt;
+		/** Faulure status message (valid in case 'status != KSI_OK'). */
+		char *statusMessage;
 	};
 
 	typedef struct KSI_RuleVerificationResult_st KSI_RuleVerificationResult;
@@ -151,6 +157,21 @@ extern "C" {
 #define KSI_TlvElementList_sort(lst, cmp) KSI_APPLY_TO_NOT_NULL((lst), sort, ((lst), (cmp)))
 #define KSI_TlvElementList_foldl(lst, foldCtx, foldFn) (((lst) != NULL) ? (((lst)->foldl != NULL) ? ((lst)->foldl((lst), (foldCtx), (foldFn))) : KSI_INVALID_STATE) : KSI_OK)
 #define KSI_TlvElementList_find(lst, o,f, i) KSI_APPLY_TO_NOT_NULL((lst), find, ((lst), (o), (f), (i)))
+
+	/**
+	 * Frees allocated resources in the result object.
+	 * \param[in]	result	Verification result to be cleaned.
+	 * \see KSI_RuleVerificationResult_init
+	 */
+	void KSI_RuleVerificationResult_clean(KSI_RuleVerificationResult *result);
+
+	/**
+	 * Initializes the result with default values.
+	 * \param[in]	result		The verification result.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_RuleVerificationResult_clean
+	 */
+	int KSI_RuleVerificationResult_init(KSI_RuleVerificationResult *result);
 
 	/**
 	 * Policy verification result structure.
