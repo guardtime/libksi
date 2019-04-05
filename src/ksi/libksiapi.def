@@ -982,6 +982,8 @@ EXPORTS
 	KSI_SignatureVerifier_verify
 	KSI_Policy_free
 	KSI_PolicyVerificationResult_free
+	KSI_RuleVerificationResult_init
+	KSI_RuleVerificationResult_clean
 	KSI_VerificationContext_init
 	KSI_VerificationContext_clean
 	KSI_PolicyVerificationResult_free
