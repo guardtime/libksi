@@ -282,7 +282,7 @@ static size_t curlCallback_receive(char *ptr, size_t size, size_t nmemb, void *u
 	curlReq->len = totalCount;
 	tmp_buffer = NULL;
 
-	KSI_LOG_debug(curlReq->client->ctx, "[%p] Async Curl HTTP: [%p] received %llu bytes (%llu so far).",
+	KSI_LOG_debug(curlReq->client->ctx, "[%p] Async Curl HTTP: [%p] received %llu bytes (%llu in total).",
 			curlReq->client, curlReq,
 			(unsigned long long)bytesReceived, (unsigned long long)curlReq->len);
 
