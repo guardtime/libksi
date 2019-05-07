@@ -3542,7 +3542,7 @@ int KSI_VerificationRule_CertificateExistence(KSI_VerificationContext *info, KSI
 	if (cert == NULL) {
 		KSI_LOG_info(ctx, "Suitable PKI certificate not found in publications file.");
 
-		VERIFICATION_RESULT_ERR(KSI_VER_RES_FAIL, KSI_VER_ERR_KEY_1, step);
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step);
 		res = KSI_OK;
 		goto cleanup;
 	}

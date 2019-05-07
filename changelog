@@ -1,3 +1,4 @@
+(KSICAPI-535)* IMPROVEMENT: Return NA(GEN-02), instead of FAIL(KEY-01), when certificate is not found during key-based verification. Verification error code KEY-01 is deprecated.
 (KSICAPI-531)* BUGFIX: Resolved compilation warnings.
 (KSICAPI-529)* BUGFIX: Constant variable KSI_HASHALG_INVALID is exported with DLL.
 (KSICAPI-530)* IMPROVEMENT: New verification rules for calendar hash chain reception from extending service (returning NA(GEN-2) in case of a service failure).

@@ -98,7 +98,6 @@ extern "C" {
 		_(PUB,  4,    0x300,  "PUB-04",    "Publication record hash and user provided publication hash mismatch") \
 		_(PUB,  5,    0x300,  "PUB-05",    "Publication record hash and publications file publication hash mismatch") \
 		\
-		_(KEY,  1,    0x400,  "KEY-01",    "Certificate not found") \
 		_(KEY,  2,    0x400,  "KEY-02",    "PKI signature not verified with certificate") \
 		_(KEY,  3,    0x400,  "KEY-03",    "Signing certificate not valid at aggregation time") \
 		\
@@ -106,6 +105,10 @@ extern "C" {
 		_(CAL,  2,    0x500,  "CAL-02",    "Aggregation hash chain root hash and calendar database hash chain input hash mismatch") \
 		_(CAL,  3,    0x500,  "CAL-03",    "Aggregation time mismatch") \
 		_(CAL,  4,    0x500,  "CAL-04",    "Calendar hash chain right links are inconsistent")
+
+	#define KSI_VERIFICATION_ERROR_CODE_DEPRECATED_LIST\
+		/*Type  Code  Offset  StrCode      Description*/\
+		_(KEY,  1,    0x400,  "KEY-01",    "Certificate not found") /* Deprecated in 3.19 */ \
 
 	/**
 	 * Enumeration of all KSI policy (#KSI_Policy) verification error codes.
@@ -115,6 +118,9 @@ extern "C" {
 		KSI_VER_ERR_NONE = 0x00,
 #define _(type, code, offset, cor, desc) KSI_VER_ERR_##type##_##code = (offset + code),
 		KSI_VERIFICATION_ERROR_CODE_LIST
+#undef _
+#define _(type, code, offset, cor, desc) KSI_ENUM_DEPRECATED(KSI_VER_ERR_##type##_##code, Removed from verfication process!),
+		KSI_VERIFICATION_ERROR_CODE_DEPRECATED_LIST
 #undef _
 		__NOF_VER_ERRORS
 	} KSI_VerificationErrorCode;

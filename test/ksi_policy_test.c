@@ -2022,8 +2022,8 @@ static void TestKeyBasedPolicy_FAIL_WithoutCertificate(CuTest* tc) {
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
 	KSI_RuleVerificationResult expected = {
-		KSI_VER_RES_FAIL,
-		KSI_VER_ERR_KEY_1,
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
 		"KSI_VerificationRule_CertificateExistence"
 	};
 	KSI_Signature *signature = NULL;
