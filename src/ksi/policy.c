@@ -532,6 +532,7 @@ const char *KSI_VerificationErrorCode_toString(int errorCode) {
 		case KSI_VER_ERR_NONE:	return "";
 #define _(type, code, offset, strCode, desc) case KSI_VER_ERR_##type##_##code: return strCode;
 		KSI_VERIFICATION_ERROR_CODE_LIST
+		KSI_VERIFICATION_ERROR_CODE_DEPRECATED_LIST
 #undef _
 		default:				return "Unknown";
 	}
@@ -545,6 +546,7 @@ int KSI_VerificationErrorCode_fromString(const char *errCodeStr) {
 	} errCodes[] = {
 #define _(type, code, offset, strCode, desc) { strCode, KSI_VER_ERR_##type##_##code },
 		KSI_VERIFICATION_ERROR_CODE_LIST
+		KSI_VERIFICATION_ERROR_CODE_DEPRECATED_LIST
 #undef _
 		{ NULL, KSI_VER_ERR_NONE }
 	};
@@ -561,6 +563,7 @@ const char *KSI_Policy_getErrorString(int errorCode) {
 		case KSI_VER_ERR_NONE:	return "No verification errors";
 #define _(type, code, offset, cor, desc) case KSI_VER_ERR_##type##_##code: return desc;
 		KSI_VERIFICATION_ERROR_CODE_LIST
+		KSI_VERIFICATION_ERROR_CODE_DEPRECATED_LIST
 #undef _
 		default:				return "Unknown verification error code";
 	}

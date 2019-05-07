@@ -3249,7 +3249,7 @@ static void testRule_CertificateExistence_verifyErrorResult(CuTest *tc) {
 	TEST_VERIFICATION_STEP_INIT;
 
 	res = KSI_VerificationRule_CertificateExistence(&verCtx, &verRes);
-	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_FAIL && verRes.errorCode == KSI_VER_ERR_KEY_1);
+	CuAssert(tc, "Wrong error result returned.", res == KSI_OK && verRes.resultCode == KSI_VER_RES_NA && verRes.errorCode == KSI_VER_ERR_GEN_2);
 
 	TEST_ASSERT_VERIFICATION_STEP_FAILED(KSI_VERIFY_CALAUTHREC_WITH_SIGNATURE);
 
