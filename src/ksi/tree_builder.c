@@ -384,7 +384,7 @@ static int processAndInsertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		if (res != KSI_OK) goto cleanup;
 
 		if (tmp != NULL) {
-			res = KSI_TreeNode_join(builder->ctx, builder->hsr, localRoot == NULL ? node : localRoot, tmp, &localRoot);
+			res = KSI_TreeNode_join(builder->ctx, builder->hsr, tmp, localRoot == NULL ? node : localRoot, &localRoot);
 			if (res != KSI_OK) goto cleanup;
 		}
 	}

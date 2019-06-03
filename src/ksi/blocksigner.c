@@ -346,6 +346,7 @@ int KSI_BlockSigner_closeAndSign(KSI_BlockSigner *signer) {
 	}
 
 	KSI_LOG_debug(signer->ctx, "Signing the root hash value of the block signer.");
+
 	/* Sign the root hash. */
 	res = KSI_Signature_signAggregated(signer->ctx, signer->builder->rootNode->hash, signer->builder->rootNode->level, &signer->signature);
 	if (res != KSI_OK) {
