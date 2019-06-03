@@ -112,7 +112,7 @@ static void testMedaData(CuTest *tc) {
 	KSI_MetaData *md = NULL;
 	char data[] = "LAPTOP";
 	char *clientId[] = { "Alice", "Bob", "Claire", NULL };
-	char *idPrefix[] = {"GT", "GT", "release test", "anon http", NULL};
+	char *idPrefix[] = {"GT", "GT", "GT", "anon", NULL};
 	size_t i;
 	KSI_DataHash *hsh = NULL;
 	KSI_BlockSignerHandle *hndl[] = {NULL, NULL, NULL};
@@ -245,7 +245,7 @@ static void testIdentityMedaData(CuTest *tc) {
 	KSI_BlockSigner *bs = NULL;
 	KSI_MetaData *md = NULL;
 	char data[] = "LAPTOP";
-	const char *chainId[] = { "GT", "GT", "release test", "anon http" };
+	const char *chainId[] = { "GT", "GT", "GT", "anon" };
 	char *userId[] = { "Alice", "Bob", "Claire", NULL };
 	size_t i;
 	KSI_DataHash *hsh = NULL;
