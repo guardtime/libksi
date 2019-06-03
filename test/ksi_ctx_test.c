@@ -157,21 +157,19 @@ static void TestCtxOptions_pduVersion(CuTest *tc) {
 	CuAssert(tc, "Default aggregation PDU version not set correctly.", ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_AGGREGATION_PDU_VERSION);
 	CuAssert(tc, "Default extending PDU version not set correctly.", ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_EXTENDING_PDU_VERSION);
 
-	res = KSI_CTX_setOption(NULL, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_1);
+	res = KSI_CTX_setOption(NULL, KSI_OPT_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
 	CuAssert(tc, "Context NULL accepted.", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_CTX_setOption(ctx, __KSI_NUMBER_OF_OPTIONS , (void*)KSI_PDU_VERSION_1);
+	res = KSI_CTX_setOption(ctx, __KSI_NUMBER_OF_OPTIONS , (void*)KSI_PDU_VERSION_2);
 	CuAssert(tc, "Flag value outside boundary accepted.", res == KSI_INVALID_ARGUMENT);
 
-	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)(KSI_AGGREGATION_PDU_VERSION == KSI_PDU_VERSION_1 ? KSI_PDU_VERSION_2 : KSI_PDU_VERSION_1));
+	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)0xff);
 	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->options[KSI_OPT_AGGR_PDU_VER] != KSI_AGGREGATION_PDU_VERSION);
-
-	res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)(KSI_EXTENDING_PDU_VERSION == KSI_PDU_VERSION_1 ? KSI_PDU_VERSION_2 : KSI_PDU_VERSION_1));
-	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->options[KSI_OPT_EXT_PDU_VER] != KSI_EXTENDING_PDU_VERSION);
-
 	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
 	CuAssert(tc, "Unable to set aggregation PDU version.", res == KSI_OK && ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_AGGREGATION_PDU_VERSION);
 
+	res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)0xff);
+	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->options[KSI_OPT_EXT_PDU_VER] != KSI_EXTENDING_PDU_VERSION);
 	res = KSI_CTX_setOption(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_EXTENDING_PDU_VERSION);
 	CuAssert(tc, "Unable to set extending PDU version.", res == KSI_OK && ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_EXTENDING_PDU_VERSION);
 

@@ -67,24 +67,20 @@ AC_ARG_WITH(default_pdu_version,
 [  --with-default-pdu-version=version Use the given PDU version by default.],
 [], [with_default_pdu_version=])
 
-if test -z "$with_default_pdu_version"; then
-	pdu_version=KSI_PDU_VERSION_2
-else
+if test ! -z "$with_default_pdu_version"; then
+	AC_MSG_NOTICE([Using default PDU version=$with_default_pdu_version])
 	case "$with_default_pdu_version" in
 		1)	pdu_version=KSI_PDU_VERSION_1
+			AC_MSG_WARN([*** PDU version is deprecated.])
 			;;
 		2)	pdu_version=KSI_PDU_VERSION_2
 			;;
-		*) AC_MSG_ERROR([*** Invalid PDU version.]);
-		;;
+		*)	AC_MSG_ERROR([*** Invalid PDU version.]);
+			;;
 	esac;
+	AC_DEFINE_UNQUOTED(KSI_AGGREGATION_PDU_VERSION, $pdu_version, [Default aggregation PDU version.])
+	AC_DEFINE_UNQUOTED(KSI_EXTENDING_PDU_VERSION,   $pdu_version, [Default extending PDU version.])
 fi
-
-AC_MSG_NOTICE([Setting aggregation PDU version to $pdu_version.])
-AC_DEFINE_UNQUOTED(KSI_AGGREGATION_PDU_VERSION, $pdu_version, [Default aggregation PDU version.])
-
-AC_MSG_NOTICE([Setting extending PDU version to $pdu_version.])
-AC_DEFINE_UNQUOTED(KSI_EXTENDING_PDU_VERSION, $pdu_version, [Default extending PDU version.])
 
 # Checks for libraries.
 
