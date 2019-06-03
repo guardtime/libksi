@@ -103,7 +103,6 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Hash_getSuite);
 	addSuite(suite, KSITest_HMAC_getSuite);
 	addSuite(suite, KSITest_NetCommon_getSuite);
-	addSuite(suite, KSITest_NetPduV1_getSuite);
 	addSuite(suite, KSITest_NetPduV2_getSuite);
 	addSuite(suite, KSITest_NetAsync_getSuite);
 	addSuite(suite, KSITest_HashChain_getSuite);

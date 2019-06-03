@@ -360,30 +360,6 @@ static void Test_ExtendSignatureUserInfoFromUrl_tcp(CuTest* tc) {
 	return;
 }
 
-static void requestExtenderConfig(CuTest* tc, const char *scheme) {
-	int res = KSI_UNKNOWN_ERROR;
-	KSI_Config *config = NULL;
-
-	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
-	KSI_ERR_clearErrors(ctx);
-
-	res = KSI_CTX_setExtender(ctx, KSITest_composeUri(scheme, &conf.extender), conf.extender.user, conf.extender.pass);
-	CuAssert(tc, "Unable to set configure aggregator as extender.", res == KSI_OK);
-
-	KSI_CTX_setFlag(ctx, KSI_OPT_EXT_PDU_VER, (void*)KSI_PDU_VERSION_1);
-
-	res = KSI_receiveExtenderConfig(ctx, &config);
-	CuAssert(tc, "Unable to receive extender config.", res == KSI_UNSUPPORTED_PDU_VERSION && config == NULL);
-}
-
-static void Test_RequestExtenderConfig_http(CuTest* tc) {
-	requestExtenderConfig(tc, TEST_SCHEME_HTTP);
-}
-
-static void Test_RequestExtenderConfig_tcp(CuTest* tc) {
-	requestExtenderConfig(tc, TEST_SCHEME_TCP);
-}
-
 static void requestExtenderConfig_pduV2(CuTest* tc, const char *scheme) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_Config *config = NULL;
@@ -429,8 +405,6 @@ CuSuite* ExtIntegrationTests_getSuite(void) {
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureDifferentNetProviders_tcp);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_http);
 	SUITE_ADD_TEST(suite, Test_ExtendSignatureUserInfoFromUrl_tcp);
-	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_http);
-	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_tcp);
 	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_pduV2_http);
 	SUITE_ADD_TEST(suite, Test_RequestExtenderConfig_pduV2_tcp);
 

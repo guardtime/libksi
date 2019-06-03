@@ -34,7 +34,6 @@ runner_SOURCES= \
 	ksi_hash_test.c \
 	ksi_hmac_test.c \
 	ksi_net_common_test.c \
-	ksi_net_pduv1_test.c \
 	ksi_net_pduv2_test.c \
 	ksi_net_async_test.c \
 	ksi_publicationsfile_test.c \

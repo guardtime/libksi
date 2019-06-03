@@ -256,7 +256,7 @@ static void testSigningHmacNotLast(CuTest* tc) {
 }
 
 static void testSigningResponsePduV1(CuTest* tc) {
-#define TEST_AGGR_RESPONSE_FILE "resource/tlv/v1/ok-sig-2014-07-01.1-aggr_response.tlv"
+#define TEST_AGGR_RESPONSE_FILE "resource/tlv/ok-sig-2014-07-01.1-aggr_response-pduv1.tlv"
 
 	int res;
 	KSI_DataHash *hsh = NULL;
@@ -510,7 +510,7 @@ static void testExtendingHmacNotLast(CuTest* tc) {
 
 static void testExtendingResponsePduV1(CuTest* tc) {
 #define TEST_SIGNATURE_FILE     "resource/tlv/ok-sig-2014-04-30.1.ksig"
-#define TEST_EXT_RESPONSE_FILE  "resource/tlv/v1/ok-sig-2014-04-30.1-extend_response.tlv"
+#define TEST_EXT_RESPONSE_FILE  "resource/tlv/ok-sig-2014-04-30.1-extend_response-pduv1.tlv"
 
 	int res;
 	KSI_Signature *sig = NULL;

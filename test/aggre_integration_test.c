@@ -33,11 +33,6 @@
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
 
-static void postTest(void) {
-	/* Restore default PDU version. */
-	KSI_CTX_setFlag(ctx, KSI_OPT_AGGR_PDU_VER, (void*)KSI_AGGREGATION_PDU_VERSION);
-}
-
 static int getDataHash(KSI_DataHash **hsh) {
 	return KSI_DataHash_fromDigest(ctx, KSI_getHashAlgorithmByName("sha256"), (const unsigned char*)"c8ef6d57ac28d1b4e95a513959f5fcdd0688380a43d601a5ace1d2e96884690a", 32, hsh);
 }
@@ -348,8 +343,6 @@ static void Test_RequestAggregatorConfig(CuTest* tc) {
 
 CuSuite* AggreIntegrationTests_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
-
-	suite->postTest = postTest;
 
 	SUITE_ADD_TEST(suite, Test_NOKAggr_TreeTooLarge);
 	SUITE_ADD_TEST(suite, Test_CreateSignatureDefaultProvider);
