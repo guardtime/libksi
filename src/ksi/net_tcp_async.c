@@ -16,21 +16,7 @@
  * Guardtime, Inc., and no license to trademarks is granted; Guardtime
  * reserves and retains all trademark rights.
  */
-
-#include <string.h>
-#include <sys/types.h>
-
-#include "internal.h"#include "net_tcp.h"
-#include "io.h"
-#include "tlv.h"
-#include "fast_tlv.h"
-#include "types.h"
-#include "net_async.h"
-
-#include "impl/ctx_impl.h"
-#include "impl/net_async_impl.h"
-#include "impl/net_sock_impl.h"
-
+#include "internal.h"
 
 #ifdef KSI_DISABLE_NET_PROVIDER
 
@@ -41,7 +27,21 @@ int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned
 	return KSI_INVALID_STATE;
 }
 
-#endif /* KSI_DISABLE_NET_PROVIDER */
+#else
+
+#include <string.h>
+#include <sys/types.h>
+
+#include "net_tcp.h"
+#include "io.h"
+#include "tlv.h"
+#include "fast_tlv.h"
+#include "types.h"
+#include "net_async.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/net_async_impl.h"
+#include "impl/net_sock_impl.h"
 
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
 
@@ -653,3 +653,5 @@ int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned
 	if (c == NULL || c->clientImpl == NULL) return KSI_INVALID_ARGUMENT;
 	return setService(c->clientImpl, host, port, user, pass);
 }
+
+#endif /* KSI_DISABLE_NET_PROVIDER */

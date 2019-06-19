@@ -17,19 +17,7 @@
  * reserves and retains all trademark rights.
  */
 
-#include <string.h>
-#include <sys/types.h>
-
-#include "net_tcp.h"
-#include "io.h"
-#include "tlv.h"
-#include "fast_tlv.h"
-
 #include "internal.h"
-#include "impl/ctx_impl.h"
-#include "impl/net_http_impl.h"
-#include "impl/net_tcp_impl.h"
-#include "impl/net_sock_impl.h"
 
 #ifdef KSI_DISABLE_NET_PROVIDER
 
@@ -49,7 +37,21 @@ int KSI_TcpClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int val){
 	return KSI_INVALID_STATE;
 }
 
-#endif /* KSI_DISABLE_NET_PROVIDER */
+#else
+
+#include <string.h>
+#include <sys/types.h>
+
+#include "net_tcp.h"
+#include "io.h"
+#include "tlv.h"
+#include "fast_tlv.h"
+
+#include "impl/ctx_impl.h"
+#include "impl/net_http_impl.h"
+#include "impl/net_tcp_impl.h"
+#include "impl/net_sock_impl.h"
+
 
 typedef struct TcpClient_Endpoint_st TcpClientCtx, TcpClient_Endpoint;
 
@@ -674,3 +676,5 @@ cleanup:
 
 	return res;
 }
+
+#endif /* KSI_DISABLE_NET_PROVIDER */
