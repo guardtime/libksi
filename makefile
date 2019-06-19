@@ -39,7 +39,7 @@ RTL = MT
 !IFNDEF NET_PROVIDER
 !MESSAGE NET_PROVIDER to default
 NET_PROVIDER = CURL
-!ELSE IF "$(NET_PROVIDER)" != "CURL" && "$(NET_PROVIDER)" != "WININET" && "$(NET_PROVIDER)" != "WINHTTP"
+!ELSE IF "$(NET_PROVIDER)" != "NONE" && "$(NET_PROVIDER)" != "CURL" && "$(NET_PROVIDER)" != "WININET" && "$(NET_PROVIDER)" != "WINHTTP"
 !ERROR NET_PROVIDER can only have one of the following values "CURL", "WININET" or "WINHTTP" but it is "$(NET_PROVIDER). Default value is "CURL".
 !ENDIF
 
