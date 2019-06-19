@@ -49,6 +49,7 @@
 #define KSI_EXTENDING_PDU_VERSION		KSI_PDU_VERSION_2
 #endif
 
+#define KSI_IMPL_NONE			0
 /**
  * HTTP network client implementations.
  */
@@ -59,14 +60,19 @@
   * Crypto implementations.
   */
 #define KSI_IMPL_OPENSSL		4
-#define KSI_IMPL_CRYPTOAPI			5
+#define KSI_IMPL_CRYPTOAPI		5
 #define KSI_IMPL_COMMONCRYPTO	6
 
 /**
  * Default implementation for HTTP network client.
  */
-#ifndef KSI_NET_HTTP_IMPL
-#define KSI_NET_HTTP_IMPL KSI_IMPL_CURL
+#ifdef KSI_DISABLE_NET_PROVIDER
+#  undef  KSI_NET_HTTP_IMPL
+#  define KSI_NET_HTTP_IMPL KSI_IMPL_NONE
+#else
+#  ifndef KSI_NET_HTTP_IMPL
+#    define KSI_NET_HTTP_IMPL KSI_IMPL_CURL
+#  endif
 #endif
 
 /**

@@ -508,7 +508,6 @@ cleanup:
 
 static void FsClient_free(KSI_FsClient *fs) {
 	if (fs != NULL) {
-		KSI_NetworkClient_free(fs->http);
 		KSI_free(fs);
 	}
 }
@@ -541,13 +540,6 @@ int KSI_FsClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	}
 
 	fs->sendRequest = sendRequest;
-	fs->http = NULL;
-
-	res = KSI_HttpClient_new(ctx, &fs->http);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
 
 	/* Create implementations for abstract endpoints. */
 	res = FsClient_Endpoint_new(&endp_aggr);

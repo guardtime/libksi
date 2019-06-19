@@ -20,8 +20,7 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "internal.h"
-#include "net_tcp.h"
+#include "internal.h"#include "net_tcp.h"
 #include "io.h"
 #include "tlv.h"
 #include "fast_tlv.h"
@@ -31,6 +30,18 @@
 #include "impl/ctx_impl.h"
 #include "impl/net_async_impl.h"
 #include "impl/net_sock_impl.h"
+
+
+#ifdef KSI_DISABLE_NET_PROVIDER
+
+int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c){
+	return KSI_INVALID_STATE;
+}
+int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned port, const char *user, const char *pass){
+	return KSI_INVALID_STATE;
+}
+
+#endif /* KSI_DISABLE_NET_PROVIDER */
 
 #define KSI_TLV_MAX_SIZE (0xffff + 4)
 

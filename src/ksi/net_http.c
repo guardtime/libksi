@@ -22,6 +22,23 @@
 #include "impl/net_http_impl.h"
 #include "impl/ctx_impl.h"
 
+#ifdef KSI_DISABLE_NET_PROVIDER
+
+int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **http){
+	return KSI_INVALID_STATE;
+}
+int KSI_HttpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c){
+	return KSI_INVALID_STATE;
+}
+int KSI_HttpAsyncClient_setService(KSI_AsyncClient *c, const char *url, const char *user, const char *pass){
+	return KSI_INVALID_STATE;
+}
+int KSI_Http_init(KSI_CTX *ctx){
+	return KSI_INVALID_STATE;
+}
+
+#endif /* KSI_DISABLE_NET_PROVIDER */
+
 typedef struct HttpClient_Endpoint_st HttpClient_Endpoint;
 
 static int HttpClient_Endpoint_new(HttpClient_Endpoint **endpoint) {

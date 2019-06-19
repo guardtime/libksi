@@ -60,6 +60,12 @@ fi
 
 # Define configuration variables for the SDK
 
+AC_ARG_WITH([net_provider],
+	[AS_HELP_STRING([--without-net-provider], [build without network provider.])],
+	[AC_MSG_NOTICE([Building without network provider.])]
+		[AC_DEFINE_UNQUOTED([KSI_DISABLE_NET_PROVIDER], [1], [Build without net provider.])],
+	[:])
+
 AC_MSG_NOTICE([Disabling strict HTTP parsing])
 AC_DEFINE(HTTP_PARSER_STRICT, 0, [Disabling strict HTTP parsing to allow underscores in host names.])
 

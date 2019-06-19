@@ -110,7 +110,9 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Publicationsfile_getSuite);
 	addSuite(suite, KSITest_Truststore_getSuite);
 	addSuite(suite, KSITest_compatibility_getSuite);
+#ifndef KSI_DISABLE_NET_PROVIDER
 	addSuite(suite, KSITest_uriClient_getSuite);
+#endif
 	addSuite(suite, KSITest_TreeBuilder_getSuite);
 	addSuite(suite, KSITest_VerificationRules_getSuite);
 	addSuite(suite, KSITest_Policy_getSuite);

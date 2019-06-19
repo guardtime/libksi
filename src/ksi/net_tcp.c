@@ -26,11 +26,30 @@
 #include "fast_tlv.h"
 
 #include "internal.h"
-
 #include "impl/ctx_impl.h"
 #include "impl/net_http_impl.h"
 #include "impl/net_tcp_impl.h"
 #include "impl/net_sock_impl.h"
+
+#ifdef KSI_DISABLE_NET_PROVIDER
+
+int KSI_TcpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
+	return KSI_INVALID_STATE;
+}
+int KSI_TcpClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) {
+	return KSI_INVALID_STATE;
+}
+int KSI_TcpClient_setExtender(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *key){
+	return KSI_INVALID_STATE;
+}
+int KSI_TcpClient_setAggregator(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *key){
+	return KSI_INVALID_STATE;
+}
+int KSI_TcpClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int val){
+	return KSI_INVALID_STATE;
+}
+
+#endif /* KSI_DISABLE_NET_PROVIDER */
 
 typedef struct TcpClient_Endpoint_st TcpClientCtx, TcpClient_Endpoint;
 
