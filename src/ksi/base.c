@@ -122,6 +122,8 @@ const char *KSI_getErrorString(int statusCode) {
 			return "Invalid publication.";
 		case KSI_INCOMPATIBLE_HASH_CHAIN:
 			return "Incompatible calendar hash chain.";
+		case KSI_NETWORK_PROVIDER_DISABLED:
+			return "Network provider is disabled.";
 		case KSI_PUBLICATIONS_FILE_NOT_SIGNED_WITH_PKI:
 			return "The publications file is not signed.";
 		case KSI_CRYPTO_FAILURE:

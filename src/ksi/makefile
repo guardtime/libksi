@@ -175,7 +175,7 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 #Configuration of net provider
 !IF "$(NET_PROVIDER)"=="NONE"
 !MESSAGE Building without network provider.
-CCFLAGS = $(CCFLAGS) /DKSI_DISABLE_NET_PROVIDER=1
+CCFLAGS = $(CCFLAGS) /DKSI_DISABLE_NET_PROVIDER=7
 
 !ELSE IF "$(NET_PROVIDER)"=="CURL"
 CCFLAGS = $(CCFLAGS) /I"$(CURL_DIR)\include"

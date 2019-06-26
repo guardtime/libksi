@@ -18,13 +18,13 @@
  */
 #include "internal.h"
 
-#ifdef KSI_DISABLE_NET_PROVIDER
+#if KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_TCP
 
 int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c){
-	return KSI_INVALID_STATE;
+	return KSI_NETWORK_PROVIDER_DISABLED;
 }
 int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned port, const char *user, const char *pass){
-	return KSI_INVALID_STATE;
+	return KSI_NETWORK_PROVIDER_DISABLED;
 }
 
 #else

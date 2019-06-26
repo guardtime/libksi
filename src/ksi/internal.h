@@ -56,23 +56,34 @@
 #define KSI_IMPL_CURL			1
 #define KSI_IMPL_WININET		2
 #define KSI_IMPL_WINHTTP		3
- /**
-  * Crypto implementations.
-  */
+/**
+ * Crypto implementations.
+ */
 #define KSI_IMPL_OPENSSL		4
 #define KSI_IMPL_CRYPTOAPI		5
 #define KSI_IMPL_COMMONCRYPTO	6
 
 /**
+ * Network client providers
+ */
+#define KSI_IMPL_NET_TCP		0x01
+#define KSI_IMPL_NET_HTTP		0x02
+#define KSI_IMPL_NET_FILE		0x04
+
+#ifndef KSI_DISABLE_NET_PROVIDER
+#  define KSI_DISABLE_NET_PROVIDER KSI_IMPL_NONE
+#endif
+
+/**
  * Default implementation for HTTP network client.
  */
-#ifdef KSI_DISABLE_NET_PROVIDER
+#if KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_HTTP
 #  undef  KSI_NET_HTTP_IMPL
 #  define KSI_NET_HTTP_IMPL KSI_IMPL_NONE
-#else
-#  ifndef KSI_NET_HTTP_IMPL
-#    define KSI_NET_HTTP_IMPL KSI_IMPL_CURL
-#  endif
+#endif
+
+#ifndef KSI_NET_HTTP_IMPL
+#  define KSI_NET_HTTP_IMPL KSI_IMPL_CURL
 #endif
 
 /**

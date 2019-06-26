@@ -22,7 +22,7 @@
 #include "impl/net_http_impl.h"
 #include "impl/ctx_impl.h"
 
-#ifdef KSI_DISABLE_NET_PROVIDER
+#if KSI_NET_HTTP_IMPL==KSI_IMPL_NONE
 
 int KSI_HttpClient_new(KSI_CTX *ctx, KSI_NetworkClient **http){
 	return KSI_INVALID_STATE;
@@ -37,7 +37,7 @@ int KSI_Http_init(KSI_CTX *ctx){
 	return KSI_INVALID_STATE;
 }
 
-#endif /* KSI_DISABLE_NET_PROVIDER */
+#endif /* KSI_NET_HTTP_IMPL */
 
 typedef struct HttpClient_Endpoint_st HttpClient_Endpoint;
 

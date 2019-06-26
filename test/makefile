@@ -117,9 +117,9 @@ EXT_LIB = $(LIB_NAME)$(RTL).lib \
 	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
 
-!IF "$(NET_PROVIDER)"=="NONE"
+!IF "$(NET_PROVIDER)" == "NONE"
 !MESSAGE Building without network provider.
-CCFLAGS = $(CCFLAGS) /DKSI_DISABLE_NET_PROVIDER=1
+CCFLAGS = $(CCFLAGS) /DKSI_DISABLE_NET_PROVIDER=7
 
 !ELSE IF "$(NET_PROVIDER)" == "CURL"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_CURL

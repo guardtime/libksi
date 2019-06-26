@@ -17,17 +17,21 @@
  * reserves and retains all trademark rights.
  */
 
+#include "all_integration_tests.h"
+
+#include "cutest/CuTest.h"
+#include "support_tests.h"
+
+#include "../src/ksi/internal.h"
+
+#include <ksi/hash.h>
+#include <ksi/compatibility.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
 
-#include <ksi/hash.h>
-
-#include "cutest/CuTest.h"
-#include "all_integration_tests.h"
-#include "support_tests.h"
-#include "ksi/compatibility.h"
 
 #ifndef UNIT_TEST_OUTPUT_XML
 #  define UNIT_TEST_OUTPUT_XML "_testsuite.xml"
@@ -64,6 +68,11 @@ static int RunAllTests() {
 	CuSuite* suite = initSuite();
 	FILE *logFile = NULL;
 	KSI_HashAlgorithm alg_id = KSI_HASHALG_INVALID_VALUE;
+
+	if (KSI_DISABLE_NET_PROVIDER & (KSI_IMPL_NET_HTTP | KSI_IMPL_NET_TCP)) {
+		fprintf(stderr, "Error: Network provider is disabled!\n");
+		exit(EXIT_FAILURE);
+	}
 
 	/* Create the context. */
 	res = KSI_CTX_new(&ctx);
