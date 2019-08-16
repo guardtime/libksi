@@ -60,6 +60,8 @@ fi
 
 # Define configuration variables for the SDK
 
+# Bitfield for setting disabled network providers (for possible values see src/ksi/internal.h under section
+# "Network client providers.")
 without_net=0
 AC_ARG_WITH([net_tcp],
 	[AS_HELP_STRING([--without-net-tcp], [build without TCP network provider.])],

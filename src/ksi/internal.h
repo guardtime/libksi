@@ -64,7 +64,7 @@
 #define KSI_IMPL_COMMONCRYPTO	6
 
 /**
- * Network client providers
+ * Network client providers.
  */
 #define KSI_IMPL_NET_TCP		0x01
 #define KSI_IMPL_NET_HTTP		0x02
