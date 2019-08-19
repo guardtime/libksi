@@ -17,6 +17,28 @@
  * reserves and retains all trademark rights.
  */
 
+#include "internal.h"
+
+#if KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_TCP
+
+int KSI_TcpClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_TcpClient_setPublicationUrl(KSI_NetworkClient *client, const char *val) {
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_TcpClient_setExtender(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *key){
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_TcpClient_setAggregator(KSI_NetworkClient *client, const char *host, unsigned port, const char *user, const char *key){
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_TcpClient_setTransferTimeoutSeconds(KSI_NetworkClient *client, int val){
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+
+#else
+
 #include <string.h>
 #include <sys/types.h>
 
@@ -25,12 +47,11 @@
 #include "tlv.h"
 #include "fast_tlv.h"
 
-#include "internal.h"
-
 #include "impl/ctx_impl.h"
 #include "impl/net_http_impl.h"
 #include "impl/net_tcp_impl.h"
 #include "impl/net_sock_impl.h"
+
 
 typedef struct TcpClient_Endpoint_st TcpClientCtx, TcpClient_Endpoint;
 
@@ -504,11 +525,13 @@ int KSI_TcpClient_new(KSI_CTX *ctx, KSI_NetworkClient **tcp) {
 	t->transferTimeoutSeconds = 10;
 	t->http = NULL;
 
+#if !(KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_HTTP)
 	res = KSI_HttpClient_new(ctx, &t->http);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
+#endif /* KSI_DISABLE_NET_PROVIDER */
 
 	/* Create implementations for abstract endpoints. */
 	res = TcpClient_Endpoint_new(&endp_aggr);
@@ -655,3 +678,5 @@ cleanup:
 
 	return res;
 }
+
+#endif /* KSI_DISABLE_NET_PROVIDER */
