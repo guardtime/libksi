@@ -111,14 +111,75 @@ cleanup:
 	return res;
 }
 
-time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
-	if (time == NULL) return -1;
+static int is_leap_year(int year) {
+	if (year % 4 > 0) return 0;
+	if (year % 100 > 0) return 1;
+	if (year % 400 > 0) return 0;
+	return 1;
+}
 
-#ifdef _WIN32
-	return _mkgmtime(time);
-#else
-	return timegm(time);
-#endif
+static int days_in_month(int month, int is_leap_year) {
+	switch (month) { 
+		case 1: return 31;
+		case 2: if (is_leap_year) return 29; else return 28;
+		case 3: return 31;
+		case 4: return 30;
+		case 5: return 31;
+		case 6: return 30;
+		case 7: return 31;
+		case 8: return 31;
+		case 9: return 30;
+		case 10: return 31;
+		case 11: return 30;
+		case 12: return 31;
+		default: return -1;
+	}
+}
+
+time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
+	/* Durations in seconds. */
+	const int MIN = 60;
+	const int HOUR = 60 * MIN;
+	const int DAY = 24 * HOUR;
+	const int YEAR = 365 * DAY;
+
+	time_t res = 0;
+	int year, month, i;
+
+	if (time == NULL) return -1;
+	year = 1900 + time->tm_year;
+	month = 1 + time->tm_mon;
+
+	if (year < 1970) return -1; /* In case time_t is unsigned type. */
+	if (year >= 2038) return -1; /* In case time_t is 32-bit signed. */
+	for (i = 1970; i < year; ++i) {
+		res += YEAR;
+		if (is_leap_year(i)) res += DAY;
+	}
+
+	if (month < 1) return -1;
+	if (month > 12) return -1;
+	for (i = 1; i < month; ++i) {
+		res += days_in_month(i, is_leap_year(year)) * DAY;
+	}
+
+	if (time->tm_mday < 1) return -1;
+	if (time->tm_mday > days_in_month(month, is_leap_year(year))) return -1;
+	res += (time->tm_mday - 1) * DAY;
+
+	if (time->tm_hour < 0) return -1;
+	if (time->tm_hour > 23) return -1;
+	res += time->tm_hour * HOUR;
+
+	if (time->tm_min < 0) return -1;
+	if (time->tm_min > 59) return -1;
+	res += time->tm_min * MIN;
+
+	if (time->tm_sec < 0) return -1;
+	if (time->tm_sec > 59) return -1;
+	res += time->tm_sec;
+
+	return res;
 }
 
 int KSI_strcasecmp(const char *s1, const char *s2) {
