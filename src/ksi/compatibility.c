@@ -147,16 +147,24 @@ time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
 	int year, month, i;
 
 	if (time == NULL) return -1;
-	year = 1900 + time->tm_year;
-	month = 1 + time->tm_mon;
 
-	if (year < 1970) return -1; /* In case time_t is unsigned type. */
-	if (year >= 2038) return -1; /* In case time_t is 32-bit signed. */
+	year = 1900 + time->tm_year;
+	if (year < 1970) return -1; /* We only return non-negative values. */
+	if (sizeof(time_t) == 4) {
+		if ((time_t) -1 < 0) {
+			if (year >= 2038) return -1; /* We have 32-bit signed time_t. */
+		} else {
+			if (year >= 2106) return -1; /* We have 32-bit unsigned time_t. */
+		}
+	} else {
+		if (year >= 3000) return -1; /* We have 64-bit time_t, but allowing more is just insane. */
+	}
 	for (i = 1970; i < year; ++i) {
 		res += YEAR;
 		if (is_leap_year(i)) res += DAY;
 	}
 
+	month = 1 + time->tm_mon;
 	if (month < 1) return -1;
 	if (month > 12) return -1;
 	for (i = 1; i < month; ++i) {
