@@ -119,7 +119,7 @@ static int is_leap_year(int year) {
 }
 
 static int days_in_month(int month, int is_leap_year) {
-	switch (month) { 
+	switch (month) {
 		case 1: return 31;
 		case 2: if (is_leap_year) return 29; else return 28;
 		case 3: return 31;
@@ -143,8 +143,10 @@ time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
 	const int DAY = 24 * HOUR;
 	const int YEAR = 365 * DAY;
 
-	time_t res = 0;
-	int year, month, i;
+	time_t tmp = 0;
+	int year = 0;
+	int month = 0;
+	int i = 0;
 
 	if (time == NULL) return -1;
 
@@ -160,34 +162,34 @@ time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
 		if (year >= 3000) return -1; /* We have 64-bit time_t, but allowing more is just insane. */
 	}
 	for (i = 1970; i < year; ++i) {
-		res += YEAR;
-		if (is_leap_year(i)) res += DAY;
+		tmp += YEAR;
+		if (is_leap_year(i)) tmp += DAY;
 	}
 
 	month = 1 + time->tm_mon;
 	if (month < 1) return -1;
 	if (month > 12) return -1;
 	for (i = 1; i < month; ++i) {
-		res += days_in_month(i, is_leap_year(year)) * DAY;
+		tmp += days_in_month(i, is_leap_year(year)) * DAY;
 	}
 
 	if (time->tm_mday < 1) return -1;
 	if (time->tm_mday > days_in_month(month, is_leap_year(year))) return -1;
-	res += (time->tm_mday - 1) * DAY;
+	tmp += (time->tm_mday - 1) * DAY;
 
 	if (time->tm_hour < 0) return -1;
 	if (time->tm_hour > 23) return -1;
-	res += time->tm_hour * HOUR;
+	tmp += time->tm_hour * HOUR;
 
 	if (time->tm_min < 0) return -1;
 	if (time->tm_min > 59) return -1;
-	res += time->tm_min * MIN;
+	tmp += time->tm_min * MIN;
 
 	if (time->tm_sec < 0) return -1;
 	if (time->tm_sec > 59) return -1;
-	res += time->tm_sec;
+	tmp += time->tm_sec;
 
-	return res;
+	return tmp;
 }
 
 int KSI_strcasecmp(const char *s1, const char *s2) {
