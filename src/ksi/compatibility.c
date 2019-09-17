@@ -170,7 +170,9 @@ time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
 	if (month < 1) return -1;
 	if (month > 12) return -1;
 	for (i = 1; i < month; ++i) {
-		tmp += days_in_month(i, is_leap_year(year)) * DAY;
+		int days = days_in_month(i, is_leap_year(year));
+		if (days < 0) return -1;
+		tmp += days * DAY;
 	}
 
 	if (time->tm_mday < 1) return -1;
