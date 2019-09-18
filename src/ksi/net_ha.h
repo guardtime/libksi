@@ -51,6 +51,9 @@ int KSI_SigningHighAvailabilityService_new(KSI_CTX *ctx, KSI_AsyncService **serv
  */
 int KSI_ExtendingHighAvailabilityService_new(KSI_CTX *ctx, KSI_AsyncService **service);
 
+void KSI_HighAvailabilityRequest_free(KSI_HighAvailabilityRequest *o);
+int KSI_HighAvailabilityRequest_new(KSI_CTX *ctx, KSI_AsyncHandle *asyncHandle, KSI_HighAvailabilityRequest **o);
+
 /**
  * @}
  */
