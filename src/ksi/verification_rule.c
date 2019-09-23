@@ -2832,7 +2832,34 @@ static int isServiceFailure(int status) {
 			status == KSI_SERVICE_EXTENDER_DATABASE_CORRUPT ||
 			status == KSI_SERVICE_UPSTREAM_ERROR ||
 			status == KSI_SERVICE_UPSTREAM_TIMEOUT ||
-			status == KSI_SERVICE_UNKNOWN_ERROR;
+			status == KSI_SERVICE_UNKNOWN_ERROR ||
+			/* IO error*/
+			status == KSI_IO_ERROR;
+}
+
+#define HANDLE_PUBFILE_FETCH_ERR_RESULT(res) if (res != KSI_OK && handle_service_failure_result(ctx, &res, step, result,"Unable to get publications file", VERIFICATION_RULE_NAME)) goto cleanup;
+#define HANDLE_CALENDAR_FETCH_ERR_RESULT(res); if (res != KSI_OK && handle_service_failure_result(ctx, &res, step, result, "Unable to get calendar hash chain from extender service", VERIFICATION_RULE_NAME)) goto cleanup;
+
+static int handle_service_failure_result(KSI_CTX *ctx, int *res, const KSI_VerificationStep step, KSI_RuleVerificationResult *result, const char *errMsg, const char *ruleName) {
+	if (ctx == NULL || res == NULL || result == NULL || errMsg == NULL || ruleName == NULL) return 0;
+
+	if (isServiceFailure(*res)) {
+		char buf[256];
+		char *msg = NULL;
+		int ext = 0;
+
+		KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
+		KSI_strdup(buf, &msg);
+
+		KSI_LOG_info(ctx, "%s (0x%x/%d: %s).", errMsg, *res, ext, msg);
+		VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, *res, ext, msg);
+		result->ruleName = ruleName;
+
+		*res = KSI_OK;
+		return 1;
+	}
+
+	return 0;
 }
 
 int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead(KSI_VerificationContext *info, KSI_RuleVerificationResult *result) {
@@ -2859,22 +2886,10 @@ int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead(KSI_Verific
 	KSI_LOG_info(ctx, "Verify calendar hash chain extended to head can be received.");
 
 	res = receiveCalendarHashChain(info, NULL);
+	HANDLE_CALENDAR_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
-		if (isServiceFailure(res)) {
-			char buf[256];
-			char *msg = NULL;
-			int ext = 0;
-
-			KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
-			KSI_strdup(buf, &msg);
-
-			KSI_LOG_info(ctx, "Unable to get calendar hash chain from extender service (0x%x/%d: %s).", res, ext, msg);
-			VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, res, ext, msg);
-			res = KSI_OK;
-		} else {
-			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
-		}
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -2925,22 +2940,10 @@ int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime(KSI_
 	}
 
 	res = receiveCalendarHashChain(info, pubTime);
+	HANDLE_CALENDAR_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
-		if (isServiceFailure(res)) {
-			char buf[256];
-			char *msg = NULL;
-			int ext = 0;
-
-			KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
-			KSI_strdup(buf, &msg);
-
-			KSI_LOG_info(ctx, "Unable to get calendar hash chain from extender service (0x%x/%d: %s).", res, ext, msg);
-			VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, res, ext, msg);
-			res = KSI_OK;
-		} else {
-			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
-		}
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -2995,6 +2998,7 @@ int KSI_VerificationRule_PublicationsFileExtendToPublication(KSI_VerificationCon
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -3025,22 +3029,10 @@ int KSI_VerificationRule_PublicationsFileExtendToPublication(KSI_VerificationCon
 	}
 
 	res = receiveCalendarHashChain(info, pubTime);
+	HANDLE_CALENDAR_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
-		if (isServiceFailure(res)) {
-			char buf[256];
-			char *msg = NULL;
-			int ext = 0;
-
-			KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
-			KSI_strdup(buf, &msg);
-
-			KSI_LOG_info(ctx, "Unable to get calendar hash chain from extender service (0x%x/%d: %s).", res, ext, msg);
-			VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, res, ext, msg);
-			res = KSI_OK;
-		} else {
-			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
-		}
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -3089,22 +3081,10 @@ int KSI_VerificationRule_UserProvidedPublicationExtendToPublication(KSI_Verifica
 	}
 
 	res = receiveCalendarHashChain(info, pubTime);
+	HANDLE_CALENDAR_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
-		if (isServiceFailure(res)) {
-			char buf[256];
-			char *msg = NULL;
-			int ext = 0;
-
-			KSI_ERR_getBaseErrorMessage(ctx, buf, sizeof(buf), NULL, &ext);
-			KSI_strdup(buf, &msg);
-
-			KSI_LOG_info(ctx, "Unable to get calendar hash chain from extender service (0x%x/%d: %s).", res, ext, msg);
-			VERIFICATION_RESULT_INC(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, step, res, ext, msg);
-			res = KSI_OK;
-		} else {
-			VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
-			KSI_pushError(ctx, res, NULL);
-		}
+		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
+		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
@@ -3526,6 +3506,7 @@ int KSI_VerificationRule_CertificateExistence(KSI_VerificationContext *info, KSI
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -3614,6 +3595,7 @@ int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -3746,6 +3728,7 @@ int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(KSI_V
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -3862,6 +3845,7 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_Verifi
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -3944,6 +3928,7 @@ int KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication(KSI_
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4025,6 +4010,7 @@ int KSI_VerificationRule_PublicationsFileSignaturePublicationVerification(KSI_Ve
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4095,6 +4081,7 @@ int KSI_VerificationRule_PublicationsFileContainsSuitablePublication(KSI_Verific
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4266,6 +4253,7 @@ int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDepre
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4363,6 +4351,7 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4468,6 +4457,7 @@ int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
@@ -4570,6 +4560,7 @@ int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(KSI_Verifica
 	}
 
 	res = initPublicationsFile(info);
+	HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
 	if (res != KSI_OK) {
 		VERIFICATION_RESULT_ERR(KSI_VER_RES_NA, KSI_VER_ERR_GEN_2, KSI_VERIFY_NONE);
 		KSI_pushError(ctx, res, NULL);
