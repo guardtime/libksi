@@ -45,7 +45,7 @@ endef
 
 configure-stamp:
 	$(is-in-build-dir)
-	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/$(INSTALL_ROOT) --mandir=/$(INSTALL_MAN)
+	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/$(INSTALL_ROOT) --mandir=/$(INSTALL_MAN) @KSI_PACKAGING_BUILD_FLAGS@
 	touch configure-stamp
 
 build-stamp: configure-stamp
