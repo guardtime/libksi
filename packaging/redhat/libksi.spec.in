@@ -61,7 +61,7 @@ Guardtime's KSI Blockchain Service.
 autoreconf -ifv
 
 %build
-%configure @KSI_PACKAGING_BUILD_FLAGS@
+%configure @KSI_PACKAGING_CONFIGURE_FLAGS@
 make
 
 %install
