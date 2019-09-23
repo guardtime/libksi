@@ -153,9 +153,11 @@ Configuring build scripts
 		2) RTL				- select C run-time library (MT, MTd, MD, MDd).
 							Default is MT. Note: MT and MTd can only be used with DLL=lib.
 		3) NET_PROVIDER		- select the network provider. Possible values are:
-							NONE, CURL, WININET and WINHTTP. When using CURL CURL_DIR
-							must be specified. When not specified explicidly,
-							CURL is used as default.
+							NONE, FILE, CURL, WININET and WINHTTP. When using CURL CURL_DIR
+							must be specified. When not specified explicitly,
+							CURL is used as default. NONE is used to disable all network
+							providers. To be able to run tests at least FILE provider
+							must be used.
 							In order to compile without any network provider use NONE.
 		4) CRYPTO_PROVIDER	- select the cryptography provider for both hashing
 							and PKI. Possible values are: OPENSSL and CRYPTOAPI.
