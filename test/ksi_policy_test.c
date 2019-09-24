@@ -1603,23 +1603,19 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	};
 	KSI_Signature *signature = NULL;
 
-	struct extErrResp_st {
-		const char *name;
-		int res;
-	};
-	struct extErrResp_st testArray[] = {
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_101.tlv", KSI_SERVICE_INVALID_REQUEST},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_102.tlv", KSI_SERVICE_AUTHENTICATION_FAILURE},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_103.tlv", KSI_SERVICE_INVALID_PAYLOAD},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_104.tlv", KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_105.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_106.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_107.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_200.tlv", KSI_SERVICE_INTERNAL_ERROR},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_201.tlv", KSI_SERVICE_EXTENDER_DATABASE_MISSING},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_202.tlv", KSI_SERVICE_EXTENDER_DATABASE_CORRUPT},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_300.tlv", KSI_SERVICE_UPSTREAM_ERROR},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_301.tlv", KSI_SERVICE_UPSTREAM_TIMEOUT}
+	const char *responseFiles[] = {
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_101.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_102.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_103.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_104.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_105.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_106.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_107.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_200.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_201.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_202.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_300.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_301.tlv"
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1633,13 +1629,13 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
-	for (i = 0; i < sizeof(testArray) / sizeof(testArray[0]); i++) {
+	for (i = 0; i < sizeof(responseFiles) / sizeof(responseFiles[0]); i++) {
 		KSI_LOG_debug(ctx, "Extender error test no %llu.", (unsigned long long)i);
-		res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(testArray[i].name), TEST_USER, TEST_PASS);
+		res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(responseFiles[i]), TEST_USER, TEST_PASS);
 		CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 		res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-		CuAssert(tc, "Policy verification must return no error.", res == KSI_OK/*testArray[i].res*/);
+		CuAssert(tc, "Policy verification must return no error.", res == KSI_OK);
 		if (res == KSI_OK) {
 			CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
 			CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
