@@ -2531,6 +2531,7 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 
 static void TestPublicationsFileBasedPolicy_NA_WithoutPublicationsfile(CuTest* tc) {
 #define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+#define TEST_PUBLICATIONS_FILE "file://pubfile-that-does-not-exist.bin"
 	int res;
 	KSI_VerificationContext context;
 	KSI_PolicyVerificationResult *result = NULL;
@@ -2547,7 +2548,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutPublicationsfile(CuTest* t
 	res = KSITest_CTX_clone(&ctx);
 	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
 
-	res = KSI_CTX_setPublicationUrl(ctx, "file://pubfile-that-does-not-exist.bin");
+	res = KSI_CTX_setPublicationUrl(ctx, TEST_PUBLICATIONS_FILE);
 	CuAssert(tc, "Unable to configure not existing publications file.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -2573,6 +2574,7 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutPublicationsfile(CuTest* t
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
+#undef TEST_PUBLICATIONS_FILE
 }
 
 static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
