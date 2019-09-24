@@ -1603,23 +1603,19 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	};
 	KSI_Signature *signature = NULL;
 
-	struct extErrResp_st {
-		const char *name;
-		int res;
-	};
-	struct extErrResp_st testArray[] = {
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_101.tlv", KSI_SERVICE_INVALID_REQUEST},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_102.tlv", KSI_SERVICE_AUTHENTICATION_FAILURE},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_103.tlv", KSI_SERVICE_INVALID_PAYLOAD},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_104.tlv", KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_105.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_106.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_107.tlv", KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_200.tlv", KSI_SERVICE_INTERNAL_ERROR},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_201.tlv", KSI_SERVICE_EXTENDER_DATABASE_MISSING},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_202.tlv", KSI_SERVICE_EXTENDER_DATABASE_CORRUPT},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_300.tlv", KSI_SERVICE_UPSTREAM_ERROR},
-		{"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_301.tlv", KSI_SERVICE_UPSTREAM_TIMEOUT}
+	const char *responseFiles[] = {
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_101.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_102.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_103.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_104.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_105.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_106.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_107.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_200.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_201.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_202.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_300.tlv",
+		"resource/tlv/" TEST_RESOURCE_EXT_VER "/ok_extender_error_response_301.tlv"
 	};
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1633,13 +1629,13 @@ static void TestCalendarBasedPolicy_NA_ExtenderErrors(CuTest* tc) {
 	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
 	context.signature = signature;
 
-	for (i = 0; i < sizeof(testArray) / sizeof(testArray[0]); i++) {
+	for (i = 0; i < sizeof(responseFiles) / sizeof(responseFiles[0]); i++) {
 		KSI_LOG_debug(ctx, "Extender error test no %llu.", (unsigned long long)i);
-		res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(testArray[i].name), TEST_USER, TEST_PASS);
+		res = KSI_CTX_setExtender(ctx, getFullResourcePathUri(responseFiles[i]), TEST_USER, TEST_PASS);
 		CuAssert(tc, "Unable to set extender file URI.", res == KSI_OK);
 
 		res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_CALENDAR_BASED, &context, &result);
-		CuAssert(tc, "Policy verification must not succeed.", res == KSI_OK/*testArray[i].res*/);
+		CuAssert(tc, "Policy verification must return no error.", res == KSI_OK);
 		if (res == KSI_OK) {
 			CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
 			CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
@@ -2530,6 +2526,54 @@ static void TestPublicationsFileBasedPolicy_OK_WithSuitablePublication(CuTest* t
 
 #undef TEST_SIGNATURE_FILE
 #undef TEST_EXT_RESPONSE_FILE
+#undef TEST_PUBLICATIONS_FILE
+}
+
+static void TestPublicationsFileBasedPolicy_NA_WithoutPublicationsfile(CuTest* tc) {
+#define TEST_SIGNATURE_FILE "resource/tlv/ok-sig-2014-04-30.1-extended_1400112000.ksig"
+#define TEST_PUBLICATIONS_FILE "file://pubfile-that-does-not-exist.bin"
+	int res;
+	KSI_VerificationContext context;
+	KSI_PolicyVerificationResult *result = NULL;
+	KSI_RuleVerificationResult expected = {
+		KSI_VER_RES_NA,
+		KSI_VER_ERR_GEN_2,
+		"KSI_VerificationRule_PublicationsFileContainsSuitablePublication"
+	};
+	KSI_CTX *ctx = NULL;
+	KSI_Signature *signature = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSITest_CTX_clone(&ctx);
+	CuAssert(tc, "Unable to create new context.", res == KSI_OK && ctx != NULL);
+
+	res = KSI_CTX_setPublicationUrl(ctx, TEST_PUBLICATIONS_FILE);
+	CuAssert(tc, "Unable to configure not existing publications file.", res == KSI_OK);
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	res = KSI_VerificationContext_init(&context, ctx);
+	CuAssert(tc, "Verification context creation failed.", res == KSI_OK);
+
+	res = KSI_Signature_fromFile(ctx, getFullResourcePath(TEST_SIGNATURE_FILE), &signature);
+	CuAssert(tc, "Unable to read signature from file.", res == KSI_OK && signature != NULL);
+	context.signature = signature;
+	context.extendingAllowed = 1;
+
+	res = KSI_SignatureVerifier_verify(KSI_VERIFICATION_POLICY_PUBLICATIONS_FILE_BASED, &context, &result);
+	CuAssert(tc, "Policy verification failed.", res == KSI_OK);
+	CuAssert(tc, "Unexpected verification result.", ResultsMatch(&expected, &result->finalResult));
+	CuAssert(tc, "Unexpected verification property.", SuccessfulProperty(&result->finalResult,
+				KSI_VERIFY_AGGRCHAIN_INTERNALLY | KSI_VERIFY_AGGRCHAIN_WITH_CALENDAR_CHAIN | KSI_VERIFY_CALCHAIN_INTERNALLY));
+	CuAssert(tc, "Unexpected verification property.", InconclusiveProperty(&result->finalResult, KSI_VERIFY_PUBLICATION_WITH_PUBFILE));
+
+	KSI_PolicyVerificationResult_free(result);
+	KSI_Signature_free(signature);
+	KSI_VerificationContext_clean(&context);
+	KSI_CTX_free(ctx);
+
+#undef TEST_SIGNATURE_FILE
 #undef TEST_PUBLICATIONS_FILE
 }
 
@@ -3717,6 +3761,7 @@ CuSuite* KSITest_Policy_getSuite(void) {
 	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_NA_WithSuitablePublication);
 	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_OK_WithSuitablePublication);
 	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_FAIL_AfterExtending);
+	SUITE_ADD_TEST(suite, TestPublicationsFileBasedPolicy_NA_WithoutPublicationsfile);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_OK_WithPublicationRecord);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_NA_DeprecatedAlgInCalendar);
 	SUITE_ADD_TEST(suite, TestUserProvidedPublicationBasedPolicy_NA_WithSignatureAfterPublication);
