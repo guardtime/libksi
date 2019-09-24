@@ -2573,8 +2573,6 @@ static void TestPublicationsFileBasedPolicy_NA_WithoutPublicationsfile(CuTest* t
 	KSI_CTX_free(ctx);
 
 #undef TEST_SIGNATURE_FILE
-#undef TEST_EXT_RESPONSE_FILE
-#undef TEST_PUBLICATIONS_FILE
 }
 
 static void TestPublicationsFileBasedPolicy_FAIL_AfterExtending(CuTest* tc) {
