@@ -1578,7 +1578,9 @@ int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hd
 	}
 	if (req->requestHash != NULL ||
 			(req->config != NULL && ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1)) {
-		KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
+		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+			KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
+		}
 		tmp->request = req;
 		req = NULL;
 	}
