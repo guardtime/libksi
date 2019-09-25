@@ -79,7 +79,7 @@ static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig);
 static int rfc3161_extractOutputHashAlgorithm(const KSI_Signature *sig, KSI_HashAlgorithm *algorithm);
 static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
 static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_CalendarHashChain **extCalHashChain);
-static int isHardFailure(int status);
+static int isFatalError(int status);
 static int initPublicationsFile(KSI_VerificationContext *info);
 static int initAggregationOutputHash(KSI_VerificationContext *info);
 static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
@@ -2813,7 +2813,7 @@ cleanup:
 	return res;
 }
 
-static int isHardFailure(int status) {
+static int isFatalError(int status) {
 	return 	status == KSI_OUT_OF_MEMORY ||
 			status == KSI_INVALID_ARGUMENT ||
 			status == KSI_BUFFER_OVERFLOW ||
@@ -2821,7 +2821,7 @@ static int isHardFailure(int status) {
 }
 
 #define HANDLE_RESOURCE_FAILURE(logmsg) \
-        if (!isHardFailure(res)) { \
+        if (!isFatalError(res)) { \
             char buf[256]; \
             char *errmsg = NULL; \
             int ext = 0; \
