@@ -79,7 +79,7 @@ static int rfc3161_verifyChainIndex(KSI_CTX *ctx, const KSI_Signature *sig);
 static int rfc3161_extractOutputHashAlgorithm(const KSI_Signature *sig, KSI_HashAlgorithm *algorithm);
 static int rfc3161_getOutputHash(const KSI_Signature *sig, KSI_DataHash **outputHash);
 static int getExtendedCalendarHashChain(KSI_VerificationContext *info, KSI_CalendarHashChain **extCalHashChain);
-static int isServiceFailure(int status);
+static int isHardFailure(int status);
 static int initPublicationsFile(KSI_VerificationContext *info);
 static int initAggregationOutputHash(KSI_VerificationContext *info);
 static int extendingPermittedVerification(KSI_VerificationContext *info, KSI_RuleVerificationResult *result, const KSI_VerificationStep step, const char *rule);
@@ -2813,32 +2813,15 @@ cleanup:
 	return res;
 }
 
-static int isServiceFailure(int status) {
-	return /* What ever network error. */
-			status == KSI_NETWORK_ERROR ||
-			status == KSI_NETWORK_CONNECTION_TIMEOUT ||
-			status == KSI_NETWORK_RECIEVE_TIMEOUT ||
-			status == KSI_NETWORK_SEND_TIMEOUT ||
-			/* What ever service error. */
-			status == KSI_SERVICE_INVALID_REQUEST ||
-			status == KSI_SERVICE_AUTHENTICATION_FAILURE ||
-			status == KSI_SERVICE_INVALID_PAYLOAD ||
-			status == KSI_SERVICE_EXTENDER_INVALID_TIME_RANGE ||
-			status == KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_OLD ||
-			status == KSI_SERVICE_EXTENDER_REQUEST_TIME_TOO_NEW ||
-			status == KSI_SERVICE_EXTENDER_REQUEST_TIME_IN_FUTURE ||
-			status == KSI_SERVICE_INTERNAL_ERROR ||
-			status == KSI_SERVICE_EXTENDER_DATABASE_MISSING ||
-			status == KSI_SERVICE_EXTENDER_DATABASE_CORRUPT ||
-			status == KSI_SERVICE_UPSTREAM_ERROR ||
-			status == KSI_SERVICE_UPSTREAM_TIMEOUT ||
-			status == KSI_SERVICE_UNKNOWN_ERROR ||
-			/* IO error*/
-			status == KSI_IO_ERROR;
+static int isHardFailure(int status) {
+	return 	status == KSI_OUT_OF_MEMORY ||
+			status == KSI_INVALID_ARGUMENT ||
+			status == KSI_BUFFER_OVERFLOW ||
+			status == KSI_UNKNOWN_ERROR;
 }
 
 #define HANDLE_RESOURCE_FAILURE(logmsg) \
-        if (isServiceFailure(res)) { \
+        if (!isHardFailure(res)) { \
             char buf[256]; \
             char *errmsg = NULL; \
             int ext = 0; \
@@ -2886,7 +2869,7 @@ int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead(KSI_Verific
 
 	res = receiveCalendarHashChain(info, NULL);
 	if (res != KSI_OK) {
-		HANDLE_CALENDAR_FETCH_ERR_RESULT(res);
+		HANDLE_CALENDAR_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -2938,7 +2921,7 @@ int KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime(KSI_
 
 	res = receiveCalendarHashChain(info, pubTime);
 	if (res != KSI_OK) {
-		HANDLE_CALENDAR_FETCH_ERR_RESULT(res);
+		HANDLE_CALENDAR_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -2994,7 +2977,7 @@ int KSI_VerificationRule_PublicationsFileExtendToPublication(KSI_VerificationCon
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -3023,7 +3006,7 @@ int KSI_VerificationRule_PublicationsFileExtendToPublication(KSI_VerificationCon
 
 	res = receiveCalendarHashChain(info, pubTime);
 	if (res != KSI_OK) {
-		HANDLE_CALENDAR_FETCH_ERR_RESULT(res);
+		HANDLE_CALENDAR_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -3073,7 +3056,7 @@ int KSI_VerificationRule_UserProvidedPublicationExtendToPublication(KSI_Verifica
 
 	res = receiveCalendarHashChain(info, pubTime);
 	if (res != KSI_OK) {
-		HANDLE_CALENDAR_FETCH_ERR_RESULT(res);
+		HANDLE_CALENDAR_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -3496,7 +3479,7 @@ int KSI_VerificationRule_CertificateExistence(KSI_VerificationContext *info, KSI
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -3583,7 +3566,7 @@ int KSI_VerificationRule_CertificateValidity(KSI_VerificationContext *info, KSI_
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -3714,7 +3697,7 @@ int KSI_VerificationRule_CalendarAuthenticationRecordSignatureVerification(KSI_V
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -3829,7 +3812,7 @@ int KSI_VerificationRule_PublicationsFileContainsSignaturePublication(KSI_Verifi
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -3910,7 +3893,7 @@ int KSI_VerificationRule_PublicationsFileDoesNotContainSignaturePublication(KSI_
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -3990,7 +3973,7 @@ int KSI_VerificationRule_PublicationsFileSignaturePublicationVerification(KSI_Ve
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -4059,7 +4042,7 @@ int KSI_VerificationRule_PublicationsFileContainsSuitablePublication(KSI_Verific
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -4229,7 +4212,7 @@ int KSI_VerificationRule_PublicationsFileExtendedCalendarChainHashAlgorithmDepre
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -4325,7 +4308,7 @@ int KSI_VerificationRule_PublicationsFilePublicationHashMatchesExtenderResponse(
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -4429,7 +4412,7 @@ int KSI_VerificationRule_PublicationsFilePublicationTimeMatchesExtenderResponse(
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
@@ -4530,7 +4513,7 @@ int KSI_VerificationRule_PublicationsFileExtendedSignatureInputHash(KSI_Verifica
 
 	res = initPublicationsFile(info);
 	if (res != KSI_OK) {
-		HANDLE_PUBFILE_FETCH_ERR_RESULT(res);
+		HANDLE_PUBFILE_FETCH_ERR_RESULT;
 		goto cleanup;
 	}
 
