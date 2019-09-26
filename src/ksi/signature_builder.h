@@ -126,6 +126,7 @@ extern "C" {
 	 * \param[in]	aggr		Aggregation hash chain.
 	 * \note It is the responsibility of the caller to free the input parameters after use.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_SignatureBuilder_setAggregationChainStartLevel for setting aggregation chain initialial level.
 	 */
 	int KSI_SignatureBuilder_appendAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr);
 
@@ -139,8 +140,24 @@ extern "C" {
 	 * \note It is the responsibility of the caller to free the input parameters after use.
 	 * \note There is no need to close the signature builder after use.
 	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \see KSI_SignatureBuilder_setAggregationChainStartLevel for setting aggregation chain initialial level.
 	 */
 	int KSI_SignatureBuilder_createSignatureWithAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig);
+
+	/**
+	 * This functions sets initialial level (input hash level value) for an appendable aggregation hash chain.
+	 * It should be used in case the aggregation chain input hash level is not nil. Eg. the input hash is a root hash
+	 * of an aggregation chain (eg. a result of local aggregation).
+	 * \param[in]	builder		Pointer to the builder.
+	 * \param[in]	lvl			The initial level of this hash chain.
+	 * \return status code (#KSI_OK, when operation succeeded, otherwise an error code).
+	 * \note If applicable, the level value must be set prior to appending the corresponding hash chain.
+	 * \see KSI_SignatureBuilder_appendAggregationChain for prepending a localy aggregated hash chains.
+	 * \see KSI_SignatureBuilder_createSignatureWithAggregationChain for constructing multible signatures from a local
+	 * aggregation root signature.
+	 * \see KSI_TreeLeafHandle_getAggregationChain
+	 */
+	int KSI_SignatureBuilder_setAggregationChainStartLevel(KSI_SignatureBuilder *builder, KSI_uint64_t lvl);
 
 	/**
 	 * This function sets the calendar authentication record of the signature.

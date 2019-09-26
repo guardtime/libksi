@@ -31,6 +31,7 @@ extern "C" {
 		KSI_CTX *ctx;
 		int noVerify;
 		KSI_Signature *sig;
+		KSI_uint64_t aggrStartLevel;
 	};
 
 
