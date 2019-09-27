@@ -496,6 +496,79 @@ static void testAddDeprecatedLeaf(CuTest *tc) {
 	KSI_DataHash_free(hsh);
 }
 
+typedef struct {
+	char buffer[1024];
+} logger;
+
+static int testBS_LoggerCallback(void *logCtx, int level, const char *message) {
+	logger *log = (logger*)logCtx;
+	return KSI_snprintf(log->buffer + strlen(log->buffer), sizeof(log->buffer), "[%d] %s\n", level, message) ?
+			KSI_OK : KSI_UNKNOWN_ERROR;
+}
+
+static void testCreateBSWithIVCheckWarning(CuTest *tc, const unsigned char *ivDat, size_t ivDatLen, int mustWarn) {
+	KSI_CTX *localctx = NULL;
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_BlockSigner *bs = NULL;
+	KSI_DataHash *prev = NULL;
+	KSI_OctetString *iv = NULL;
+	logger log;
+
+	log.buffer[0] = '\0';
+
+	res = KSI_CTX_new(&localctx);
+	res |= KSI_CTX_setLoggerCallback(localctx, testBS_LoggerCallback, (void*)&log);
+	res |= KSI_CTX_setLogLevel(localctx, KSI_LOG_DEBUG);
+	CuAssert(tc, "Failed to initialize ksi context.", res == KSI_OK);
+
+	if (ivDat != NULL) {
+		res = KSI_DataHash_createZero(localctx, KSI_HASHALG_SHA2_256, &prev);
+		res |= KSI_OctetString_new(localctx, ivDat, ivDatLen, &iv);
+		CuAssert(tc, "Failed to initialize masking data.", res == KSI_OK);
+	}
+
+	res = KSI_BlockSigner_new(localctx, KSI_HASHALG_SHA2_256, prev, iv, &bs);
+	CuAssert(tc, "Unable to create data hash with masking.", res == KSI_OK && bs != NULL);
+
+	if (mustWarn) {
+		CuAssert(tc, "Warning must be logged.", !!strstr(log.buffer, "Blinding mask initial value has insufficient entropy."));
+	} else {
+		CuAssert(tc, "Warning must not be logged.", !strstr(log.buffer, "Blinding mask initial value has insufficient entropy."));
+	}
+
+	KSI_DataHash_free(prev);
+	KSI_OctetString_free(iv);
+	KSI_BlockSigner_free(bs);
+}
+
+static void testCreateBsLogWarningShortIV(CuTest *tc) {
+	const unsigned char ivDat[11] = {
+		0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1
+	};
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	testCreateBSWithIVCheckWarning(tc, ivDat, sizeof(ivDat), 1);
+}
+
+static void testCreateBsLogWarningLongIV(CuTest *tc) {
+	const unsigned char ivDat[33] = {
+		0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1,
+		0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1,
+		0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1
+	};
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	testCreateBSWithIVCheckWarning(tc, ivDat, sizeof(ivDat), 0);
+}
+
+static void testCreateBsLogWarningNoIV(CuTest *tc) {
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
+	testCreateBSWithIVCheckWarning(tc, NULL, 0, 0);
+}
+
 
 static void preTest(void) {
 	ctx->netProvider->requestCount = 0;
@@ -514,6 +587,9 @@ CuSuite* KSITest_Blocksigner_getSuite(void) {
 	SUITE_ADD_TEST(suite, testReset);
 	SUITE_ADD_TEST(suite, testCreateBlockSigner);
 	SUITE_ADD_TEST(suite, testAddDeprecatedLeaf);
+	SUITE_ADD_TEST(suite, testCreateBsLogWarningShortIV);
+	SUITE_ADD_TEST(suite, testCreateBsLogWarningLongIV);
+	SUITE_ADD_TEST(suite, testCreateBsLogWarningNoIV);
 
 	return suite;
 }
