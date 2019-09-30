@@ -241,6 +241,8 @@ cleanup:
 int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_BlockSigner **signer) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *tmp = NULL;
+	const unsigned char *ivValue = NULL;
+	size_t ivLength = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -300,6 +302,15 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
+	}
+
+	/**
+	 * The masking IV value should be about as long as the outputs of the hash function in
+	 * order to ensure enough entropy. If it is not the case a warning should be logged.
+	 */
+	if (KSI_OctetString_extract(initVal, &ivValue, &ivLength) == KSI_OK &&
+			ivLength < KSI_getHashLength(algoId)) {
+		KSI_LOG_warn(ctx, "Blinding mask initial value has insufficient entropy.");
 	}
 
 	*signer = tmp;
