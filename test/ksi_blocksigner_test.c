@@ -539,6 +539,7 @@ static void testCreateBSWithIVCheckWarning(CuTest *tc, const unsigned char *ivDa
 	KSI_DataHash_free(prev);
 	KSI_OctetString_free(iv);
 	KSI_BlockSigner_free(bs);
+	KSI_CTX_free(localctx);
 }
 
 static void testCreateBsLogWarningShortIV(CuTest *tc) {
