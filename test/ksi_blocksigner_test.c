@@ -497,13 +497,16 @@ static void testAddDeprecatedLeaf(CuTest *tc) {
 }
 
 typedef struct {
-	char buffer[1024];
-} logger;
+	char *msg;
+	int level;
 
-static int testBS_LoggerCallback(void *logCtx, int level, const char *message) {
-	logger *log = (logger*)logCtx;
-	return KSI_snprintf(log->buffer + strlen(log->buffer), sizeof(log->buffer), "[%d] %s\n", level, message) ?
-			KSI_OK : KSI_UNKNOWN_ERROR;
+	int found;
+} seeker;
+
+static int seeker_LoggerCallback(void *logCtx, int level, const char *message) {
+	seeker *log = (seeker*)logCtx;
+	if (log->level == level && strcmp(log->msg, message) == 0) log->found = 1;
+	return KSI_OK;
 }
 
 static void testCreateBSWithIVCheckWarning(CuTest *tc, const unsigned char *ivDat, size_t ivDatLen, int mustWarn) {
@@ -512,12 +515,14 @@ static void testCreateBSWithIVCheckWarning(CuTest *tc, const unsigned char *ivDa
 	KSI_BlockSigner *bs = NULL;
 	KSI_DataHash *prev = NULL;
 	KSI_OctetString *iv = NULL;
-	logger log;
+	seeker log;
 
-	log.buffer[0] = '\0';
+	log.msg = "Blinding mask initial value has insufficient entropy.";
+	log.level = KSI_LOG_WARN;
+	log.found = 0;
 
 	res = KSI_CTX_new(&localctx);
-	res |= KSI_CTX_setLoggerCallback(localctx, testBS_LoggerCallback, (void*)&log);
+	res |= KSI_CTX_setLoggerCallback(localctx, seeker_LoggerCallback, (void*)&log);
 	res |= KSI_CTX_setLogLevel(localctx, KSI_LOG_DEBUG);
 	CuAssert(tc, "Failed to initialize ksi context.", res == KSI_OK);
 
@@ -531,9 +536,9 @@ static void testCreateBSWithIVCheckWarning(CuTest *tc, const unsigned char *ivDa
 	CuAssert(tc, "Unable to create data hash with masking.", res == KSI_OK && bs != NULL);
 
 	if (mustWarn) {
-		CuAssert(tc, "Warning must be logged.", !!strstr(log.buffer, "Blinding mask initial value has insufficient entropy."));
+		CuAssert(tc, "Warning must be logged.", log.found);
 	} else {
-		CuAssert(tc, "Warning must not be logged.", !strstr(log.buffer, "Blinding mask initial value has insufficient entropy."));
+		CuAssert(tc, "Warning must not be logged.", !log.found);
 	}
 
 	KSI_DataHash_free(prev);
