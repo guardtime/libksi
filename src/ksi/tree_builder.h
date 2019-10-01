@@ -173,6 +173,8 @@ void KSI_TreeLeafHandle_free(KSI_TreeLeafHandle *handle);
  */
 int KSI_TreeLeafHandle_getAggregationChain(const KSI_TreeLeafHandle *handle, KSI_AggregationHashChain **chain);
 
+int KSI_TreeLeafHandle_getTreeNode(const KSI_TreeLeafHandle *handle, KSI_TreeNode **node);
+
 /**
  * An object for building an aggregation tree on the fly.
  */
