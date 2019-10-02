@@ -290,15 +290,15 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	tmp->origPrevLeaf = KSI_DataHash_ref(prevLeaf);
 	tmp->iv = KSI_OctetString_ref(initVal);
 
-	/* Add the masking handle. */
-	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->maskingProcessor);
+	/* Add the client id handle. Add it first as metadata must be in the first link. */
+	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->metaDataProcessor);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	/* Add the client id handle. */
-	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->metaDataProcessor);
+	/* Add the masking handle. */
+	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->maskingProcessor);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
