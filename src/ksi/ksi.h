@@ -215,6 +215,11 @@ enum KSI_StatusCode {
 	 */
 	KSI_INCOMPATIBLE_HASH_CHAIN = 0x213,
 
+	/**
+	 * Network provider is disabled (at compile time). This meens that the desired network provider can not be used runtime anymore.
+	 */
+	KSI_NETWORK_PROVIDER_DISABLED = 0x214,
+
 	/* Generic service errors. */
 
 	/**

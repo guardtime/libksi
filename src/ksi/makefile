@@ -28,9 +28,12 @@ RTL = MT
 !IF "$(DLL)" == "dll"
 CCFLAGS = $(CCFLAGS) /DDLL_BUILD
 !ENDIF
+
 #Selecting of different functionality providers
+!IF "$(NET_PROVIDER)" != "NONE" && "$(NET_PROVIDER)" != "FILE"
 !IF "$(NET_PROVIDER)" != "CURL" && "$(NET_PROVIDER)" != "WININET" && "$(NET_PROVIDER)" != "WINHTTP"
 NET_PROVIDER = CURL
+!ENDIF
 !ENDIF
 
 !IF "$(HASH_PROVIDER)" != "OPENSSL" && "$(HASH_PROVIDER)" != "CRYPTOAPI"
@@ -170,7 +173,15 @@ EXT_LIB = $(EXT_LIB) Crypt32.lib advapi32.lib
 
 
 #Configuration of net provider
-!IF "$(NET_PROVIDER)"=="CURL"
+!IF "$(NET_PROVIDER)"=="NONE"
+!MESSAGE Building without network provider.
+CCFLAGS = $(CCFLAGS) /DKSI_DISABLE_NET_PROVIDER=7
+
+!ELSE IF "$(NET_PROVIDER)"=="FILE"
+!MESSAGE Building with only file network client.
+CCFLAGS = $(CCFLAGS) /DKSI_DISABLE_NET_PROVIDER=3
+
+!ELSE IF "$(NET_PROVIDER)"=="CURL"
 CCFLAGS = $(CCFLAGS) /I"$(CURL_DIR)\include"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_CURL
 LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\net_http_curl.obj

@@ -111,14 +111,87 @@ cleanup:
 	return res;
 }
 
+static int is_leap_year(int year) {
+	if (year % 4 > 0) return 0;
+	if (year % 100 > 0) return 1;
+	if (year % 400 > 0) return 0;
+	return 1;
+}
+
+static int days_in_month(int month, int is_leap_year) {
+	switch (month) {
+		case 1: return 31;
+		case 2: if (is_leap_year) return 29; else return 28;
+		case 3: return 31;
+		case 4: return 30;
+		case 5: return 31;
+		case 6: return 30;
+		case 7: return 31;
+		case 8: return 31;
+		case 9: return 30;
+		case 10: return 31;
+		case 11: return 30;
+		case 12: return 31;
+		default: return -1;
+	}
+}
+
 time_t KSI_CalendarTimeToUnixTime(struct tm *time) {
+	/* Durations in seconds. */
+	const int MIN = 60;
+	const int HOUR = 60 * MIN;
+	const int DAY = 24 * HOUR;
+	const int YEAR = 365 * DAY;
+
+	time_t tmp = 0;
+	int year = 0;
+	int month = 0;
+	int i = 0;
+
 	if (time == NULL) return -1;
 
-#ifdef _WIN32
-	return _mkgmtime(time);
-#else
-	return timegm(time);
-#endif
+	year = 1900 + time->tm_year;
+	if (year < 1970) return -1; /* We only return non-negative values. */
+	if (sizeof(time_t) == 4) {
+		if ((time_t) -1 < 0) {
+			if (year >= 2038) return -1; /* We have 32-bit signed time_t. */
+		} else {
+			if (year >= 2106) return -1; /* We have 32-bit unsigned time_t. */
+		}
+	} else {
+		if (year >= 3000) return -1; /* We have 64-bit time_t, but allowing more is just insane. */
+	}
+	for (i = 1970; i < year; ++i) {
+		tmp += YEAR;
+		if (is_leap_year(i)) tmp += DAY;
+	}
+
+	month = 1 + time->tm_mon;
+	if (month < 1) return -1;
+	if (month > 12) return -1;
+	for (i = 1; i < month; ++i) {
+		int days = days_in_month(i, is_leap_year(year));
+		if (days < 0) return -1;
+		tmp += days * DAY;
+	}
+
+	if (time->tm_mday < 1) return -1;
+	if (time->tm_mday > days_in_month(month, is_leap_year(year))) return -1;
+	tmp += (time->tm_mday - 1) * DAY;
+
+	if (time->tm_hour < 0) return -1;
+	if (time->tm_hour > 23) return -1;
+	tmp += time->tm_hour * HOUR;
+
+	if (time->tm_min < 0) return -1;
+	if (time->tm_min > 59) return -1;
+	tmp += time->tm_min * MIN;
+
+	if (time->tm_sec < 0) return -1;
+	if (time->tm_sec > 59) return -1;
+	tmp += time->tm_sec;
+
+	return tmp;
 }
 
 int KSI_strcasecmp(const char *s1, const char *s2) {

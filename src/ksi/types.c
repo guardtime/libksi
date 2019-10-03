@@ -199,6 +199,7 @@ KSI_IMPLEMENT_LIST(KSI_PublicationsHeader, KSI_PublicationsHeader_free);
 KSI_IMPLEMENT_LIST(KSI_CertificateRecord, KSI_CertificateRecord_free);
 KSI_IMPLEMENT_LIST(KSI_RequestHandle, KSI_RequestHandle_free);
 KSI_IMPLEMENT_LIST(KSI_AsyncHandle, KSI_AsyncHandle_free);
+KSI_IMPLEMENT_LIST(KSI_HighAvailabilityRequest, KSI_HighAvailabilityRequest_free);
 KSI_IMPLEMENT_LIST(KSI_AsyncService, KSI_AsyncService_free);
 
 KSI_IMPLEMENT_REF(KSI_MetaDataElement);
@@ -1577,7 +1578,9 @@ int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hd
 	}
 	if (req->requestHash != NULL ||
 			(req->config != NULL && ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1)) {
-		KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
+		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+			KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
+		}
 		tmp->request = req;
 		req = NULL;
 	}

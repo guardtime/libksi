@@ -30,7 +30,7 @@ PKG_VERSION=1
 DEB_DIR=packaging/deb
 
 autoreconf -if
-./configure $conf_args
+./configure $*
 make clean
 make dist
 

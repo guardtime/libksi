@@ -28,8 +28,10 @@ RTL = MT
 CCFLAGS = $(CCFLAGS) /DDLL_BUILD
 !ENDIF
 
+!IF "$(NET_PROVIDER)" != "NONE" && "$(NET_PROVIDER)" != "FILE"
 !IF "$(NET_PROVIDER)" != "CURL" && "$(NET_PROVIDER)" != "WININET" && "$(NET_PROVIDER)" != "WINHTTP"
 NET_PROVIDER = CURL
+!ENDIF
 !ENDIF
 
 !IF "$(HASH_PROVIDER)" != "OPENSSL" && "$(HASH_PROVIDER)" != "CRYPTOAPI"
@@ -115,7 +117,15 @@ EXT_LIB = $(LIB_NAME)$(RTL).lib \
 	wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
 
-!IF "$(NET_PROVIDER)" == "CURL"
+!IF "$(NET_PROVIDER)" == "NONE"
+!MESSAGE Building without network provider.
+CCFLAGS = $(CCFLAGS) /DKSI_DISABLE_NET_PROVIDER=7
+
+!ELSE IF "$(NET_PROVIDER)" == "FILE"
+!MESSAGE Building with only file network client.
+CCFLAGS = $(CCFLAGS) /DKSI_DISABLE_NET_PROVIDER=3
+
+!ELSE IF "$(NET_PROVIDER)" == "CURL"
 CCFLAGS = $(CCFLAGS) /DKSI_NET_HTTP_IMPL=KSI_IMPL_CURL
 !IF "$(DLL)" == "lib"
 EXT_LIB = $(EXT_LIB) libcurl$(RTL).lib

@@ -1,8 +1,11 @@
+(KSICAPI-537)* FEATURE: Added support for disabling network providers via compile time options.
 (KSICAPI-535)* IMPROVEMENT: Return NA(GEN-02), instead of FAIL(KEY-01), when certificate is not found during key-based verification. Verification error code KEY-01 is deprecated.
 (KSICAPI-531)* BUGFIX: Resolved compilation warnings.
+(KSICAPI-528)* IMPROVEMENT: Value returned by KSI_getHashAlgorithmByName must be verified with KSI_isHashAlgorithmSupported and KSI_isHashAlgorithmTrusted.
 (KSICAPI-529)* BUGFIX: Constant variable KSI_HASHALG_INVALID is exported with DLL.
 (KSICAPI-530)* IMPROVEMENT: New verification rules for calendar hash chain reception from extending service (returning NA(GEN-2) in case of a service failure).
 (KSICAPI-530)* IMPROVEMENT: KSI_RuleVerificationResult has additional fields with error information. Will be filled in case verification result is NA(GEN-2).
+(KSICAPI-538)* IMPROVEMENT: KSI_CalendarTimeToUnixTime no longer depends on non-portable timegm.
 
 Version 3.19
 

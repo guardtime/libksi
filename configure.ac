@@ -60,6 +60,32 @@ fi
 
 # Define configuration variables for the SDK
 
+# Bitfield for setting disabled network providers (for possible values see src/ksi/internal.h under section
+# "Network client providers.")
+without_net=0
+AC_ARG_WITH([net_tcp],
+	[AS_HELP_STRING([--without-net-tcp], [build without TCP network provider.])],
+	[AC_MSG_NOTICE([Building without TCP network provider.])]
+		[without_net=$(( without_net | 0x01 ))
+		KSI_PACKAGING_CONFIGURE_FLAGS="$KSI_PACKAGING_CONFIGURE_FLAGS --without-net-tcp"
+		],
+	[:])
+AC_ARG_WITH([net_http],
+	[AS_HELP_STRING([--without-net-http], [build without HTTP network provider.])],
+	[AC_MSG_NOTICE([Building without HTTP network provider.])]
+		[without_net=$(( without_net | 0x02 ))
+		KSI_PACKAGING_CONFIGURE_FLAGS="$KSI_PACKAGING_CONFIGURE_FLAGS --without-net-http"
+		],
+	[:])
+AC_ARG_WITH([net_file],
+	[AS_HELP_STRING([--without-net-file], [build without FILE network provider (needed for reading test resources).])],
+	[AC_MSG_NOTICE([Building without FILE network provider.])]
+		[without_net=$(( without_net | 0x04 ))
+		KSI_PACKAGING_CONFIGURE_FLAGS="$KSI_PACKAGING_CONFIGURE_FLAGS --without-net-file"],
+	[:])
+AC_DEFINE_UNQUOTED([KSI_DISABLE_NET_PROVIDER], [$without_net], [Build without net provider (bitfield).])
+AC_SUBST(KSI_PACKAGING_CONFIGURE_FLAGS)
+
 AC_MSG_NOTICE([Disabling strict HTTP parsing])
 AC_DEFINE(HTTP_PARSER_STRICT, 0, [Disabling strict HTTP parsing to allow underscores in host names.])
 
