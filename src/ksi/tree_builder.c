@@ -481,7 +481,7 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 		res = levelWithOverhead(builder, (unsigned short)level, &actualInputHeight);
 		if (res != KSI_OK) goto cleanup;
 
-		if (calculateHighestLevel(builder, actualInputHeight) > builder->maxTreeLevel) {
+		if (calculateHighestLevel(builder, actualInputHeight) > (unsigned)builder->maxTreeLevel) {
 			KSI_pushError(builder->ctx, res = KSI_BUFFER_OVERFLOW, "The maximum height passed.");
 			goto cleanup;
 		}
