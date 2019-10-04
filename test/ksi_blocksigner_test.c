@@ -226,7 +226,8 @@ static void testMasking(CuTest *tc) {
 		CuAssert(tc, "Unable to add leaf hash to the block signer.", res == KSI_OK);
 	}
 
-	KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Failed to set aggregator.", res == KSI_OK);
 
 	/* The tree root hash value is verified with the signature, thus no need to do it twice here. */
 	res = KSI_BlockSigner_closeAndSign(bs);
@@ -236,6 +237,71 @@ static void testMasking(CuTest *tc) {
 	KSI_BlockSigner_free(bs);
 	KSI_OctetString_free(iv);
 	KSI_DataHash_free(prev);
+#undef TEST_AGGR_RESPONSE_FILE
+}
+
+static void testMaskingWithMetaDataAndLevel(CuTest *tc) {
+#define TEST_AGGR_RESPONSE_FILE  "resource/tlv/" TEST_RESOURCE_AGGR_VER "/test-masking-lvl-metadata-root-sig-lvl-12-hash-1e1587ca82-response.tlv"
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_BlockSigner *bs = NULL;
+	int i;
+	KSI_DataHash *hsh = NULL;
+	KSI_DataHash *prev = NULL;
+	KSI_Signature *sig = NULL;
+	KSI_OctetString *iv = NULL;
+	const char *userId[] = { "Alice", "Bob", "Claire", "Delta", "Mansion", "Nugget", "Kate", "Redis", NULL };
+	KSI_BlockSignerHandle *hndl[sizeof(userId)] = {NULL};
+	KSI_MetaData *md = NULL;
+	const unsigned char ivDat[] = {0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1,
+		0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1,
+		0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1,
+		0x01, 0x02, 0xff, 0xfe, 0xaa, 0xa9, 0xf1, 0x55, 0x23, 0x51, 0xa1};
+
+	KSI_OctetString_new(ctx, ivDat, sizeof(ivDat), &iv);
+	KSI_DataHash_createZero(ctx, KSI_HASHALG_SHA2_256, &prev);
+	KSITest_DataHash_fromStr(ctx, "01004313f53502a18fe4a31ae0197ab09d4597042942a3a54e846fa01ff5479fa2", &hsh);
+	res = KSI_BlockSigner_new(ctx, KSI_HASHALG_SHA2_256, prev, iv, &bs);
+	CuAssert(tc, "Unable to create data hash with masking.", res == KSI_OK && bs != NULL);
+
+	for (i = 0; userId[i] != NULL; ++i) {
+		res = createMetaData(userId[i], &md);
+		CuAssert(tc, "Unable to create meta-data.", res == KSI_OK && md != NULL);
+
+		res = KSI_BlockSigner_addLeaf(bs, hsh, i, md, &hndl[i]);
+		CuAssert(tc, "Unable to add leaf hash to the block signer.", res == KSI_OK && hndl[i] != NULL);
+
+		KSI_MetaData_free(md);
+		md = NULL;
+	}
+
+	res = KSI_CTX_setAggregator(ctx, getFullResourcePathUri(TEST_AGGR_RESPONSE_FILE), TEST_USER, TEST_PASS);
+	CuAssert(tc, "Failed to set aggregator.", res == KSI_OK);
+
+	/* The tree root hash value is verified with the signature, thus no need to do it twice here. */
+	res = KSI_BlockSigner_closeAndSign(bs);
+	CuAssert(tc, "Unable to close the blocksigner.", res == KSI_OK);
+
+	/* Loop over all the handles, and extract the signature. */
+	for (i = 0; userId[i] != NULL; i++) {
+		/* Extract the signature. */
+		res = KSI_BlockSignerHandle_getSignature(hndl[i], &sig);
+		CuAssert(tc, "Unable to extract signature.", res == KSI_OK && sig != NULL);
+
+		/* Verify the signature. */
+		res = KSI_Signature_verifyWithPolicy(sig, hsh, i, KSI_VERIFICATION_POLICY_GENERAL, NULL);
+		CuAssert(tc, "Unable to verify the extracted signature.", res == KSI_OK);
+
+		/* Cleanup. */
+		KSI_Signature_free(sig);
+		sig = NULL;
+
+		KSI_BlockSignerHandle_free(hndl[i]);
+	}
+
+	KSI_DataHash_free(hsh);
+	KSI_DataHash_free(prev);
+	KSI_OctetString_free(iv);
+	KSI_BlockSigner_free(bs);
 #undef TEST_AGGR_RESPONSE_FILE
 }
 
@@ -587,6 +653,7 @@ CuSuite* KSITest_Blocksigner_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, testFreeBeforeClose);
 	SUITE_ADD_TEST(suite, testMasking);
+	SUITE_ADD_TEST(suite, testMaskingWithMetaDataAndLevel);
 	SUITE_ADD_TEST(suite, testMedaData);
 	SUITE_ADD_TEST(suite, testIdentityMedaData);
 	SUITE_ADD_TEST(suite, testSingle);
