@@ -16,11 +16,22 @@
  * Guardtime, Inc., and no license to trademarks is granted; Guardtime
  * reserves and retains all trademark rights.
  */
+#include "internal.h"
+
+#if KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_TCP
+
+int KSI_TcpAsyncClient_new(KSI_CTX *ctx, KSI_AsyncClient **c){
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned port, const char *user, const char *pass){
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+
+#else
 
 #include <string.h>
 #include <sys/types.h>
 
-#include "internal.h"
 #include "net_tcp.h"
 #include "io.h"
 #include "tlv.h"
@@ -642,3 +653,5 @@ int KSI_TcpAsyncClient_setService(KSI_AsyncClient *c, const char *host, unsigned
 	if (c == NULL || c->clientImpl == NULL) return KSI_INVALID_ARGUMENT;
 	return setService(c->clientImpl, host, port, user, pass);
 }
+
+#endif /* KSI_DISABLE_NET_PROVIDER */

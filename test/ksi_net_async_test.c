@@ -306,7 +306,7 @@ static void Test_AsyncSingningService_verifyReqId(CuTest* tc) {
 	res = KSITest_MockAsyncService_setEndpoint(as, NULL, 0, "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0x1234, &handle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0x1234, &handle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
@@ -349,7 +349,7 @@ static void Test_AsyncSingningService_verifyRequestCacheFull(CuTest* tc) {
 	for (i = 0; i < cacheSize; i++) {
 		handle = NULL;
 
-		res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &handle);
+		res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &handle);
 		CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
 
 		res = KSI_AsyncService_addRequest(as, handle);
@@ -357,7 +357,7 @@ static void Test_AsyncSingningService_verifyRequestCacheFull(CuTest* tc) {
 	}
 
 	handle = NULL;
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &handle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &handle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && handle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, handle);
@@ -402,7 +402,7 @@ static void Test_AsyncSign_oneRequest_verifyReqCtx(CuTest* tc) {
 	res = KSITest_DataHash_fromStr(ctx, "0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", &hsh);
 	CuAssert(tc, "Unable to create data hash.", res == KSI_OK && hsh != NULL);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 0, NULL, 0, KSI_HASHALG_INVALID, KSI_DataHash_ref(hsh), 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 0, NULL, 0, KSI_HASHALG_INVALID_VALUE, KSI_DataHash_ref(hsh), 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncHandle_setRequestCtx(reqHandle, (void*)hsh, (void (*)(void*))KSI_DataHash_free);
@@ -470,7 +470,7 @@ static void Test_AsyncSign_oneRequest_verifySignature(CuTest* tc) {
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -534,7 +534,7 @@ static void Test_AsyncSign_oneRequest_multipleResponses_verifySignature(CuTest* 
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -594,7 +594,7 @@ static void Test_AsyncSign_oneRequest_verifyNoError(CuTest* tc) {
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -644,7 +644,7 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf_viaServiceCallback(Cu
 	res = KSI_AsyncService_setOption(as, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)KSITest_ConfigCallback);
 	CuAssert(tc, "Unable to set conf callback.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -702,7 +702,7 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf_viaKsiCtxAggrCallback
 	res = KSI_CTX_setOption(ctx, KSI_OPT_AGGR_CONF_RECEIVED_CALLBACK, (void *)KSITest_ConfigCallback);
 	CuAssert(tc, "Unable to set extender conf callback.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -762,7 +762,7 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf_viaHandle_setKsiCtxEx
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -835,7 +835,7 @@ static void Test_AsyncSign_oneRequest_responseWithPushConf_viaHandle(CuTest* tc)
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -905,7 +905,7 @@ static void Test_AsyncSign_oneRequest_wrongResponse_getSignatureFail(CuTest* tc)
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -943,7 +943,7 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId(CuTest* tc) {
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -980,7 +980,7 @@ static void Test_AsyncSign_oneRequest_wrongResponseReqId_rcvTimeout0(CuTest* tc)
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -1038,7 +1038,7 @@ static void Test_AsyncSign_oneRequest_responseVerifyWithRequest(CuTest* tc) {
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -1098,7 +1098,7 @@ static void Test_AsyncSign_oneRequest_ErrorStatusWithSignatureElementsInResponse
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -1144,7 +1144,7 @@ static void Test_AsyncSign_oneRequest_invalidResponse(CuTest* tc) {
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -1185,7 +1185,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_validResponseFirst(
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -1228,7 +1228,7 @@ static void Test_AsyncSign_oneRequest_twoResponsesWithSameId_invalidResponseFirs
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);
@@ -1273,7 +1273,7 @@ static void Test_AsyncSign_oneRequest_responseMissingHeader(CuTest* tc) {
 	res = KSITest_MockAsyncService_setEndpoint(as, TEST_AGGR_RESPONSE_FILES, TEST_RESP_COUNT(TEST_AGGR_RESPONSE_FILES), "anon", "anon");
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID, NULL, 0, 0, &reqHandle);
+	res = KSITest_createAggrAsyncHandle(ctx, 1, (unsigned char *)"0111a700b0c8066c47ecba05ed37bc14dcadb238552d86c659342d1d7e87b8772d", 0, KSI_HASHALG_INVALID_VALUE, NULL, 0, 0, &reqHandle);
 	CuAssert(tc, "Unable to create async handle.", res == KSI_OK && reqHandle != NULL);
 
 	res = KSI_AsyncService_addRequest(as, reqHandle);

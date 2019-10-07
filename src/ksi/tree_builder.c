@@ -24,19 +24,18 @@
 #include "hashchain.h"
 #include "impl/meta_data_impl.h"
 
-KSI_IMPLEMENT_LIST(KSI_TreeBuilderLeafProcessor, NULL);
+KSI_IMPLEMENT_LIST(KSI_TreeBuilderLeafProcessor, NULL)
 
 struct KSI_TreeLeafHandle_st {
 	size_t ref;
 	KSI_TreeBuilder *pBuilder;
 	KSI_TreeNode *leafNode;
 };
+KSI_IMPLEMENT_REF(KSI_TreeLeafHandle)
+KSI_IMPLEMENT_LIST(KSI_TreeLeafHandle, KSI_TreeLeafHandle_free)
 
-KSI_IMPLEMENT_REF(KSI_TreeLeafHandle);
-
-KSI_IMPLEMENT_LIST(KSI_TreeLeafHandle, KSI_TreeLeafHandle_free);
-
-static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root);
+static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_DataHasher *hsr,
+		KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root);
 
 void KSI_TreeNode_free(KSI_TreeNode *node) {
 	if (node != NULL ) {
@@ -117,14 +116,12 @@ cleanup:
 static int joinHashes(KSI_CTX *ctx, KSI_DataHasher *hsr, const KSI_TreeNode *left, const KSI_TreeNode *right, int level, KSI_DataHash **root) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_DataHash *tmp = NULL;
-	unsigned char l;
+	unsigned char l = (unsigned char)level;
 
 	if (left == NULL || right == NULL || !KSI_IS_VALID_TREE_LEVEL(level) || root == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
-
-	l = (unsigned char) level;
 
 	res = KSI_DataHasher_reset(hsr);
 	if (res != KSI_OK) {
@@ -137,13 +134,11 @@ static int joinHashes(KSI_CTX *ctx, KSI_DataHasher *hsr, const KSI_TreeNode *lef
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
 	res = KSI_DataHasher_addTreeNode(hsr, right);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
-
 	res = KSI_DataHasher_add(hsr, &l, 1);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
@@ -168,7 +163,8 @@ cleanup:
 	return res;
 }
 
-static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root) {
+static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_DataHasher *hsr,
+		KSI_TreeNode *leftSibling, KSI_TreeNode *rightSibling, KSI_TreeNode **root) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *tmp = NULL;
 	int level;
@@ -186,7 +182,7 @@ static int KSI_TreeNode_join(KSI_CTX *ctx, KSI_DataHasher *hsr, KSI_TreeNode *le
 
 	KSI_ERR_clearErrors(ctx);
 
-	level = (leftSibling->level > rightSibling->level ? leftSibling->level : rightSibling->level) + 1;
+	level = (int)(leftSibling->level > rightSibling->level ? leftSibling->level : rightSibling->level) + 1;
 
 	/* Sanity check. */
 	if (!KSI_IS_VALID_TREE_LEVEL(level)) {
@@ -303,7 +299,7 @@ void KSI_TreeBuilder_free(KSI_TreeBuilder *builder) {
 	}
 }
 
-static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
+static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node, int at) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_TreeNode *pSlot = NULL;
 	KSI_TreeNode *root = NULL;
@@ -319,11 +315,11 @@ static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 	}
 
 	/* Get the current value from the stack. */
-	pSlot = builder->stack[node->level];
+	pSlot = builder->stack[at];
 
 	if (pSlot == NULL) {
 		/* The slot is empty - reuse the slot. */
-		builder->stack[node->level] = node;
+		builder->stack[at] = node;
 	} else {
 		/* The slot is taken - create a new node from the existing ones. */
 		res = KSI_TreeNode_join(builder->ctx, builder->hsr, pSlot, node, &root);
@@ -333,9 +329,9 @@ static int insertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		}
 
 		/* Remove the existing element. */
-		builder->stack[node->level] = NULL;
+		builder->stack[at] = NULL;
 
-		res = insertNode(builder, root);
+		res = insertNode(builder, root, at + 1);
 		if (res != KSI_OK) {
 			KSI_pushError(builder->ctx, res, NULL);
 			goto cleanup;
@@ -384,12 +380,12 @@ static int processAndInsertNode(KSI_TreeBuilder *builder, KSI_TreeNode *node) {
 		if (res != KSI_OK) goto cleanup;
 
 		if (tmp != NULL) {
-			res = KSI_TreeNode_join(builder->ctx, builder->hsr, localRoot == NULL ? node : localRoot, tmp, &localRoot);
+			res = KSI_TreeNode_join(builder->ctx, builder->hsr, tmp, localRoot == NULL ? node : localRoot, &localRoot);
 			if (res != KSI_OK) goto cleanup;
 		}
 	}
 
-	res = insertNode(builder, localRoot == NULL ? node : localRoot);
+	res = insertNode(builder, localRoot == NULL ? node : localRoot, 0);
 	if (res != KSI_OK) goto cleanup;
 
 	tmp = NULL;
@@ -446,36 +442,18 @@ cleanup:
  * \param[in] level   The level from the next input hash. If 0, the height of the current tree is calculated.
  * \return Returns the level of the root hash.
  */
-static unsigned short calculateHighestLevel(KSI_TreeBuilder *builder, int level) {
-	unsigned int height = 0;
-	int carry = 0;
+static unsigned calculateHighestLevel(KSI_TreeBuilder *builder, unsigned level) {
 	int i;
 
 	if (builder == NULL) return 0;
 
-
 	for (i = 0; i < KSI_TREE_BUILDER_STACK_LEN; i++) {
-		if (i < level) {
-			if (builder->stack[i] != NULL) {
-				/* If there's at least one sub-tree, this will increase the overall tree height by one. */
-				carry = 1;
-			}
-		} else {
-			if (i == level) {
-				/* Calculate the height just in case if the forest is empty. */
-				height = level + carry;
-				++carry;
-			}
-
-			if (builder->stack[i] != NULL) {
-				height = i + carry;
-			} else {
-				carry = 1;
-			}
+		if (builder->stack[i] != NULL) {
+			level = (builder->stack[i]->level > level ? builder->stack[i]->level : level) + 1;
 		}
 	}
 
-	return height;
+	return level;
 }
 
 static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *metaData, int level, KSI_TreeLeafHandle **leaf) {
@@ -492,7 +470,7 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 
 
 	if (builder->maxTreeLevel > 0) {
-		unsigned short actualInputHeight;
+		unsigned short actualInputHeight = 0;
 
 		/* Let's not waste time and effort. */
 		if (level > builder->maxTreeLevel) {
@@ -500,10 +478,10 @@ static int addLeaf(KSI_TreeBuilder *builder, KSI_DataHash *hsh, KSI_MetaData *me
 			goto cleanup;
 		}
 
-		res = levelWithOverhead(builder, level, &actualInputHeight);
+		res = levelWithOverhead(builder, (unsigned short)level, &actualInputHeight);
 		if (res != KSI_OK) goto cleanup;
 
-		if (calculateHighestLevel(builder, actualInputHeight) > builder->maxTreeLevel) {
+		if (calculateHighestLevel(builder, actualInputHeight) > (unsigned)builder->maxTreeLevel) {
 			KSI_pushError(builder->ctx, res = KSI_BUFFER_OVERFLOW, "The maximum height passed.");
 			goto cleanup;
 		}
@@ -569,8 +547,6 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder) {
 	KSI_TreeNode *root = NULL;
 	KSI_TreeNode *tmp = NULL;
 
-	size_t i;
-
 	if  (builder == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
@@ -579,6 +555,8 @@ int KSI_TreeBuilder_close(KSI_TreeBuilder *builder) {
 	KSI_ERR_clearErrors(builder->ctx);
 
 	if (builder->rootNode == NULL) {
+		size_t i;
+
 		/* Finalize the forest of complete binary trees into a single tree. */
 		for (i = 0; i < KSI_TREE_BUILDER_STACK_LEN; i++) {
 			KSI_TreeNode *node = builder->stack[i];
@@ -747,6 +725,8 @@ cleanup:
 }
 
 
+KSI_IMPLEMENT_GETTER(KSI_TreeLeafHandle, KSI_TreeNode*, leafNode, TreeNode)
+
 int KSI_TreeLeafHandle_getAggregationChain(const KSI_TreeLeafHandle *handle, KSI_AggregationHashChain **chain) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_AggregationHashChain *tmp = NULL;
@@ -801,7 +781,7 @@ int KSI_TreeLeafHandle_getAggregationChain(const KSI_TreeLeafHandle *handle, KSI
 	}
 
 	/* Set the aggregation algorithm. */
-	res = KSI_Integer_new(handle->pBuilder->ctx, handle->pBuilder->algo, &algoId);
+	res = KSI_Integer_new(handle->pBuilder->ctx, (KSI_uint64_t)handle->pBuilder->algo, &algoId);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
@@ -826,4 +806,3 @@ cleanup:
 
 	return res;
 }
-

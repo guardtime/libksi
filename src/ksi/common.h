@@ -38,9 +38,9 @@ extern "C" {
  */
 #define KSI_IS_VALID_TREE_LEVEL(level) (((level) <= 0xff) && ((int)(level) >= 0))
 
-	/**
-	 * Marks a function as deprecated.
-	 */
+/**
+ * Marks a function as deprecated.
+ */
 #ifndef __KSI_NO_DEPRECATE__
 #  if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
 #    define KSI_FN_DEPRECATED(decl, comment) /*! \deprecated comment */ decl __attribute__((deprecated))
@@ -53,17 +53,32 @@ extern "C" {
 #  define KSI_FN_DEPRECATED(decl, comment) decl;
 #endif
 
+/**
+ * Marks a variable as deprecated.
+ */
 #ifndef __KSI_NO_DEPRECATE__
 #  if defined(__GNUC__) && ((__GNUC__ >= 4) || ((__GNUC__ == 3) && (__GNUC_MINOR__ >= 1)))
 #    define KSI_VAR_DEPRECATED(decl, comment) /*! \deprecated comment */ decl __attribute__((deprecated))
-#  elif defined(_WIN32)
-	 /* No reasonable way to shown the warning with VS. */
+#  else
+	 /* No reasonable way to show the warning with VS. */
+#    define KSI_VAR_DEPRECATED(decl, comment) /*! \deprecated comment */ decl
 #  endif
+#else
+#  define KSI_VAR_DEPRECATED(decl, comment) decl
 #endif
 
-
-#ifndef KSI_VAR_DEPRECATED
-#  define KSI_VAR_DEPRECATED(decl, comment) /*! \deprecated comment */ decl
+/**
+ * Marks a enumerator as deprecated.
+ */
+#ifndef __KSI_NO_DEPRECATE__
+#  if defined(__GNUC__) && (__GNUC__ >= 6)
+#    define KSI_ENUM_DEPRECATED(decl, comment) /*! \deprecated comment */ decl __attribute__((deprecated))
+#  else
+	 /* No reasonable way to show the warning with VS. */
+#    define KSI_ENUM_DEPRECATED(decl, comment) /*! \deprecated comment */ decl
+#  endif
+#else
+#  define KSI_ENUM_DEPRECATED(decl, comment) decl
 #endif
 
 #if defined(_WIN32) && defined(DLL_BUILD) && !(KSI_BUILD)

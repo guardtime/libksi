@@ -963,7 +963,7 @@ static void asyncExtending_requestConfigOnly(CuTest* tc, KSI_AsyncService *as) {
 
 		if (handle == NULL) {
 			CuAssert(tc, "No response within timeout.", slept < (KSITEST_ASYNC_SLEEP_TIME_MS * 10));
-			/* There is nothing has been received. */
+			/* Nothing has been received. */
 			/* Wait for a while to avoid busy loop. */
 			KSI_LOG_debug(ctx, "%s: SLEEP.", __FUNCTION__);
 			sleep_ms(KSITEST_ASYNC_SLEEP_TIME_MS);

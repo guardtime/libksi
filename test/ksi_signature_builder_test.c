@@ -374,6 +374,8 @@ static void testAppendChain(CuTest* tc) {
 	unsigned char *rawRoot = NULL;
 	size_t rawRoot_len = 0;
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
 

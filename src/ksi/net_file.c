@@ -28,6 +28,26 @@
 #include "impl/ctx_impl.h"
 #include "impl/net_file_impl.h"
 
+#if KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_FILE
+
+int KSI_FsClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_FsClient_setPublicationUrl(KSI_NetworkClient *client, const char *path) {
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_FsClient_setExtender(KSI_NetworkClient *client, const char *path, const char *user, const char *pass) {
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_FsClient_setAggregator(KSI_NetworkClient *client, const char *path, const char *user, const char *pass) {
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+int KSI_FsClient_extractPath(const char *uri, char **path) {
+	return KSI_NETWORK_PROVIDER_DISABLED;
+}
+
+#else
+
 #define TLV_BUFFER_SIZE     (0xffff + 4)
 
 typedef struct FsClient_Endpoint_st FsClientCtx, FsClient_Endpoint;
@@ -508,7 +528,6 @@ cleanup:
 
 static void FsClient_free(KSI_FsClient *fs) {
 	if (fs != NULL) {
-		KSI_NetworkClient_free(fs->http);
 		KSI_free(fs);
 	}
 }
@@ -541,13 +560,6 @@ int KSI_FsClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	}
 
 	fs->sendRequest = sendRequest;
-	fs->http = NULL;
-
-	res = KSI_HttpClient_new(ctx, &fs->http);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
-	}
 
 	/* Create implementations for abstract endpoints. */
 	res = FsClient_Endpoint_new(&endp_aggr);
@@ -698,3 +710,5 @@ cleanup:
 	if (tmpPath) KSI_free(tmpPath);
 	return res;
 }
+
+#endif /* KSI_DISABLE_NET_PROVIDER */

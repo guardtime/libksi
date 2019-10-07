@@ -51,7 +51,7 @@ extern "C" {
 	 */
 	typedef struct KSI_DataHash_st KSI_DataHash;
 
-	extern const int KSI_VAR_DEPRECATED(KSI_HASHALG_INVALID, Use #KSI_isHashAlgorithmSupported instead.);
+	KSI_DEFINE_EXTERN(const int KSI_VAR_DEPRECATED(KSI_HASHALG_INVALID, Use #KSI_isHashAlgorithmSupported instead.));
 
 	/**
 	 * The Guardtime representation of hash algorithms, necessary to calculate
@@ -83,7 +83,7 @@ extern "C" {
 		/* Number of known hash algorithms. */
 		KSI_NUMBER_OF_KNOWN_HASHALGS,
 
-		/** An invalid hash algorithm. This is returned from #KSI_getHashAlgorithmByName,  */
+		/** An invalid hash algorithm. */
 		KSI_HASHALG_INVALID_VALUE = 0x100,
 	} KSI_HashAlgorithm;
 
@@ -260,10 +260,9 @@ extern "C" {
 	int KSI_DataHash_fromImprint(KSI_CTX *ctx, const unsigned char *imprint, size_t imprint_length, KSI_DataHash **hash);
 
 	/**
-	 * Returns the hash algorithm specified by the case insensitive string parameter \c name . If the algorithm
-	 * name is not recognized the value of KSI_HASHALG_INVALID, witch is not a
-	 * correct hashing algorithm, is returned. To verify the correctness of the returned
-	 * value #KSI_isHashAlgorithmSupported or #KSI_isHashAlgorithmTrusted function must be used.
+	 * Returns the hash algorithm specified by the case insensitive string parameter \c name. If the algorithm
+	 * name is not recognized the value of invalid algorithm is returned. To verify the correctness
+	 * of the returned value #KSI_isHashAlgorithmSupported or #KSI_isHashAlgorithmTrusted function must be used.
 	 * The valid inputs are "default" for the configured default hash algorithm or one of the following:
 	 * "sha-1", "sha1", "sha-256", "sha2-256", "sha-2", "sha2", "sha256", "ripemd-160", "ripemd160",
 	 * "sha-384", "sha384", "sha2-384", "sha-512", "sha512", "sha2-512", "sha3-224", "sha3-256", "sha3-384",
@@ -272,8 +271,10 @@ extern "C" {
 	 * 		 the infix "3" is mandatory. This means "sha-256" is unambiguously the 256 bit version of SHA-2.
 	 * \param[in]	name			Name of the hash function.
 	 *
-	 * \return The hash algorithm id or -1 if it was not found.
+	 * \return The hash algorithm id or invalid algorithm if it was not found.
 	 * \see #KSI_getHashAlgorithmName
+	 * \see #KSI_isHashAlgorithmSupported
+	 * \see #KSI_isHashAlgorithmTrusted
 	 */
 	KSI_HashAlgorithm KSI_getHashAlgorithmByName(const char *name);
 

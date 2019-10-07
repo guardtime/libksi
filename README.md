@@ -1,4 +1,5 @@
 # libksi #
+
 Guardtime KSI Blockchain is an industrial scale blockchain platform that cryptographically
 ensures data integrity and proves time of existence. Its signatures, based on hash chains, link data to global
 calendar blockchain. The checkpoints of the blockchain, published in newspapers and electronic media, enable long term
@@ -11,6 +12,44 @@ and systems. It provides an API for all KSI functionality, including the core fu
 and verifying the signatures.
 
 ## Installation ##
+
+### Latest Release from Guardtime Repository
+
+In order to install the `libksi` packages directly from the Guardtime public repository, download and save the repository configuration and use appropriate system package manager. 
+
+
+```
+### On RHEL/CentOS ###
+
+cd /etc/yum.repos.d
+
+# In case of RHEL/CentOS 6
+sudo curl -O http://download.guardtime.com/ksi/configuration/guardtime.el6.repo
+
+# In case of RHEL/CentOS 7
+sudo curl -O http://download.guardtime.com/ksi/configuration/guardtime.el7.repo
+
+sudo yum install libksi
+
+
+### On Debian/Ubuntu ###
+
+# Add Guardtime pgp key.
+sudo curl http://download.guardtime.com/ksi/GUARDTIME-GPG-KEY | sudo apt-key add -
+
+# In case of Ubuntu 16 (Xenial)
+sudo curl -o /etc/apt/sources.list.d/guardtime.list http://download.guardtime.com/ksi/configuration/guardtime.xenial.list
+
+# In case of Debian 9 (Stretch)
+sudo curl -o /etc/apt/sources.list.d/guardtime.list http://download.guardtime.com/ksi/configuration/guardtime.stretch.list
+
+sudo apt update
+apt-get install libksi
+```
+
+For macOS, see [https://github.com/guardtime/homebrew-ksi](https://github.com/guardtime/homebrew-ksi)
+
+### From Source Code
 
 To build the `libksi`, you need to have the following SW components installed:
 1. A network provider
@@ -29,9 +68,6 @@ For building under Windows you need the Windows SDK.
 
 To use `libksi` in your C/C++ project, link it against the `libksi` binary and your chosen network and cryptography providers.
 
-If you do not want to build your own binaries, you can get the latest stable release from the Guardtime repository.
-To set up the repository, save this repo file in your repositories directory (e.g. `/etc/yum.repos.d/`):
-[http://download.guardtime.com/ksi/configuration/guardtime.el6.repo](http://download.guardtime.com/ksi/configuration/guardtime.el6.repo)
 
 ## Known Limitations ##
 
@@ -94,31 +130,6 @@ Alternatively in the Windows registry, modify the 'HKEY_CURRENT_USER\Software\Mi
 2) Set ProxyServer to `server:port`
 
 Configuring authentication is not supported by the Windows control panel and registry.
-
-## PDU Version ##
-
-`libksi` supports two different PDU versions for aggregation and extending messages. By default, PDU version 1 is used both for aggregation and extending.
-If the configured aggregator or extender does not support the default PDU version, the PDU version can be changed in one of the following ways:
-
-1) Define a macro that will be used when building the `libksi`. The macro name must be `KSI_AGGREGATION_PDU_VERSION` or `KSI_EXTENDING_PDU_VERSION`. Possible values are `KSI_PDU_VERSION_1` or `KSI_PDU_VERSION_2`.
-
-An example of defining the macro in `WinBuild64.bat`:
-~~~
-	nmake [macros...] KSI_AGGREGATION_PDU_VERSION=KSI_PDU_VERSION_2 [targets...]
-~~~
-
-An example of defining the macro in `configure.ac`:
-~~~
-	AC_MSG_NOTICE([Setting extending PDU version])
-	AC_DEFINE(KSI_EXTENDING_PDU_VERSION, KSI_PDU_VERSION_2, [Setting extending PDU version to 2.])
-~~~
-
-2) Configure the PDU versions in your application by using the `KSI_CTX_setFlag()` interface:
-~~~
-	KSI_CTX_setFlag(ksi, KSI_CTX_FLAG_AGGR_PDU_VER, (void*)KSI_PDU_VERSION_2);
-	KSI_CTX_setFlag(ksi, KSI_CTX_FLAG_EXT_PDU_VER, (void*)KSI_PDU_VERSION_2);
-~~~
-
 
 ## Usage ##
 
@@ -192,6 +203,7 @@ See `CONTRIBUTING.md` file.
 See `license.txt` file.
 
 ## Dependencies ##
+
 | Dependency        | Version                           | License type | Source                         | Notes |
 | :---              | :---                              | :---         | :---                           |:---   |
 | OpenSSL           | Latest stable for target platform | BSD          | https://www.openssl.org/       | This product includes cryptographic software written by Eric Young (eay@cryptsoft.com).  This product includes software written by Tim Hudson (tjh@cryptsoft.com). |
@@ -203,9 +215,10 @@ See `license.txt` file.
 | Nginx             | n/a                               | MIT          |                                | Modified version of code based on src/http/ngx_http_parse.c from NGINX embedded in KSI code base. |
 
 ## Compatibility ##
-| OS / Platform                              | Compatibility                                |
+
+| OS/Platform                              | Compatibility                                |
 | :---                                       | :---                                         |
-| CentOS / RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
+| CentOS/RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
 | Debian, ...                                | Compatible but not tested on a regular basis. |
-| OS X                                       | Compatible but not tested on a regular basis. |
+| macOS                                       | Compatible but not tested on a regular basis. |
 | Windows 7, 8, 10                           | Compatible but not tested on a regular basis. |

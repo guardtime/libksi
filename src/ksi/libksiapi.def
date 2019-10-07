@@ -60,6 +60,7 @@ EXPORTS
 
 ;hash.h
 EXPORTS
+	KSI_HASHALG_INVALID DATA
 	KSI_DataHasher_open
 	KSI_DataHasher_reset
 	KSI_DataHasher_add
@@ -494,16 +495,6 @@ EXPORTS
 	KSI_TLV_parseBlob2
 	KSI_TLV_writeBytes
 
-;tree_builder.h
-EXPORTS
-	KSI_TreeLeafHandle_free
-	KSI_TreeLeafHandle_getAggregationChain
-	KSI_TreeBuilder_new
-	KSI_TreeBuilder_free
-	KSI_TreeBuilder_addDataHash
-	KSI_TreeBuilder_addMetaData
-	KSI_TreeBuilder_close
-
 ;tlv_template.h
 EXPORTS
 	KSI_TlvTemplate_extract
@@ -545,6 +536,7 @@ EXPORTS
 ;tree_builder.h
 	KSI_TreeLeafHandle_free
 	KSI_TreeLeafHandle_getAggregationChain
+	KSI_TreeLeafHandle_getTreeNode
 	KSI_TreeBuilder_new
 	KSI_TreeBuilder_free
 	KSI_TreeBuilder_addDataHash
@@ -965,6 +957,10 @@ EXPORTS
 	KSI_VerificationRule_PublicationsFileSignaturePublicationVerification
 	KSI_VerificationRule_UserProvidedPublicationTimeDoesNotSuit
 	KSI_VerificationRule_CalendarAuthenticationRecordPresenceVerification
+	KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToHead
+	KSI_VerificationRule_ExtendSignatureCalendarChainInputHashToSamePubTime
+	KSI_VerificationRule_PublicationsFileExtendToPublication
+	KSI_VerificationRule_UserProvidedPublicationExtendToPublication
 
 ;policy.h
 EXPORTS
@@ -977,6 +973,8 @@ EXPORTS
 	KSI_SignatureVerifier_verify
 	KSI_Policy_free
 	KSI_PolicyVerificationResult_free
+	KSI_RuleVerificationResult_init
+	KSI_RuleVerificationResult_clean
 	KSI_VerificationContext_init
 	KSI_VerificationContext_clean
 	KSI_PolicyVerificationResult_free
@@ -1007,6 +1005,7 @@ EXPORTS
 	KSI_SignatureBuilder_addAggregationChain
 	KSI_SignatureBuilder_appendAggregationChain
 	KSI_SignatureBuilder_createSignatureWithAggregationChain
+	KSI_SignatureBuilder_setAggregationChainStartLevel
 	KSI_SignatureBuilder_setCalendarAuthRecord
 	KSI_SignatureBuilder_setPublication
 	KSI_SignatureBuilder_setRFC3161

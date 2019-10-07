@@ -440,18 +440,19 @@ static void testKsiUserAndPassFromUri(CuTest* tc) {
 	KSI_NetworkClient_free(uric);
 }
 
+#define TEST_SKIP_CONDITION (KSI_DISABLE_NET_PROVIDER & (KSI_IMPL_NET_HTTP | KSI_IMPL_NET_TCP))
 
 CuSuite* KSITest_uriClient_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
-	SUITE_ADD_TEST(suite, testUriClientInit);
-	SUITE_ADD_TEST(suite, testValidAggregatorHttpUri);
-	SUITE_ADD_TEST(suite, testValidExtenderHttpUri);
-	SUITE_ADD_TEST(suite, testValidAggregatorTcpUri);
-	SUITE_ADD_TEST(suite, testValidExtenderTcpUri);
+	SUITE_SKIP_TEST_IF(TEST_SKIP_CONDITION, suite, testUriClientInit, "user", "Network provider disabled.");
+	SUITE_SKIP_TEST_IF(TEST_SKIP_CONDITION, suite, testValidAggregatorHttpUri, "user", "Network provider disabled.");
+	SUITE_SKIP_TEST_IF(TEST_SKIP_CONDITION, suite, testValidExtenderHttpUri, "user", "Network provider disabled.");
+	SUITE_SKIP_TEST_IF(TEST_SKIP_CONDITION, suite, testValidAggregatorTcpUri, "user", "Network provider disabled.");
+	SUITE_SKIP_TEST_IF(TEST_SKIP_CONDITION, suite, testValidExtenderTcpUri, "user", "Network provider disabled.");
 	SUITE_ADD_TEST(suite, testInvalidExtenderUri);
 	SUITE_ADD_TEST(suite, testInvalidAggregatorUri);
-	SUITE_ADD_TEST(suite, testKsiUserAndPassFromUri);
+	SUITE_SKIP_TEST_IF(TEST_SKIP_CONDITION, suite, testKsiUserAndPassFromUri, "user", "Network provider disabled.");
 
 	return suite;
 }

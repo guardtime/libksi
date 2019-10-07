@@ -25,7 +25,7 @@
 #include "signature_builder.h"
 
 
-KSI_IMPLEMENT_LIST(KSI_BlockSignerHandle, KSI_BlockSignerHandle_free);
+KSI_IMPLEMENT_LIST(KSI_BlockSignerHandle, KSI_BlockSignerHandle_free)
 
 
 struct KSI_BlockSigner_st {
@@ -52,7 +52,7 @@ struct KSI_BlockSignerHandle_st {
 	KSI_BlockSigner *signer;
 };
 
-static KSI_IMPLEMENT_REF(KSI_BlockSignerHandle);
+static KSI_IMPLEMENT_REF(KSI_BlockSignerHandle)
 
 void KSI_BlockSignerHandle_free(KSI_BlockSignerHandle *handle) {
 	if (handle != NULL && --handle->ref == 0) {
@@ -105,7 +105,7 @@ static int metaDataProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 	}
 
 	if (signer->metaData != NULL) {
-		res = KSI_TreeNode_new(signer->ctx, NULL, signer->metaData, in->level, &tmp);
+		res = KSI_TreeNode_new(signer->ctx, NULL, signer->metaData, (int)in->level, &tmp);
 		if (res != KSI_OK) goto cleanup;
 
 		*out = tmp;
@@ -172,7 +172,7 @@ static int maskingProcessor(KSI_TreeNode *in, void *c, KSI_TreeNode **out) {
 		}
 
 		/* Add the mask as left link of the calculation. */
-		res = KSI_TreeNode_new(signer->ctx, mask, NULL, in->level, &tmp);
+		res = KSI_TreeNode_new(signer->ctx, mask, NULL, (int)in->level, &tmp);
 		if (res != KSI_OK) {
 			KSI_pushError(signer->ctx, res, NULL);
 			goto cleanup;
@@ -241,6 +241,8 @@ cleanup:
 int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *prevLeaf, KSI_OctetString *initVal, KSI_BlockSigner **signer) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_BlockSigner *tmp = NULL;
+	const unsigned char *ivValue = NULL;
+	size_t ivLength = 0;
 
 	KSI_ERR_clearErrors(ctx);
 
@@ -288,6 +290,13 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 	tmp->origPrevLeaf = KSI_DataHash_ref(prevLeaf);
 	tmp->iv = KSI_OctetString_ref(initVal);
 
+	/* Add the client id handle. Add it first as metadata must be in the first link. */
+	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->metaDataProcessor);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
 	/* Add the masking handle. */
 	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->maskingProcessor);
 	if (res != KSI_OK) {
@@ -295,11 +304,13 @@ int KSI_BlockSigner_new(KSI_CTX *ctx, KSI_HashAlgorithm algoId, KSI_DataHash *pr
 		goto cleanup;
 	}
 
-	/* Add the client id handle. */
-	res = KSI_TreeBuilderLeafProcessorList_append(tmp->builder->cbList, &tmp->metaDataProcessor);
-	if (res != KSI_OK) {
-		KSI_pushError(ctx, res, NULL);
-		goto cleanup;
+	/**
+	 * The masking IV value should be about as long as the outputs of the hash function in
+	 * order to ensure enough entropy. If it is not the case a warning should be logged.
+	 */
+	if (KSI_OctetString_extract(initVal, &ivValue, &ivLength) == KSI_OK &&
+			ivLength < KSI_getHashLength(algoId)) {
+		KSI_LOG_warn(ctx, "Blinding mask initial value has insufficient entropy.");
 	}
 
 	*signer = tmp;
@@ -346,6 +357,7 @@ int KSI_BlockSigner_closeAndSign(KSI_BlockSigner *signer) {
 	}
 
 	KSI_LOG_debug(signer->ctx, "Signing the root hash value of the block signer.");
+
 	/* Sign the root hash. */
 	res = KSI_Signature_signAggregated(signer->ctx, signer->builder->rootNode->hash, signer->builder->rootNode->level, &signer->signature);
 	if (res != KSI_OK) {
@@ -502,6 +514,7 @@ int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_
 	KSI_Signature *tmp = NULL;
 	KSI_AggregationHashChain *aggr = NULL;
 	KSI_SignatureBuilder *builder = NULL;
+	KSI_TreeNode *node = NULL;
 
 	if (handle == NULL || sig == NULL) {
 		res = KSI_INVALID_ARGUMENT;
@@ -529,13 +542,29 @@ int KSI_BlockSignerHandle_getSignature(const KSI_BlockSignerHandle *handle, KSI_
 		goto cleanup;
 	}
 
+	res = KSI_TreeLeafHandle_getTreeNode(handle->leafHandle, &node);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
+	if (node == NULL) {
+		KSI_pushError(handle->ctx, res = KSI_INVALID_FORMAT, "Leaf node is missing.");
+		goto cleanup;
+	}
+
+	res = KSI_SignatureBuilder_setAggregationChainStartLevel(builder, node->level);
+	if (res != KSI_OK) {
+		KSI_pushError(handle->ctx, res, NULL);
+		goto cleanup;
+	}
+
 	res = KSI_SignatureBuilder_appendAggregationChain(builder, aggr);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;
 	}
 
-	res = KSI_SignatureBuilder_close(builder, 0, &tmp);
+	res = KSI_SignatureBuilder_close(builder, node->level, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(handle->ctx, res, NULL);
 		goto cleanup;

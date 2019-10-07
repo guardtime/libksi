@@ -1,12 +1,12 @@
 
-    	Copyright 2013-2015 Guardtime, Inc.
-	
+		Copyright 2013-2015 Guardtime, Inc.
+
 	This file is part of the Guardtime client SDK.
-	
+
 	Licensed under the Apache License, Version 2.0 (the "License").
 	You may not use this file except in compliance with the License.
 	You may obtain a copy of the License at
-	    http://www.apache.org/licenses/LICENSE-2.0
+		http://www.apache.org/licenses/LICENSE-2.0
 	Unless required by applicable law or agreed to in writing, software
 	distributed under the License is distributed on an "AS IS" BASIS,
 	WITHOUT WARRANTIES, CONDITIONS, OR OTHER LICENSES OF ANY KIND, either
@@ -22,8 +22,8 @@ Building with Microsoft Visual Studio
 
 	This document describes how to build KSI C API as static and dynamic library
 	using Microsoft Visual Studio tools and different libraries.
-	
-	
+
+
 Prerequisites
 =====================================
 
@@ -33,12 +33,12 @@ Prerequisites
 		2) Network provider (must have one)
 			2.1) Lib Curl 0.9.8g (recommended).
 			2.2) Windows native WinINet
-			2.4) Windows native WinHTTP 
+			2.4) Windows native WinHTTP
 		3) Cryptography provider (must have one)
 			3.1) OpenSSL 0.9.8g (recommended)
 			3.2) Windows native CryptoAPI
-		
-	Lib Curl must be build from binaries when Visual Studio 14 and lib Curl are 
+
+	Lib Curl must be build from binaries when Visual Studio 14 and lib Curl are
 	used for building API:
 		1) Download cURL 7.37 binaries from git.
 		2) Build cURL using Visual Studio Command prompt and the following command
@@ -51,17 +51,17 @@ Prerequisites
 			5.1) move build to desired location and rename the directory
 			5.2) Copy curl.exe from bin folder to system32
 			5.3) Add curl path to system variables
-	
+
 	When KSI API uses OpenSSl or Curl the location of libraries must be specified.
 	See make file options CURL_DIR, OPENSSL_DIR. The structure of the directories
 	must be as described below. The name of static library or import library files
-	must contain description of C runtime library (RTL). After build, rename 
+	must contain description of C runtime library (RTL). After build, rename
 	libcurl(RTL).dll as libcurl.dll and libeay32(RTL).dll as libeay32.dll. Windows
 	native libraries are already installed with Windows.
-	
-	
+
+
 	For CURL:
-	
+
 	dll
 	   |libcurlMT.lib
 	   |libcurlMTd.lib
@@ -76,10 +76,10 @@ Prerequisites
 	   |libcurlMTd.lib
 	   |libcurlMD.lib
 	   |libcurlMDd.lib
-	
-	
+
+
 	For OpenSSL:
-	
+
 	dll
 	   |libeay32MT.lib
 	   |libeay32MTd.lib
@@ -94,17 +94,17 @@ Prerequisites
 	   |libeay32MTd.lib
 	   |libeay32MD.lib
 	   |libeay32MDd.lib
-		
-		
+
+
 Build process
 =====================================
-	
+
 	Below is the abstract structure of the project that describes the location
 	of the source code, make files and output. Root directory contains top-level
 	build scripts that are used to build KSI C API. After successful build out
 	directory is created.
-	
-	
+
+
 	|WinBuild32.bat
 	|WinBuild62.bat
 	|makefile
@@ -116,49 +116,53 @@ Build process
 	|	 | makefile
 	|  |example
 	|	 | *.c
-	|	 | *.h      
+	|	 | *.h
 	|	 | makefile
 	|
 	|test
 	|  | *.c
 	|  | *.h
 	|  | makefile
-	|   
+	|
 	|out
 	|  |lib
 	|	 | *.lib
 	|  |dll
 	|	 | *.dll
 	|  |bin
-	|	 | *.exe	 
+	|	 | *.exe
 	|  |include
 	|	 |ksi
 	|		| *.h
-		
-	
-Configuring build scripts
-=====================================	
 
-	For building process, above described top level-make file or 
+
+Configuring build scripts
+=====================================
+
+	For building process, above described top level-make file or
 	WinBuild32.bat/WinBuild64.bat must be called.
-	
+
 	Make file can be executed via CMD shell or Visual Studio command prompt shell.
-	When using CMD shell environment must be configured using setenv command. 
+	When using CMD shell environment must be configured using setenv command.
 	For example for 64-bit build setenv /x64.
 
-	
+
 	Make file has following options:
-	
-		1) DLL				- select if dll or lib is to be built. Default is lib. 	
+
+		1) DLL				- select if dll or lib is to be built. Default is lib.
 		2) RTL				- select C run-time library (MT, MTd, MD, MDd).
 							Default is MT. Note: MT and MTd can only be used with DLL=lib.
 		3) NET_PROVIDER		- select the network provider. Possible values are:
-							CURL, WININET and WINHTTP. When using CURL CURL_DIR
-							must be specified. Default is CURL
+							NONE, FILE, CURL, WININET and WINHTTP. When using CURL CURL_DIR
+							must be specified. When not specified explicitly,
+							CURL is used as default. NONE is used to disable all network
+							providers. To be able to run tests at least FILE provider
+							must be used.
+							In order to compile without any network provider use NONE.
 		4) CRYPTO_PROVIDER	- select the cryptography provider for both hashing
 							and PKI. Possible values are: OPENSSL and CRYPTOAPI.
 							When using OPENSSL OPENSSL_DIR must be specified.
-							Default is OPENSSL. 
+							Default is OPENSSL.
 		5) HASH_PROVIDER	- select the cryptography provider for hashing.
 							Possible values are: OPENSSL and CRYPTOAPI. When
 							using OPENSSL OPENSSL_DIR must be specified. Default
@@ -174,9 +178,9 @@ Configuring build scripts
 		5) LDEXTRA 			- extra flags for linker.
 		6) CCEXTRA 			- extra flags for compiler.
 
-	
+
 	Make file has following tasks:
-	
+
 		1) default		- build library using DLL and RTL option.
 		2) all 			- build all libraries, examples and tests. RTL and DLL
 						options are used when linking tests and examples.
@@ -191,24 +195,24 @@ Configuring build scripts
 		11) tests		- build tests. RTL and DLL options are used.
 		12) test 		- build and run tests. RTL and DLL options are used.
 		13) clean		- clean the build.
-		
-		
-		
+
+
+
 Examples
 =====================================
 
-	Build static library linked against Windows native libraries and RTL as MD 
+	Build static library linked against Windows native libraries and RTL as MD
 	using cURL as network provider and CryptoAPI as hash provider:
-	nmake RTL=MD DLL=lib CURL_DIR=<path to cURL dir> NET_PROVIDER=CURL 
+	nmake RTL=MD DLL=lib CURL_DIR=<path to cURL dir> NET_PROVIDER=CURL
 	CRYPTO_PROVIDER=CRYPTOAPI
 
 	Build static library linked against Windows native libraries and RTL as MT:
-	nmake RTL=MT DLL=lib NET_PROVIDER=WININET CRYPTO_PROVIDER=CRYPTOAPI 
+	nmake RTL=MT DLL=lib NET_PROVIDER=WININET CRYPTO_PROVIDER=CRYPTOAPI
 
 	Build static library linked against Windows native CryptoAPI as hash provider
 	and OpenSSL as trust provider (PKI):
-	nmake RTL=MT DLL=lib NET_PROVIDER=WININET TRUST_PROVIDER=OPENSSL 
-	HASH_PROVIDER=CRYPTOAPI OPENSSL_DIR=C:\openssl 
-	
+	nmake RTL=MT DLL=lib NET_PROVIDER=WININET TRUST_PROVIDER=OPENSSL
+	HASH_PROVIDER=CRYPTOAPI OPENSSL_DIR=C:\openssl
+
 	Build dynamic library linked against Windows native libraries with RTL as MTD:
 	nmake NET_PROVIDER=WININET CRYPTO_PROVIDER=CRYPTOAPI dllMDd

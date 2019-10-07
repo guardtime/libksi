@@ -35,7 +35,6 @@ extern "C" {
 
 	struct KSI_FsClient_st {
 		int (*sendRequest)(KSI_NetworkClient *, KSI_RequestHandle *, struct FsClient_Endpoint_st *endp);
-		KSI_NetworkClient *http;
 	};
 
 
