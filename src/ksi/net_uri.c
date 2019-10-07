@@ -97,6 +97,7 @@ static void uriClient_free(KSI_UriClient *client) {
 
 int KSI_UriClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	int res;
+	KSI_NetworkClient *clientImpl = NULL;
 	KSI_NetworkClient *tmp = NULL;
 	KSI_UriClient *u = NULL;
 
@@ -126,15 +127,27 @@ int KSI_UriClient_new(KSI_CTX *ctx, KSI_NetworkClient **client) {
 	u->pExtendClient = NULL;
 	u->pPublicationClient = NULL;
 
-	res = KSI_HttpClient_new(ctx, &u->httpClient);
+#if !(KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_HTTP)
+	res = KSI_HttpClient_new(ctx, &clientImpl);
+	u->httpClient = clientImpl;
+#elif !(KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_TCP)
+	res = KSI_TcpClient_new(ctx, &clientImpl);
+	u->tcpClient = clientImpl;
+#elif !(KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_FILE)
+	res = KSI_FsClient_new(ctx, &clientImpl);
+	u->fsClient = clientImpl;
+#else
+	KSI_LOG_info(ctx, "Network providers are disabled.");
+	res = KSI_OK;
+#endif
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
 	}
 
-	u->pExtendClient = u->httpClient;
-	u->pAggregationClient = u->httpClient;
-	u->pPublicationClient = u->httpClient;
+	u->pExtendClient = clientImpl;
+	u->pAggregationClient = clientImpl;
+	u->pPublicationClient = clientImpl;
 
 	tmp->sendExtendRequest = prepareExtendRequest;
 	tmp->sendSignRequest = prepareAggregationRequest;

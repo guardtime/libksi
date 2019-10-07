@@ -45,6 +45,8 @@ static void testTreeBuilderAddLeafs(CuTest* tc) {
 	size_t i;
 	KSI_DataHash *hsh = NULL;
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
 
@@ -75,6 +77,8 @@ static void testGetAggregationChain(CuTest* tc) {
 	KSI_AggregationHashChain *chn = NULL;
 	KSI_DataHash *root = NULL;
 	KSI_DataHash *tmp = NULL;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 	CuAssert(tc, "Unable to create tree builder.", res == KSI_OK && builder != NULL);
@@ -128,6 +132,8 @@ static void testMaxTreeLevelt1(CuTest *tc) {
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 
@@ -153,6 +159,8 @@ static void testMaxTreeLevelWithAbove0Level(CuTest *tc) {
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 
@@ -165,12 +173,12 @@ static void testMaxTreeLevelWithAbove0Level(CuTest *tc) {
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 1, NULL);
 	CuAssert(tc, "Unable to add data 2nd hash.", res == KSI_OK);
 
-	/* Should fail. */
+	/* Next additions should fail. */
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 2, NULL);
 	CuAssert(tc, "Adding 3rd hash should not succeed.", res == KSI_BUFFER_OVERFLOW);
 
 	res = KSI_TreeBuilder_addDataHash(builder, hsh, 0, NULL);
-	CuAssert(tc, "Adding 4th leaf should not fail.", res == KSI_OK);
+	CuAssert(tc, "Adding 4th hash should not succeed.", res == KSI_BUFFER_OVERFLOW);
 
 	res = KSI_TreeBuilder_close(builder);
 	CuAssert(tc, "Closing the builder should not fail", res == KSI_OK);
@@ -186,6 +194,8 @@ static void testMaxTreeLevelWithFullTree(CuTest *tc) {
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
 	int i;
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
@@ -219,6 +229,8 @@ static void testMaxTreeLevelDoubleHighestLevel(CuTest *tc) {
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 	KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 
@@ -246,6 +258,8 @@ static void testEmptyTreeBuilderClosing(CuTest *tc) {
 	KSI_TreeBuilder *builder = NULL;
 	char buf[1024];
 
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
+
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 	CuAssert(tc, "Unable to create new tree builder.", res == KSI_OK);
 
@@ -261,6 +275,8 @@ static void testEmptyTreeBuilderWithMaxLevelClosing(CuTest *tc) {
 	int res;
 	KSI_TreeBuilder *builder = NULL;
 	char buf[1024];
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_TreeBuilder_new(ctx, KSI_HASHALG_SHA2_256, &builder);
 	CuAssert(tc, "Unable to create new tree builder.", res == KSI_OK);
@@ -278,6 +294,8 @@ static void testTreeBuilderDoubleClose(CuTest *tc) {
 	KSI_TreeBuilder *builder = NULL;
 	KSI_DataHash *hsh = NULL;
 	char buf[1024];
+
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	KSITest_DataHash_fromStr(ctx, "0168a0d7327ae5d25da38fbb903b73903e9db33cf52345a940a467134f3e81128e", &hsh);
 

@@ -29,6 +29,7 @@
 #include "../src/ksi/impl/net_impl.h"
 #include "../src/ksi/impl/policy_impl.h"
 #include "../src/ksi/impl/signature_impl.h"
+#include "../src/ksi/internal.h"
 
 
 extern KSI_CTX *ctx;
@@ -410,14 +411,16 @@ static void postTest(void) {
 	KSI_CTX_setPublicationUrl(ctx, conf.pubfile.url);
 }
 
+#define TEST_SKIP_CONDITION (KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_FILE)
+
 CuSuite* IntegrationTestPack_getSuite(void) {
 	CuSuite* suite = CuSuiteNew();
 
 	suite->postTest = postTest;
 
-	SUITE_ADD_TEST(suite, TestPack_ValidSignatures);
+	SUITE_SKIP_TEST_IF(TEST_SKIP_CONDITION, suite, TestPack_ValidSignatures, "user", "Network provider disabled.");
 	SUITE_ADD_TEST(suite, TestPack_InvalidSignatures);
-	SUITE_ADD_TEST(suite, TestPack_PolicyVerification);
+	SUITE_SKIP_TEST_IF(TEST_SKIP_CONDITION, suite, TestPack_PolicyVerification, "user", "Network provider disabled.");
 	SUITE_ADD_TEST(suite, TestPack_InternalPolicySignatures);
 
 	return suite;

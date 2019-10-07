@@ -17,18 +17,23 @@
  * reserves and retains all trademark rights.
  */
 
-#include<stdio.h>
-#include<string.h>
-#include<ctype.h>
-#include<stdlib.h>
+#include "all_tests.h"
 
 #include "cutest/CuTest.h"
-#include "all_tests.h"
+
+#include "../src/ksi/internal.h"
+#include "../src/ksi/impl/ctx_impl.h"
+
 #include <ksi/pkitruststore.h>
 #include <ksi/ksi.h>
 #include <ksi/tlv.h>
 
-#include "../src/ksi/impl/ctx_impl.h"
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+
 
 #ifndef _WIN32
 #  ifdef HAVE_CONFIG_H
@@ -103,7 +108,6 @@ static CuSuite* initSuite(void) {
 	addSuite(suite, KSITest_Hash_getSuite);
 	addSuite(suite, KSITest_HMAC_getSuite);
 	addSuite(suite, KSITest_NetCommon_getSuite);
-	addSuite(suite, KSITest_NetPduV1_getSuite);
 	addSuite(suite, KSITest_NetPduV2_getSuite);
 	addSuite(suite, KSITest_NetAsync_getSuite);
 	addSuite(suite, KSITest_HashChain_getSuite);
@@ -130,6 +134,11 @@ static int RunAllTests() {
 	CuSuite* suite = initSuite();
 	FILE *logFile = NULL;
 
+	if (KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_FILE) {
+		fprintf(stderr, "Error: File network provider is disabled!\n");
+		exit(EXIT_FAILURE);
+	}
+
 	/* Create the context. */
 	res = KSI_CTX_new(&ctx);
 	if (ctx == NULL || res != KSI_OK){
@@ -139,25 +148,25 @@ static int RunAllTests() {
 
 	res = KSI_CTX_setAggregatorHmacAlgorithm(ctx, TEST_DEFAULT_AGGR_HMAC_ALGORITHM);
 	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set aggregator HMAC algorithm.\n");
+		fprintf(stderr, "Unable to set aggregator HMAC algorithm (%s)!\n", KSI_getErrorString(res));
 		exit(EXIT_FAILURE);
 	}
 
 	res = KSI_CTX_setExtenderHmacAlgorithm(ctx, TEST_DEFAULT_EXT_HMAC_ALGORITHM);
 	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set extender HMAC algorithm.\n");
+		fprintf(stderr, "Unable to set extender HMAC algorithm (%s)!\n", KSI_getErrorString(res));
 		exit(EXIT_FAILURE);
 	}
 
 	res = KSI_CTX_setDefaultPubFileCertConstraints(ctx, testPubFileCertConstraints);
 	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set publications file verification constraints.\n");
+		fprintf(stderr, "Unable to set publications file verification constraints (%s)!\n", KSI_getErrorString(res));
 		exit(EXIT_FAILURE);
 	}
 
 	res = KSITest_setDefaultPubfileAndVerInfo(ctx);
 	if (res != KSI_OK) {
-		fprintf(stderr, "Unable to set default publications file.");
+		fprintf(stderr, "Unable to set default publications file (%s)!\n", KSI_getErrorString(res));
 		exit(EXIT_FAILURE);
 	}
 

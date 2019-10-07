@@ -1,3 +1,18 @@
+Version 3.20
+
+2019-10-07 release(3.20.3025)
+* FEATURE: Added support for disabling network providers via compile time options.
+* IMPROVEMENT: PDU V1 marked as deprecated.
+* IMPROVEMENT: Return NA(GEN-02), instead of FAIL(KEY-01), when certificate is not found during key-based verification. Verification error code KEY-01 is deprecated.
+* IMPROVEMENT: New verification rules for calendar hash chain reception from extending service (returning NA(GEN-2) in case of a service failure).
+* IMPROVEMENT: KSI_RuleVerificationResult has additional fields with error information. Will be filled in case verification result is NA(GEN-2).
+* IMPROVEMENT: Value returned by KSI_getHashAlgorithmByName must be verified with KSI_isHashAlgorithmSupported and KSI_isHashAlgorithmTrusted.
+* IMPROVEMENT: KSI_CalendarTimeToUnixTime no longer depends on non-portable timegm.
+* BUGFIX: Fixed TreeBuilder masking algorithm.
+* BUGFIX: Metadata is now placed into the first link when using KSI_BlockSigner with blinding mask.
+* BUGFIX: Constant variable KSI_HASHALG_INVALID is exported with DLL.
+* BUGFIX: Resolved compilation warnings.
+
 Version 3.19
 
 2019-02-20 release(3.19.2939)
@@ -18,11 +33,10 @@ Version 3.19
 * BUGFIX: Made URI schemes case insensitive.
 * BUGFIX: RPM build fixed when there is libksi already installed with different binary interface version.
 * IMPROVEMENT: Function KSI_CTX_getLastFailedSignature is deprecated. See KSI_VERIFICATION_POLICY_EMPTY for replacement.
-* BUGFIX: Made URI schemes case insensitive.
-* BUGFIX: RPM build fixed when there is libksi already installed with different binary interface version.
 * BUGFIX: Fixed high availability server aggregation persion configuration consolodation.
-* BUGFIX: Fixed possible crash when using multiple KSI_AsyncService instances with HTTP endpoints in different threads.
 * BUGFIX: Made URI schemes case insensitive.
+* BUGFIX: Fixed possible crash when using multiple KSI_AsyncService instances with HTTP endpoints in different threads.
+* BUGFIX: RPM build fixed when there is libksi already installed with different binary interface version.
 * BUGFIX: Negative enum value is not ISO standard.
 
 Version 3.18

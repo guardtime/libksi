@@ -580,6 +580,20 @@ cleanup:
 	return res;
 }
 
+int KSI_SignatureBuilder_setAggregationChainStartLevel(KSI_SignatureBuilder *builder, KSI_uint64_t lvl) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (builder == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	builder->aggrStartLevel = lvl;
+	res = KSI_OK;
+cleanup:
+	return res;
+}
+
 int KSI_SignatureBuilder_appendAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr) {
 	int res = KSI_UNKNOWN_ERROR;
 	int rootLevel = 0;
@@ -593,7 +607,7 @@ int KSI_SignatureBuilder_appendAggregationChain(KSI_SignatureBuilder *builder, K
 	KSI_ERR_clearErrors(ctx);
 
 	/* Get signature root level by aggregating the hash chain. */
-	res = KSI_AggregationHashChain_aggregate(aggr, 0, &rootLevel, NULL);
+	res = KSI_AggregationHashChain_aggregate(aggr, (int)builder->aggrStartLevel, &rootLevel, NULL);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -601,7 +615,7 @@ int KSI_SignatureBuilder_appendAggregationChain(KSI_SignatureBuilder *builder, K
 
 	/* Remove applied level correction in signature. */
 	if (rootLevel != 0) {
-		res = subRootLevel(builder->sig, rootLevel);
+		res = subRootLevel(builder->sig, (KSI_uint64_t)rootLevel);
 		if (res != KSI_OK) {
 			KSI_pushError(ctx, res, NULL);
 			goto cleanup;
@@ -619,8 +633,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureBuilder_createSignatureWithAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig)
-{
+int KSI_SignatureBuilder_createSignatureWithAggregationChain(KSI_SignatureBuilder *builder, KSI_AggregationHashChain *aggr, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_CTX *ctx = NULL;
 	KSI_SignatureBuilder *tmpBuilder = NULL;
@@ -645,7 +658,7 @@ int KSI_SignatureBuilder_createSignatureWithAggregationChain(KSI_SignatureBuilde
 		goto cleanup;
 	}
 
-	res = KSI_SignatureBuilder_close(tmpBuilder, 0, &tmp);
+	res = KSI_SignatureBuilder_close(tmpBuilder, builder->aggrStartLevel, &tmp);
 	if (res != KSI_OK) {
 		KSI_pushError(ctx, res, NULL);
 		goto cleanup;
@@ -714,7 +727,7 @@ cleanup:
 	return res;
 }
 
-int KSI_SignatureBuilder_open(KSI_CTX *ctx, KSI_SignatureBuilder **builder) {
+static int KSI_SignatureBuilder_new(KSI_CTX *ctx, KSI_SignatureBuilder **builder) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_SignatureBuilder *tmp = NULL;
 
@@ -734,6 +747,33 @@ int KSI_SignatureBuilder_open(KSI_CTX *ctx, KSI_SignatureBuilder **builder) {
 	tmp->ctx = ctx;
 	tmp->noVerify = 0;
 	tmp->sig = NULL;
+	tmp->aggrStartLevel = 0;
+
+	*builder = tmp;
+	tmp = NULL;
+
+	res = KSI_OK;
+cleanup:
+	KSI_SignatureBuilder_free(tmp);
+	return res;
+}
+
+int KSI_SignatureBuilder_open(KSI_CTX *ctx, KSI_SignatureBuilder **builder) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_SignatureBuilder *tmp = NULL;
+
+	if (ctx == NULL || builder == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+
+	KSI_ERR_clearErrors(ctx);
+
+	res = KSI_SignatureBuilder_new(ctx, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
 
 	res = KSI_Signature_new(ctx, &tmp->sig);
 	if (res != KSI_OK) {
@@ -764,15 +804,11 @@ int KSI_SignatureBuilder_openFromSignature(const KSI_Signature *sig, KSI_Signatu
 
 	KSI_ERR_clearErrors(sig->ctx);
 
-	tmp = KSI_new(KSI_SignatureBuilder);
-	if (tmp == NULL) {
-		KSI_pushError(sig->ctx, res = KSI_OUT_OF_MEMORY, NULL);
+	res = KSI_SignatureBuilder_new(sig->ctx, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(sig->ctx, res, NULL);
 		goto cleanup;
 	}
-
-	tmp->ctx = sig->ctx;
-	tmp->noVerify = 0;
-	tmp->sig = NULL;
 
 	res = KSI_Signature_clone(sig, &tmp->sig);
 	if (res != KSI_OK) {

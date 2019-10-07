@@ -215,6 +215,11 @@ enum KSI_StatusCode {
 	 */
 	KSI_INCOMPATIBLE_HASH_CHAIN = 0x213,
 
+	/**
+	 * Network provider is disabled (at compile time). This meens that the desired network provider can not be used runtime anymore.
+	 */
+	KSI_NETWORK_PROVIDER_DISABLED = 0x214,
+
 	/* Generic service errors. */
 
 	/**
@@ -335,8 +340,10 @@ enum KSI_StatusCode {
 /**
  * Default PDU versions for KSI aggregation and extending messages.
  */
-#define KSI_PDU_VERSION_1		1
-#define KSI_PDU_VERSION_2		2
+enum KSI_PDUver_en {
+	KSI_ENUM_DEPRECATED(KSI_PDU_VERSION_1, Only PDU v2 is supported.) = 1,
+	KSI_PDU_VERSION_2 = 2
+};
 
 #define KSI_CTX_PUBFILE_CACHE_DEFAULT_TTL (8 * 60 * 60)
 
@@ -354,13 +361,13 @@ typedef enum KSI_Option_en {
 	/**
 	 * PDU version for KSI aggregation messages.
 	 * \param		version		PDU version. Paramer of type size_t.
-	 * \note		Range: KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
+	 * \note		Range:		#KSI_PDUver_en
 	 */
 	KSI_OPT_AGGR_PDU_VER,
 	/**
 	 * PDU version for KSI extending messages.
 	 * \param		version		PDU version. Paramer of type size_t.
-	 * \note		Range: KSI_PDU_VERSION_1 .. KSI_PDU_VERSION_2
+	 * \note		Range:		#KSI_PDUver_en
 	 */
 	KSI_OPT_EXT_PDU_VER,
 

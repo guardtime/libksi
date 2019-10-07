@@ -37,16 +37,16 @@
 extern "C" {
 #endif
 
-#if KSI_AGGREGATION_PDU_VERSION == 2
+#if KSI_AGGREGATION_PDU_VERSION == KSI_PDU_VERSION_2
 #	define	TEST_RESOURCE_AGGR_VER "v2"
 #else
-#	define	TEST_RESOURCE_AGGR_VER "v1"
+#	error	"Failed to set up test resources. Invalid PDU version."
 #endif
 
-#if KSI_EXTENDING_PDU_VERSION == 2
+#if KSI_EXTENDING_PDU_VERSION == KSI_PDU_VERSION_2
 #	define	TEST_RESOURCE_EXT_VER "v2"
 #else
-#	define	TEST_RESOURCE_EXT_VER "v1"
+#	error	"Failed to set up test resources. Invalid PDU version."
 #endif
 
 #define TEST_DEFAULT_AGGR_HMAC_ALGORITHM KSI_HASHALG_SHA2_256
@@ -65,7 +65,6 @@ CuSuite* KSITest_Log_getSuite(void);
 CuSuite* KSITest_TLV_Sample_getSuite(void);
 CuSuite* KSITest_Hash_getSuite(void);
 CuSuite* KSITest_NetCommon_getSuite(void);
-CuSuite* KSITest_NetPduV1_getSuite(void);
 CuSuite* KSITest_NetPduV2_getSuite(void);
 CuSuite* KSITest_NetAsync_getSuite(void);
 CuSuite* KSITest_HashChain_getSuite(void);

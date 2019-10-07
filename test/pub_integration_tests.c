@@ -20,6 +20,8 @@
 #include "cutest/CuTest.h"
 #include "all_integration_tests.h"
 
+#include "../src/ksi/internal.h"
+
 extern KSI_CTX *ctx;
 extern KSITest_Conf conf;
 
@@ -209,7 +211,7 @@ CuSuite* PubIntegrationTests_getSuite(void) {
 
 	SUITE_ADD_TEST(suite, Test_DownloadPubfile);
 	SUITE_ADD_TEST(suite, Test_DownloadPubfileInvalidConstraints);
-	SUITE_ADD_TEST(suite, Test_DownloadPubfile_ChangeClient);
+	SUITE_SKIP_TEST_IF((KSI_DISABLE_NET_PROVIDER & KSI_IMPL_NET_FILE), suite, Test_DownloadPubfile_ChangeClient, "user", "Network provider disabled.");
 	SUITE_ADD_TEST(suite, Test_DownloadPubfileCacheTimeout);
 	SUITE_ADD_TEST(suite, Test_DownloadPubfileCacheNoTimeout);
 	SUITE_ADD_TEST(suite, Test_LoadFromFileAndDownloadPubfile);

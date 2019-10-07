@@ -20,10 +20,10 @@
 #include <stdio.h>
 #include <ksi/ksi.h>
 
-#if KSI_AGGREGATION_PDU_VERSION == 2
+#if KSI_AGGREGATION_PDU_VERSION == KSI_PDU_VERSION_2
 #	define	TEST_RESOURCE_AGGR_VER "v2"
 #else
-#	define	TEST_RESOURCE_AGGR_VER "v1"
+#	error	"Failed to set up test resources. Invalid PDU version."
 #endif
 
 static size_t parseCount = 1000000;
