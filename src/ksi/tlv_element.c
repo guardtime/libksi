@@ -355,6 +355,8 @@ static int convertToNested(KSI_TlvElement *el) {
 
 cleanup:
 
+	KSI_TlvElementList_free(list);
+
 	return res;
 }
 
