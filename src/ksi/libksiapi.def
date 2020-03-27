@@ -564,6 +564,7 @@ EXPORTS
 	KSI_MetaData_setMachineId
 	KSI_MetaData_setSequenceNr
 	KSI_MetaData_setRequestTimeInMicros
+	KSI_Pdu_verifyHmac
 	KSI_ExtendPdu_free
 	KSI_ExtendPdu_new
 	KSI_ExtendPdu_verify
