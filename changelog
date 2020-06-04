@@ -1,3 +1,5 @@
+(KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
+
 Version 3.20
 
 2019-10-07 release(3.20.3025)
