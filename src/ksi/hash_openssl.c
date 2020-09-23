@@ -16,11 +16,12 @@
  * Guardtime, Inc., and no license to trademarks is granted; Guardtime
  * reserves and retains all trademark rights.
  */
+#include "internal.h"
+
 #if KSI_HASH_IMPL == KSI_IMPL_OPENSSL
 
 #include <openssl/evp.h>
 
-#include "internal.h"
 #include "impl/hash_impl.h"
 #include "hash.h"
 
@@ -47,6 +48,22 @@ static const EVP_MD *hashAlgorithmToEVP(KSI_HashAlgorithm hash_id)
 			return EVP_sha384();
 		case KSI_HASHALG_SHA2_512:
 			return EVP_sha512();
+#endif
+#ifdef HAVE_EVP_SHA3_256
+		case KSI_HASHALG_SHA3_256:
+			return EVP_sha3_256();
+#endif
+#ifdef HAVE_EVP_SHA3_384
+		case KSI_HASHALG_SHA3_384:
+			return EVP_sha3_384();
+#endif
+#ifdef HAVE_EVP_SHA3_512
+		case KSI_HASHALG_SHA3_512:
+			return EVP_sha3_512();
+#endif
+#ifdef HAVE_EVP_SM3
+		case KSI_HASHALG_SM3:
+			return EVP_sm3();
 #endif
 		default:
 			return NULL;

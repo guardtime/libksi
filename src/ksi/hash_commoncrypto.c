@@ -16,14 +16,13 @@
  * Guardtime, Inc., and no license to trademarks is granted; Guardtime
  * reserves and retains all trademark rights.
  */
+#include "internal.h"
+
+#if KSI_HASH_IMPL == KSI_IMPL_COMMONCRYPTO
 
 #include "hash.h"
 
-#include "internal.h"
-
 #include "impl/hash_impl.h"
-
-#if KSI_HASH_IMPL == KSI_IMPL_COMMONCRYPTO
 
 #include <CommonCrypto/CommonCrypto.h>
 

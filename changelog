@@ -1,3 +1,4 @@
+* FEATURE: Added SM-3 and SHA-3 family hash functions for OpenSSL.
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
 (KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
 

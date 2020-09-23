@@ -21,7 +21,28 @@
 
 #include "internal.h"
 #include "hmac.h"
-#include "impl/hmac_impl.h"
+
+/**
+* The maximum block size of an algorithm.
+*/
+#define MAX_BUF_LEN 256
+
+struct KSI_HmacHasher_st {
+	/** KSI context. */
+	KSI_CTX *ctx;
+
+	/** Data hasher. */
+	KSI_DataHasher *dataHasher;
+
+	/** Inner buffer for XOR-ed key, padded with zeros. */
+	unsigned char ipadXORkey[MAX_BUF_LEN];
+
+	/** Outer buffer for XOR-ed key, padded with zeros. */
+	unsigned char opadXORkey[MAX_BUF_LEN];
+
+	/** Block size of algorithm. */
+	unsigned blockSize;
+};
 
 int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -198,7 +219,6 @@ int KSI_HmacHasher_reset(KSI_HmacHasher *hasher) {
 	}
 
 	/* Hash inner data. */
-	KSI_LOG_logBlob(hasher->ctx, KSI_LOG_DEBUG, "Adding ipad", hasher->ipadXORkey, hasher->blockSize);
 	res = KSI_DataHasher_add(hasher->dataHasher, hasher->ipadXORkey, hasher->blockSize);
 	if (res != KSI_OK) {
 		KSI_pushError(hasher->ctx, res, NULL);
@@ -248,8 +268,6 @@ int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac) {
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	KSI_LOG_debug(hasher->ctx, "Closing inner hasher.");
-
 	res = KSI_DataHasher_close(hasher->dataHasher, &innerHash);
 	if (res != KSI_OK) {
 		KSI_pushError(hasher->ctx, res, NULL);
@@ -263,7 +281,6 @@ int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac) {
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(hasher->ctx, KSI_LOG_DEBUG, "Adding opad", hasher->opadXORkey, hasher->blockSize);
 	res = KSI_DataHasher_add(hasher->dataHasher, hasher->opadXORkey, hasher->blockSize);
 	if (res != KSI_OK) {
 		KSI_pushError(hasher->ctx, res, NULL);
@@ -276,14 +293,11 @@ int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac) {
 		goto cleanup;
 	}
 
-	KSI_LOG_logBlob(hasher->ctx, KSI_LOG_DEBUG, "Adding inner hash", digest, digest_len);
 	res = KSI_DataHasher_add(hasher->dataHasher, digest, digest_len);
 	if (res != KSI_OK) {
 		KSI_pushError(hasher->ctx, res, NULL);
 		goto cleanup;
 	}
-
-	KSI_LOG_debug(hasher->ctx, "Closing outer hasher.");
 
 	res = KSI_DataHasher_close(hasher->dataHasher, &outerHash);
 	if (res != KSI_OK) {

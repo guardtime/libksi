@@ -39,7 +39,14 @@ static int CompareHmac(KSI_DataHash *hmac, const char *expected) {
 	KSI_DataHash_toString(hmac, buf, sizeof(buf));
 
 	if (!strcmp(buf, expected)) {
+		KSI_LOG_debug(ctx, "HMAC values match as expected");
+		KSI_LOG_debug(ctx, "Expected HMAC: %s", expected);
+		KSI_LOG_debug(ctx, "Actual HMAC:   %s", buf);
 		res = KSI_OK;
+	} else {
+		KSI_LOG_debug(ctx, "HMAC values do not match");
+		KSI_LOG_debug(ctx, "Expected HMAC: %s", expected);
+		KSI_LOG_debug(ctx, "Actual HMAC:   %s", buf);
 	}
 
 	return res;
@@ -195,10 +202,10 @@ static void TestAllAlgorithms(CuTest* tc) {
 	expected[KSI_HASHALG_SHA2_512] = "05fb7ed4edda2e2631c53103413823b1d7613d756e43b5182550f04decbde99bd3848ff38dbc5a4210f3439754b77de10c294acdb0704fbfcd2493d48f2e65ed98";
 	expected[0x06] = NULL; /* Deprecated hash function. */
 	expected[KSI_HASHALG_SHA3_224] = "TODO!";
-	expected[KSI_HASHALG_SHA3_256] = "TODO!";
-	expected[KSI_HASHALG_SHA3_384] = "TODO!";
-	expected[KSI_HASHALG_SHA3_512] = "TODO!";
-	expected[KSI_HASHALG_SM3] = "TODO!";
+	expected[KSI_HASHALG_SHA3_256] = "08f5001cfd23ef507c63af0adc57447a5cf6c39dacecb100cb8d2351e0a29f9b86";
+	expected[KSI_HASHALG_SHA3_384] = "0973c629f9f36745f086ba2514768c53fb019fa15560497d7ba73ed8c4272efa22484709633b3b47ef956a7b0000fb5d0a";
+	expected[KSI_HASHALG_SHA3_512] = "0a8b79264214dfc74f6edbf69ba5060e7ac0e42295ab1e6832c3b65c3d02e5e188f915f2170f4c0c2f7065f623d052e742f22163ea5a87bc1ae54085c4e0a85eaf";
+	expected[KSI_HASHALG_SM3] = "0b8ada73d2992ddbc91f3d984710dc1d605801f34aaac741f5a3a407eb8f0959c6";
 
 	for (algo_id = 0; algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algo_id++) {
 		char errm[0x1ff];
@@ -206,11 +213,18 @@ static void TestAllAlgorithms(CuTest* tc) {
 		/* Skip unsupported. */
 		if (!KSI_isHashAlgorithmSupported(algo_id)) continue;
 
+		KSI_LOG_debug(ctx, "Testing HMAC-%s", KSI_getHashAlgorithmName(algo_id));
+
 		KSI_ERR_clearErrors(ctx);
 
 		res = KSI_HMAC_create(ctx, algo_id, key, data, data_len, &hmac);
+		KSI_LOG_logCtxError(ctx, KSI_LOG_DEBUG);
+
 		KSI_snprintf(errm, sizeof(errm), "Failed to create HMAC for algorithm %s", KSI_getHashAlgorithmName(algo_id));
 		CuAssert(tc, errm, res == KSI_OK && hmac != NULL);
+
+		KSI_LOG_debug(ctx, "HMAC-%s creates successfully", KSI_getHashAlgorithmName(algo_id));
+
 
 		res = CompareHmac(hmac, expected[algo_id]);
 		KSI_snprintf(errm, sizeof(errm), "HMAC mismatch for algorithm %s", KSI_getHashAlgorithmName(algo_id));
@@ -364,7 +378,7 @@ static void TestInvalidParams(CuTest* tc) {
 static void testUnimplementedHashAlgorithm(CuTest *tc) {
 	KSI_DataHash *hsh = NULL;
 
-	int res = KSI_HMAC_create(ctx, KSI_HASHALG_SM3, "key", (unsigned char *)"data", 4, &hsh);
+	int res = KSI_HMAC_create(ctx, KSI_HASHALG_SHA3_224, "key", (unsigned char *)"data", 4, &hsh);
 	CuAssert(tc, "Unimplemented hash algorithm may not be used for HMAC computation.", res = KSI_UNAVAILABLE_HASH_ALGORITHM && hsh == NULL);
 
 	KSI_DataHash_free(hsh);
