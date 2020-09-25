@@ -1,5 +1,6 @@
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
 (KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
+(KSICAPI-555)* BUGFIX: Test testUnimplementedHashAlgorithm fixed.
 
 Version 3.20
 
