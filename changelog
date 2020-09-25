@@ -1,5 +1,6 @@
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
 (KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
+(KSICAPI-554)* BUGFIX: String comparison in test/include-test.sh fixed.
 
 Version 3.20
 

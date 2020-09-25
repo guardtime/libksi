@@ -25,7 +25,7 @@ if [ $# -ne 1 ]; then
 	exit 1;
 fi;
 
-if [ "z$CC" == "z" ]; then
+if [ "z$CC" = "z" ]; then
 	echo "Compiler variable CC not set.";
 	exit 1;
 fi;
