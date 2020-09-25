@@ -1,5 +1,6 @@
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
 (KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
+(KSICAPI-550)* BUGFIX: Possibly NULL passed to memcpy with byte count 0 in tlv.c fixed.
 
 Version 3.20
 
