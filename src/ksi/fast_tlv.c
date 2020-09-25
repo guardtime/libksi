@@ -115,14 +115,10 @@ int readData(void *fd, unsigned char *buf, size_t len, size_t *consumed, struct 
 			res = KSI_INVALID_FORMAT;
 			goto cleanup;
 		}
-
-		res = parseHdr(buf, 4, t);
-		if (res != KSI_OK) goto cleanup;
-
-	} else {
-		res = parseHdr(buf, 2, t);
-		if (res != KSI_OK) goto cleanup;
 	}
+
+	res = parseHdr(buf, len, t);
+	if (res != KSI_OK) goto cleanup;
 
 	if (len < t->hdr_len + t->dat_len) {
 		res = KSI_BUFFER_OVERFLOW;
@@ -174,14 +170,8 @@ int KSI_FTLV_memRead(const unsigned char *m, size_t l, KSI_FTLV *t) {
 	/* Initialize offset. */
 	t->off = 0;
 
-	if (m[0] & KSI_TLV_MASK_TLV16) {
 		res = parseHdr(m, l, t);
 		if (res != KSI_OK) goto cleanup;
-	} else {
-		res = parseHdr(m, l, t);
-		if (res != KSI_OK) goto cleanup;
-	}
-
 	if (l < t->hdr_len + t->dat_len) {
 		res = KSI_INVALID_FORMAT;
 		goto cleanup;
