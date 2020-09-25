@@ -1,3 +1,4 @@
+(KSICAPI-548)* BUGFIX: Possibly uninitialized clean in KSI_SignatureBuilder_close fixed.
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
 (KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
 
