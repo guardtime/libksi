@@ -607,7 +607,7 @@ static int serializeRaw(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size,
 	int res = KSI_UNKNOWN_ERROR;
 	size_t payloadLength;
 
-	if (tlv == NULL || (buf == NULL && buf_size != 0) || buf_len == NULL) {
+	if (tlv == NULL || (tlv->datap == NULL && tlv->datap_len != 0) || buf == NULL || buf_len == NULL) {
 		res = KSI_INVALID_ARGUMENT;
 		goto cleanup;
 	}
@@ -615,12 +615,12 @@ static int serializeRaw(const KSI_TLV *tlv, unsigned char *buf, size_t buf_size,
 	KSI_ERR_clearErrors(tlv->ctx);
 
 	payloadLength = tlv->datap_len;
-
-	if (buf != NULL) {
+	if (payloadLength > 0) {
 		if (buf_size < payloadLength) {
 			KSI_pushError(tlv->ctx, res = KSI_INVALID_ARGUMENT, NULL);
 			goto cleanup;
 		}
+
 		memcpy(buf + buf_size - payloadLength, tlv->datap, payloadLength);
 	}
 
