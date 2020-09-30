@@ -236,4 +236,229 @@ cleanup:
 	return res;
 }
 
+#ifdef KSI_NATIVE_HMAC
+
+#include <string.h>
+#include <openssl/hmac.h>
+
+#include "ksi/hmac.h"
+
+/**
+* The maximum block size of an algorithm.
+*/
+#define MAX_BUF_LEN 256
+
+struct KSI_HmacHasher_st {
+	/** KSI context. */
+	KSI_CTX *ctx;
+
+	/** OpenSSL HMAC context. */
+	HMAC_CTX *openssl_ctx;
+
+	/** Hash algorithm id for reset. */
+	KSI_HashAlgorithm hash_id;
+
+	/** HMAC key for reset. */
+	char *key;
+};
+
+int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, const unsigned char *data, size_t data_len, KSI_DataHash **hmac) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HmacHasher *hasher = NULL;
+	KSI_DataHash *tmp_hmac = NULL;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || hmac == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HmacHasher_open(ctx, algo_id, key, &hasher);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HmacHasher_add(hasher, data, data_len);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	res = KSI_HmacHasher_close(hasher, &tmp_hmac);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*hmac = tmp_hmac;
+	tmp_hmac = NULL;
+	res = KSI_OK;
+
+	cleanup:
+
+	KSI_DataHash_free(tmp_hmac);
+	KSI_HmacHasher_free(hasher);
+
+	return res;
+}
+
+int KSI_HmacHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, KSI_HmacHasher **hasher) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_HmacHasher *tmp_hasher = NULL;
+
+	unsigned int key_len = 0;
+
+	KSI_ERR_clearErrors(ctx);
+	if (ctx == NULL || key == NULL || hasher == NULL) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, NULL);
+		goto cleanup;
+	}
+
+	key_len = strlen(key);
+	if (key_len == 0 || key_len > 0xffff) {
+		KSI_pushError(ctx, res = KSI_INVALID_ARGUMENT, "Invalid key length.");
+		goto cleanup;
+	}
+
+	tmp_hasher = KSI_new(KSI_HmacHasher);
+	if (tmp_hasher == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, NULL);
+		goto cleanup;
+	}
+
+	memset(tmp_hasher, 0, sizeof(KSI_HmacHasher));
+	tmp_hasher->ctx = ctx;
+	tmp_hasher->openssl_ctx = NULL;
+
+	tmp_hasher->openssl_ctx = HMAC_CTX_new();
+	if (tmp_hasher->openssl_ctx == NULL) {
+		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, "Unable to create HMAC context.");
+		goto cleanup;
+	}
+
+	res = KSI_strdup(key, &tmp_hasher->key);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	tmp_hasher->hash_id = algo_id;
+	if (!KSI_isHashAlgorithmSupported(algo_id)) {
+		KSI_pushError(ctx, res = KSI_UNKNOWN_HASH_ALGORITHM_ID, "Unsupported hash algorithm");
+		goto cleanup;
+	}
+
+	res = KSI_HmacHasher_reset(tmp_hasher);
+	if (res != KSI_OK) {
+		KSI_pushError(ctx, res, NULL);
+		goto cleanup;
+	}
+
+	*hasher = tmp_hasher;
+	tmp_hasher = NULL;
+	res = KSI_OK;
+
+	cleanup:
+
+	KSI_HmacHasher_free(tmp_hasher);
+
+	return res;
+}
+
+int KSI_HmacHasher_reset(KSI_HmacHasher *hasher) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (hasher == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
+
+	if (!HMAC_CTX_reset(hasher->openssl_ctx)) {
+		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Unable to reset OpenSSL HMAC");
+		goto cleanup;
+	}
+
+	if(!HMAC_Init_ex(hasher->openssl_ctx, hasher->key, strlen(hasher->key), hashAlgorithmToEVP(hasher->hash_id), NULL)) {
+		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Unable to init OpenSSL HMAC");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+	cleanup:
+
+	return res;
+}
+
+int KSI_HmacHasher_add(KSI_HmacHasher *hasher, const void *data, size_t data_length) {
+	int res = KSI_UNKNOWN_ERROR;
+
+	if (hasher == NULL || data == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
+
+	if (!HMAC_Update(hasher->openssl_ctx, data, data_length)) {
+		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Unable to update OpenSSL HMAC");
+		goto cleanup;
+	}
+
+	res = KSI_OK;
+
+cleanup:
+
+	return res;
+}
+
+int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac) {
+	int res = KSI_UNKNOWN_ERROR;
+	KSI_DataHash *tmp = NULL;
+
+	unsigned char digest[64];
+	unsigned int digest_len = 0;
+
+	if (hasher == NULL || hmac == NULL) {
+		res = KSI_INVALID_ARGUMENT;
+		goto cleanup;
+	}
+	KSI_ERR_clearErrors(hasher->ctx);
+
+
+	if (!HMAC_Final(hasher->openssl_ctx, digest, &digest_len)) {
+		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Unable to finalize OpenSSL HMAC");
+		goto cleanup;
+	}
+
+	res = KSI_DataHash_fromDigest(hasher->ctx, hasher->hash_id, digest, digest_len, &tmp);
+	if (res != KSI_OK) {
+		KSI_pushError(hasher->ctx, res, NULL);
+		goto cleanup;
+	}
+
+
+	*hmac = KSI_DataHash_ref(tmp);
+
+	res = KSI_OK;
+
+cleanup:
+
+	KSI_DataHash_free(tmp);
+
+	return res;
+}
+
+void KSI_HmacHasher_free(KSI_HmacHasher *hasher) {
+	if (hasher != NULL) {
+		if (hasher->openssl_ctx != NULL) HMAC_CTX_free(hasher->openssl_ctx);
+		if (hasher->key != NULL) KSI_free(hasher->key);
+		KSI_free(hasher);
+	}
+}
+
+
+#endif
+
 #endif

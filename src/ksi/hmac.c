@@ -16,10 +16,12 @@
  * Guardtime, Inc., and no license to trademarks is granted; Guardtime
  * reserves and retains all trademark rights.
  */
+#include "internal.h"
+
+#ifndef KSI_NATIVE_HMAC
 
 #include <string.h>
 
-#include "internal.h"
 #include "hmac.h"
 
 /**
@@ -323,3 +325,5 @@ void KSI_HmacHasher_free(KSI_HmacHasher *hasher) {
 		KSI_free(hasher);
 	}
 }
+
+#endif

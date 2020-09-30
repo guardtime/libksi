@@ -127,10 +127,19 @@ if test "x$with_hash_provider" = "xcommoncrypto" ; then
 	AC_DEFINE_UNQUOTED(KSI_HASH_IMPL, KSI_IMPL_COMMONCRYPTO, [Use CommonCrypto.])
 	AC_CHECK_HEADER([CommonCrypto/CommonCrypto.h])
 elif test "x$with_hash_provider" = "xopenssl" ; then
+	use_native_hmac="yes"
 	AC_DEFINE_UNQUOTED(KSI_HASH_IMPL, KSI_IMPL_OPENSSL, [Use OpenSSL.])
     AC_CHECK_FUNCS([EVP_sha3_256 EVP_sha3_384 EVP_sha3_512 EVP_sm3])
 else
 	AC_MSG_ERROR([*** Unknown hash provider.])
+fi
+
+AC_MSG_CHECKING([Use native HMAC implementation])
+if test "x$use_native_hmac" = "xyes" ; then
+	AC_MSG_RESULT([yes])
+	AC_DEFINE_UNQUOTED(KSI_NATIVE_HMAC, [1], [Use native HMAC implementation.])
+else
+	AC_MSG_RESULT([no])
 fi
 
 AC_CHECK_LIB([curl], [curl_easy_init], [], [AC_MSG_FAILURE([Could nod find Curl libraries.])])
