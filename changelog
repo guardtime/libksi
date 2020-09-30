@@ -1,3 +1,4 @@
+(KSICAPI-553)* IMPROVEMENT: Redundant code from fast_tlv.c removed.
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
 (KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
 (KSICAPI-555)* BUGFIX: Test testUnimplementedHashAlgorithm fixed.
