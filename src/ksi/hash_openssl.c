@@ -17,6 +17,7 @@
  * reserves and retains all trademark rights.
  */
 #include "internal.h"
+#include "internalfunc.h"
 
 #if KSI_HASH_IMPL == KSI_IMPL_OPENSSL
 
@@ -26,49 +27,6 @@
 #include "hash.h"
 
 #include "openssl_compatibility.h"
-
-/**
- * Converts hash function ID from hash chain to OpenSSL identifier
- */
-static const EVP_MD *hashAlgorithmToEVP(KSI_HashAlgorithm hash_id)
-{
-	switch (hash_id) {
-#ifndef OPENSSL_NO_SHA
-		case KSI_HASHALG_SHA1:
-			return EVP_sha1();
-#endif
-#ifndef OPENSSL_NO_RIPEMD
-		case KSI_HASHALG_RIPEMD160:
-			return EVP_ripemd160();
-#endif
-		case KSI_HASHALG_SHA2_256:
-			return EVP_sha256();
-#ifndef OPENSSL_NO_SHA512
-		case KSI_HASHALG_SHA2_384:
-			return EVP_sha384();
-		case KSI_HASHALG_SHA2_512:
-			return EVP_sha512();
-#endif
-#ifdef HAVE_EVP_SHA3_256
-		case KSI_HASHALG_SHA3_256:
-			return EVP_sha3_256();
-#endif
-#ifdef HAVE_EVP_SHA3_384
-		case KSI_HASHALG_SHA3_384:
-			return EVP_sha3_384();
-#endif
-#ifdef HAVE_EVP_SHA3_512
-		case KSI_HASHALG_SHA3_512:
-			return EVP_sha3_512();
-#endif
-#ifdef HAVE_EVP_SM3
-		case KSI_HASHALG_SM3:
-			return EVP_sm3();
-#endif
-		default:
-			return NULL;
-	}
-}
 
 static int closeExisting(KSI_DataHasher *hasher, KSI_DataHash *data_hash) {
 	int res = KSI_UNKNOWN_ERROR;
@@ -113,7 +71,7 @@ cleanup:
 }
 
 int KSI_isHashAlgorithmSupported(KSI_HashAlgorithm algo_id) {
-	return hashAlgorithmToEVP(algo_id) != NULL;
+	return InternalFunc.hashAlgorithmToEVP(algo_id) != NULL;
 }
 
 static void ksi_DataHasher_cleanup(KSI_DataHasher *hasher) {
@@ -137,7 +95,7 @@ static int ksi_DataHasher_reset(KSI_DataHasher *hasher) {
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	evp_md = hashAlgorithmToEVP(hasher->algorithm);
+	evp_md = InternalFunc.hashAlgorithmToEVP(hasher->algorithm);
 	if (evp_md == NULL) {
 		KSI_pushError(hasher->ctx, res = KSI_OUT_OF_MEMORY, NULL);
 		goto cleanup;
@@ -241,7 +199,7 @@ cleanup:
 #include <string.h>
 #include <openssl/hmac.h>
 
-#include "ksi/hmac.h"
+#include "hmac.h"
 
 /**
 * The maximum block size of an algorithm.
@@ -295,7 +253,7 @@ int KSI_HMAC_create(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key, co
 	tmp_hmac = NULL;
 	res = KSI_OK;
 
-	cleanup:
+cleanup:
 
 	KSI_DataHash_free(tmp_hmac);
 	KSI_HmacHasher_free(hasher);
@@ -330,6 +288,7 @@ int KSI_HmacHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key
 	memset(tmp_hasher, 0, sizeof(KSI_HmacHasher));
 	tmp_hasher->ctx = ctx;
 	tmp_hasher->openssl_ctx = NULL;
+	tmp_hasher->key = NULL;
 
 	tmp_hasher->openssl_ctx = HMAC_CTX_new();
 	if (tmp_hasher->openssl_ctx == NULL) {
@@ -359,7 +318,7 @@ int KSI_HmacHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key
 	tmp_hasher = NULL;
 	res = KSI_OK;
 
-	cleanup:
+cleanup:
 
 	KSI_HmacHasher_free(tmp_hasher);
 
@@ -380,14 +339,14 @@ int KSI_HmacHasher_reset(KSI_HmacHasher *hasher) {
 		goto cleanup;
 	}
 
-	if(!HMAC_Init_ex(hasher->openssl_ctx, hasher->key, strlen(hasher->key), hashAlgorithmToEVP(hasher->hash_id), NULL)) {
+	if(!HMAC_Init_ex(hasher->openssl_ctx, hasher->key, strlen(hasher->key), InternalFunc.hashAlgorithmToEVP(hasher->hash_id), NULL)) {
 		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Unable to init OpenSSL HMAC");
 		goto cleanup;
 	}
 
 	res = KSI_OK;
 
-	cleanup:
+cleanup:
 
 	return res;
 }

@@ -49,6 +49,8 @@ libksi_la_SOURCES = \
 	http_parser.h \
 	http_parser.c \
 	internal.h \
+	internalfunc.c \
+	internalfunc.h \
 	io.c \
 	io.h \
 	ksi.h \
