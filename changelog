@@ -5,6 +5,7 @@
 (KSICAPI-555)* BUGFIX: Test testUnimplementedHashAlgorithm fixed.
 (KSICAPI-554)* BUGFIX: String comparison in test/include-test.sh fixed.
 (KSICAPI-550)* BUGFIX: Possibly NULL passed to memcpy with byte count 0 in tlv.c fixed.
+(KSICAPI-551)* BUGFIX: Unexpected behaviour fixed when dealing with SHA3-512 hash algorithm names.
 
 Version 3.20
 
