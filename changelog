@@ -1,6 +1,11 @@
 * FEATURE: Added SM-3 and SHA-3 family hash functions for OpenSSL.
+(KSICAPI-553)* IMPROVEMENT: Redundant code from fast_tlv.c removed.
+(KSICAPI-548)* BUGFIX: Possibly uninitialized clean in KSI_SignatureBuilder_close fixed.
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
 (KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
+(KSICAPI-555)* BUGFIX: Test testUnimplementedHashAlgorithm fixed.
+(KSICAPI-554)* BUGFIX: String comparison in test/include-test.sh fixed.
+(KSICAPI-550)* BUGFIX: Possibly NULL passed to memcpy with byte count 0 in tlv.c fixed.
 
 Version 3.20
 
