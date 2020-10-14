@@ -37,14 +37,14 @@ const int KSI_HASHALG_SHA3_244 = KSI_HASHALG_SHA3_224;
 /** Hash algorithm names. The last name has to be an empty string. */
 static const char * const KSI_HASHALG_SHA1_names[] = {"SHA-1", "SHA1", ""};
 static const char * const KSI_HASHALG_SHA2_256_names[] = {"SHA-256", "SHA2-256", "SHA-2", "SHA2", "SHA256", "DEFAULT", ""};
-static const char * const KSI_HASHALG_RIPEMD160_names[] = { "RIPEMD-160", "RIPEMD160", ""};
-static const char * const KSI_HASHALG_SHA2_384_names[] = { "SHA-384", "SHA384", "SHA2-384", ""};
-static const char * const KSI_HASHALG_SHA2_512_names[] = { "SHA-512", "SHA512", "SHA2-512", ""};
-static const char * const KSI_HASHALG_SHA3_224_names[] = { "SHA3-224", ""};
-static const char * const KSI_HASHALG_SHA3_256_names[] = { "SHA3-256", ""};
-static const char * const KSI_HASHALG_SHA3_384_names[] = { "SHA3-384", ""};
-static const char * const KSI_HASHALG_SHA3_512_names[] = { "SHA3-512"};
-static const char * const KSI_HASHALG_SM3_names[] = { "SM-3", "SM3", ""};
+static const char * const KSI_HASHALG_RIPEMD160_names[] = {"RIPEMD-160", "RIPEMD160", ""};
+static const char * const KSI_HASHALG_SHA2_384_names[] = {"SHA-384", "SHA384", "SHA2-384", ""};
+static const char * const KSI_HASHALG_SHA2_512_names[] = {"SHA-512", "SHA512", "SHA2-512", ""};
+static const char * const KSI_HASHALG_SHA3_224_names[] = {"SHA3-224", ""};
+static const char * const KSI_HASHALG_SHA3_256_names[] = {"SHA3-256", ""};
+static const char * const KSI_HASHALG_SHA3_384_names[] = {"SHA3-384", ""};
+static const char * const KSI_HASHALG_SHA3_512_names[] = {"SHA3-512", ""};
+static const char * const KSI_HASHALG_SM3_names[] = {"SM-3", "SM3", ""};
 
 
 static const struct KSI_hashAlgorithmInfo_st {
