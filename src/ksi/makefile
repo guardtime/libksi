@@ -115,7 +115,8 @@ LIB_OBJ = \
 	$(OBJ_DIR)\pkitruststore.obj \
 	$(OBJ_DIR)\net_file.obj \
 	$(OBJ_DIR)\policy.obj \
-	$(OBJ_DIR)\blocksigner.obj
+	$(OBJ_DIR)\blocksigner.obj \
+	$(OBJ_DIR)\internalfunc.obj
 
 INC_FILES = \
 	base32.h \

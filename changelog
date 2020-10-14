@@ -1,4 +1,5 @@
 (KSICAPI-552)* IMPROVEMENT: Code refactored in tlv_element.c to eliminate redundant addition to NULL pointer.
+* FEATURE: Added SM-3 and SHA-3 family hash functions for OpenSSL.
 (KSICAPI-553)* IMPROVEMENT: Redundant code from fast_tlv.c removed.
 (KSICAPI-548)* BUGFIX: Possibly uninitialized clean in KSI_SignatureBuilder_close fixed.
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.

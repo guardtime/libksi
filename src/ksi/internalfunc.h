@@ -17,39 +17,41 @@
  * reserves and retains all trademark rights.
  */
 
-#ifndef HMAC_IMPL_H_
-#define HMAC_IMPL_H_
+/**
+ * This file may only be included internally to share functions that may not be
+ * exported width libksi.
+ */
 
-#include "../hash.h"
+#ifndef INTERNALFUNC_H_
+#define INTERNALFUNC_H_
+
+#include "ksi.h"
+
+#if KSI_HASH_IMPL == KSI_IMPL_OPENSSL || KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_OPENSSL
+#	include <openssl/evp.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-	/**
-	* The maximum block size of an algorithm.
-	*/
-	#define MAX_BUF_LEN 128
+struct KSI_InternalFunctions_st {
+#if KSI_HASH_IMPL == KSI_IMPL_OPENSSL || KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_OPENSSL
+	KSI_HashAlgorithm const (*EVPTohashAlgorithm)(const EVP_MD *hash_id);
+	const EVP_MD* const (*hashAlgorithmToEVP)(KSI_HashAlgorithm hash_id);
+#endif
 
-	struct KSI_HmacHasher_st {
-		/** KSI context. */
-		KSI_CTX *ctx;
+	/* Value with no effect, do not use. May be removed in future. */
+	void *_reserved;
+};
 
-		/** Data hasher. */
-		KSI_DataHasher *dataHasher;
-
-		/** Inner buffer for XOR-ed key, padded with zeros. */
-		unsigned char ipadXORkey[MAX_BUF_LEN];
-
-		/** Outer buffer for XOR-ed key, padded with zeros. */
-		unsigned char opadXORkey[MAX_BUF_LEN];
-
-		/** Block size of algorithm. */
-		unsigned blockSize;
-	};
+/**
+ * Internally used data structure for sharing internal function.
+ */
+extern struct KSI_InternalFunctions_st InternalFunc;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* HMAC_IMPL_H_ */
+#endif /* INTERNALFUNC_H_*/
