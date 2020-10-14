@@ -318,8 +318,9 @@ static int convertToNested(KSI_TlvElement *el) {
 	}
 
 	if (el->subList == NULL) {
-		/* The pointer points to the header of the TLV not the data itself. */
-		unsigned char *ptr = el->ptr + el->ftlv.hdr_len;
+		/* The pointer points to the header of the TLV not the data itself.
+		   Note that when ptr is NULL, len is also 0. */
+		unsigned char *ptr = el->ptr != NULL ? el->ptr + el->ftlv.hdr_len : NULL;
 		size_t len = el->ftlv.dat_len;
 
 		res = KSI_TlvElementList_new(&list);
