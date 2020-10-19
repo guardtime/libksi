@@ -120,16 +120,33 @@ fi
 
 AC_CHECK_LIB([crypto], [SHA256_Init], [], [AC_MSG_FAILURE([Could not find OpenSSL 0.9.8+ libraries.])])
 
+AC_MSG_CHECKING([if compile with SM3 hash algorithm])
+	
+AC_ARG_WITH(sm3-hash-algorithm,
+[  --with-sm3-hash-algorithm                         build support for SM3 hash algorithm (default: no)],
+:,[with_sm3_hash_algorithm="no"])
+AC_MSG_RESULT([$with_sm3_hash_algorithm])
+
 AC_ARG_WITH(hash-provider,
 [  --with-hash-provider=<openssl|commoncrypto>       build using library for hash functions (default: openssl)],
 :, with_hash_provider=openssl)
 if test "x$with_hash_provider" = "xcommoncrypto" ; then
 	AC_DEFINE_UNQUOTED(KSI_HASH_IMPL, KSI_IMPL_COMMONCRYPTO, [Use CommonCrypto.])
 	AC_CHECK_HEADER([CommonCrypto/CommonCrypto.h])
+	if test "x$with_sm3_hash_algorithm" = "xyes" ; then
+		AC_MSG_ERROR([SM3 hash algorithm not supported by CommonCrypto.])
+	fi
+
 elif test "x$with_hash_provider" = "xopenssl" ; then
-	use_native_hmac="yes"
+	use_native_hmac="no"
+	AC_CHECK_FUNCS([HMAC_CTX_new], [use_native_hmac="yes"],[])
 	AC_DEFINE_UNQUOTED(KSI_HASH_IMPL, KSI_IMPL_OPENSSL, [Use OpenSSL.])
-    AC_CHECK_FUNCS([EVP_sha3_256 EVP_sha3_384 EVP_sha3_512 EVP_sm3])
+	AC_CHECK_FUNCS([EVP_sha3_256 EVP_sha3_384 EVP_sha3_512])
+
+	if test "x$with_sm3_hash_algorithm" = "xyes" ; then
+		AC_CHECK_FUNCS([EVP_sm3],[],[AC_MSG_ERROR([SM3 hash algorithm not supported by OpenSSL.])])
+	fi
+	
 else
 	AC_MSG_ERROR([*** Unknown hash provider.])
 fi

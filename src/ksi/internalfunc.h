@@ -26,6 +26,7 @@
 #define INTERNALFUNC_H_
 
 #include "ksi.h"
+#include "internal.h"
 
 #if KSI_HASH_IMPL == KSI_IMPL_OPENSSL || KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_OPENSSL
 #	include <openssl/evp.h>
