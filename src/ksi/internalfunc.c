@@ -20,8 +20,9 @@
 #include "internalfunc.h"
 
 #if KSI_HASH_IMPL == KSI_IMPL_OPENSSL || KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_OPENSSL
-static KSI_HashAlgorithm EVPTohashAlgorithm(const EVP_MD *hash_id);
+static const KSI_HashAlgorithm EVPTohashAlgorithm(const EVP_MD *hash_id);
 static const EVP_MD *hashAlgorithmToEVP(KSI_HashAlgorithm hash_id);
+
 #endif
 
 struct KSI_InternalFunctions_st InternalFunc = {
@@ -74,7 +75,7 @@ static const EVP_MD *hashAlgorithmToEVP(KSI_HashAlgorithm hash_id) {
 /**
  * Converts OpenSSL hash function ID to hash function ID from hash chain.
  */
-static KSI_HashAlgorithm EVPTohashAlgorithm(const EVP_MD *hash_id) {
+static const KSI_HashAlgorithm EVPTohashAlgorithm(const EVP_MD *hash_id) {
 	KSI_HashAlgorithm algo_id;
 	if (hash_id == NULL) return KSI_HASHALG_INVALID_VALUE;
 	if (!isRegistred) registerSupportedAlgorithms();

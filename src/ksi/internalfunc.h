@@ -38,8 +38,8 @@ extern "C" {
 
 struct KSI_InternalFunctions_st {
 #if KSI_HASH_IMPL == KSI_IMPL_OPENSSL || KSI_PKI_TRUSTSTORE_IMPL == KSI_IMPL_OPENSSL
-	KSI_HashAlgorithm const (*EVPTohashAlgorithm)(const EVP_MD *hash_id);
-	const EVP_MD* const (*hashAlgorithmToEVP)(KSI_HashAlgorithm hash_id);
+	const KSI_HashAlgorithm (*const EVPTohashAlgorithm)(const EVP_MD *hash_id);
+	const EVP_MD* (*const hashAlgorithmToEVP)(KSI_HashAlgorithm hash_id);
 #endif
 
 	/* Value with no effect, do not use. May be removed in future. */
