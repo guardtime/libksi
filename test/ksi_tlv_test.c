@@ -780,7 +780,6 @@ void testTlvElementRemoveMultipleSameId(CuTest *tc) {
 
 void testTlvElementGetFromCorruptedTlv(CuTest *tc) {
 	int res;
-	size_t len = 0;
 	KSI_TlvElement *tlv = NULL;
 	KSI_TlvElement *subTlv = NULL;
 	/* # TLV to be parsed.
