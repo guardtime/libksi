@@ -121,7 +121,7 @@ fi
 AC_CHECK_LIB([crypto], [SHA256_Init], [], [AC_MSG_FAILURE([Could not find OpenSSL 0.9.8+ libraries.])])
 
 AC_MSG_CHECKING([if compile with SM3 hash algorithm])
-	
+
 AC_ARG_WITH(sm3-hash-algorithm,
 [  --with-sm3-hash-algorithm                         build support for SM3 hash algorithm (default: no)],
 :,[with_sm3_hash_algorithm="no"])
@@ -146,7 +146,7 @@ elif test "x$with_hash_provider" = "xopenssl" ; then
 	if test "x$with_sm3_hash_algorithm" = "xyes" ; then
 		AC_CHECK_FUNCS([EVP_sm3],[],[AC_MSG_ERROR([SM3 hash algorithm not supported by OpenSSL.])])
 	fi
-	
+
 else
 	AC_MSG_ERROR([*** Unknown hash provider.])
 fi
