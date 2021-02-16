@@ -24,10 +24,10 @@ In order to install the `libksi` packages directly from the Guardtime public rep
 cd /etc/yum.repos.d
 
 # In case of RHEL/CentOS 6
-sudo curl -O http://download.guardtime.com/ksi/configuration/guardtime.el6.repo
+sudo curl -O https://download.guardtime.com/ksi/configuration/guardtime.el6.repo
 
 # In case of RHEL/CentOS 7
-sudo curl -O http://download.guardtime.com/ksi/configuration/guardtime.el7.repo
+sudo curl -O https://download.guardtime.com/ksi/configuration/guardtime.el7.repo
 
 sudo yum install libksi
 
@@ -35,13 +35,13 @@ sudo yum install libksi
 ### On Debian/Ubuntu ###
 
 # Add Guardtime pgp key.
-sudo curl http://download.guardtime.com/ksi/GUARDTIME-GPG-KEY | sudo apt-key add -
+sudo curl https://download.guardtime.com/ksi/GUARDTIME-GPG-KEY | sudo apt-key add -
 
 # In case of Ubuntu 16 (Xenial)
-sudo curl -o /etc/apt/sources.list.d/guardtime.list http://download.guardtime.com/ksi/configuration/guardtime.xenial.list
+sudo curl -o /etc/apt/sources.list.d/guardtime.list https://download.guardtime.com/ksi/configuration/guardtime.xenial.list
 
 # In case of Debian 9 (Stretch)
-sudo curl -o /etc/apt/sources.list.d/guardtime.list http://download.guardtime.com/ksi/configuration/guardtime.stretch.list
+sudo curl -o /etc/apt/sources.list.d/guardtime.list https://download.guardtime.com/ksi/configuration/guardtime.stretch.list
 
 sudo apt update
 apt-get install libksi
