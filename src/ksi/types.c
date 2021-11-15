@@ -794,6 +794,11 @@ cleanup:
 	return res;
 }
 
+int pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
+		int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**), void *pdu) {
+	return KSI_Pdu_verifyHmac(ctx, hmac, key, conf_alg, calculateHmac, pdu);
+}
+
 static int pdu_calculateHmac(KSI_CTX* ctx, const void* pdu,
 		int (*getHeader)(const void*, KSI_Header**),
 		int (*getResponse)(const void*, void**),
