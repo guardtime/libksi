@@ -1,14 +1,18 @@
-(KSICAPI-552)* IMPROVEMENT: Code refactored in tlv_element.c to eliminate redundant addition to NULL pointer.
-* FEATURE: Added SM-3 and SHA-3 family hash functions for OpenSSL.
-(KSICAPI-553)* IMPROVEMENT: Redundant code from fast_tlv.c removed.
-(KSICAPI-548)* BUGFIX: Possibly uninitialized clean in KSI_SignatureBuilder_close fixed.
+Version 3.21
+
+2022-01-06 release(3.21.3075)
+
+* FEATURE: Added SM-3 and SHA-3 family hash functions for OpenSSL (disabled by default).
+* IMPROVEMENT: Code refactored in tlv_element.c to eliminate redundant addition to NULL pointer.
+* IMPROVEMENT: Redundant code from fast_tlv.c removed.
+* BUGFIX: Possibly uninitialized clean in KSI_SignatureBuilder_close fixed.
 * BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
-(KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
-(KSICAPI-555)* BUGFIX: Test testUnimplementedHashAlgorithm fixed.
-(KSICAPI-554)* BUGFIX: String comparison in test/include-test.sh fixed.
-(KSICAPI-549)* BUGFIX: Potential memory leak in KSI_TreeLeafHandle_getAggregationChain fixed.
-(KSICAPI-550)* BUGFIX: Possibly NULL passed to memcpy with byte count 0 in tlv.c fixed.
-(KSICAPI-551)* BUGFIX: Unexpected behaviour fixed when dealing with SHA3-512 hash algorithm names.
+* BUGFIX: Tests failing due to expired certificate fixed.
+* BUGFIX: Test testUnimplementedHashAlgorithm fixed.
+* BUGFIX: String comparison in test/include-test.sh fixed.
+* BUGFIX: Potential memory leak in KSI_TreeLeafHandle_getAggregationChain fixed.
+* BUGFIX: Possibly NULL passed to memcpy with byte count 0 in tlv.c fixed.
+* BUGFIX: Unexpected behaviour fixed when dealing with SHA3-512 hash algorithm names.
 
 Version 3.20
 
