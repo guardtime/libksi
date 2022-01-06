@@ -1,3 +1,15 @@
+(KSICAPI-552)* IMPROVEMENT: Code refactored in tlv_element.c to eliminate redundant addition to NULL pointer.
+* FEATURE: Added SM-3 and SHA-3 family hash functions for OpenSSL.
+(KSICAPI-553)* IMPROVEMENT: Redundant code from fast_tlv.c removed.
+(KSICAPI-548)* BUGFIX: Possibly uninitialized clean in KSI_SignatureBuilder_close fixed.
+* BUGFIX: Memory leak in several KSI_TlvElement_* functions fixed.
+(KSICAPI-545)* BUGFIX: Tests failing due to expired certificate fixed.
+(KSICAPI-555)* BUGFIX: Test testUnimplementedHashAlgorithm fixed.
+(KSICAPI-554)* BUGFIX: String comparison in test/include-test.sh fixed.
+(KSICAPI-549)* BUGFIX: Potential memory leak in KSI_TreeLeafHandle_getAggregationChain fixed.
+(KSICAPI-550)* BUGFIX: Possibly NULL passed to memcpy with byte count 0 in tlv.c fixed.
+(KSICAPI-551)* BUGFIX: Unexpected behaviour fixed when dealing with SHA3-512 hash algorithm names.
+
 Version 3.20
 
 2019-10-07 release(3.20.3025)
@@ -21,6 +33,7 @@ Version 3.19
 
 2019-01-30 release(3.19.2919)
 * FEATURE: Added new async handle state KSI_ASYNC_STATE_ERROR_NOTICE for returning errors that whould be otherwise resolved internally (eg. in case of high availability where one of the configured endpoint encounter connection issues).
+* FEATURE: Added new option KSI_ASYNC_OPT_HMAC_ALGORITHM for overriding default HMAC algorithm set via KSI_CTX options KSI_OPT_AGGR_HMAC_ALGORITHM or KSI_OPT_EXT_HMAC_ALGORITHM.
 * FEATURE: Added new option KSI_ASYNC_OPT_CONF_CONSOLIDATE_CALLBACK for overriding default consolidation handling.
 * FEATURE: Added async service option KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK for setting connection state listener.
 * FEATURE: Added prefix string format support to KSI_LOG_logBlob. Interface remains fully backwards compatible.

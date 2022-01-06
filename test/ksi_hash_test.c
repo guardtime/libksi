@@ -442,10 +442,10 @@ static void testAllHashing(CuTest *tc) {
 	expected[KSI_HASHALG_SHA2_512] = "2dcee3bebeeec061751c7e2c886fddb069502c3c71e1f70272d77a64c092e51b6a262d208939cc557de7650da347b08f643d515ff8009a7342454e73247761dd";
 	expected[0x06] = NULL; /* Deprecated hash function. */
 	expected[KSI_HASHALG_SHA3_224] = "TODO!";
-	expected[KSI_HASHALG_SHA3_256] = "TODO!";
-	expected[KSI_HASHALG_SHA3_384] = "TODO!";
-	expected[KSI_HASHALG_SHA3_512] = "TODO!";
-	expected[KSI_HASHALG_SM3] = "TODO!";
+	expected[KSI_HASHALG_SHA3_256] = "05d89ebd9e3ecb536ad11cac3bda51a7a81e043f7843274b49e7893ab161ffc6";
+	expected[KSI_HASHALG_SHA3_384] = "3b45a4e97d912b2cb05f6c4ea659714c3db95280f37117a05e679338a5064fd434b1c73164c51ec9687ce39096d7b7b7";
+	expected[KSI_HASHALG_SHA3_512] = "90f8c16c5e7d134deaf1c64a9ab79851ac7f7c1718c918c6ae902b84d8954de94b2d96bc2abf8fbd13a6b5d4f108c2ec0e64b912d379f4f970efa079c01a2eb7";
+	expected[KSI_HASHALG_SM3] = "06d3dad6636fae1a39e02361f3d67908e0315a610cdf640502f36987258f2a71";
 
 	for (algo_id = 0; algo_id < KSI_NUMBER_OF_KNOWN_HASHALGS; algo_id++) {
 		unsigned char expectedImprint[0xff];
@@ -530,7 +530,7 @@ static void testUnimplemented(CuTest *tc) {
 	const unsigned char *ptr = NULL;
 	size_t ptr_len;
 
-	KSI_HashAlgorithm algo = KSI_HASHALG_SHA3_512;
+	KSI_HashAlgorithm algo = KSI_HASHALG_SHA3_224;
 
 	CuAssert(tc, "The algorithm used for this test must not be implemented.", !KSI_isHashAlgorithmSupported(algo));
 

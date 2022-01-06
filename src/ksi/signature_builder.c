@@ -1061,6 +1061,7 @@ cleanup:
 int KSI_SignatureBuilder_close(KSI_SignatureBuilder *builder, KSI_uint64_t rootLevel, KSI_Signature **sig) {
 	int res = KSI_UNKNOWN_ERROR;
 	KSI_VerificationContext context;
+	int isContextInitialized = 0;
 	KSI_PolicyVerificationResult *result = NULL;
 	int tlvConstructed = 0;
 	KSI_Signature *clone = NULL;
@@ -1075,6 +1076,7 @@ int KSI_SignatureBuilder_close(KSI_SignatureBuilder *builder, KSI_uint64_t rootL
 		KSI_pushError(builder->ctx, res, NULL);
 		goto cleanup;
 	}
+	isContextInitialized = 1;
 
 	/* Make sure the aggregation hash chains are in correct order. */
 	res = KSI_AggregationHashChainList_sort(builder->sig->aggregationChainList, KSI_AggregationHashChain_compare);
@@ -1149,7 +1151,7 @@ cleanup:
 		builder->sig->baseTlv = NULL;
 	}
 	KSI_Signature_free(clone);
-	KSI_VerificationContext_clean(&context);
+	if (isContextInitialized) {KSI_VerificationContext_clean(&context);}
 	KSI_PolicyVerificationResult_free(result);
 
 	return res;

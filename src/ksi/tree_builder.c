@@ -765,6 +765,7 @@ int KSI_TreeLeafHandle_getAggregationChain(const KSI_TreeLeafHandle *handle, KSI
 		KSI_pushError(handle->pBuilder->ctx, res, NULL);
 		goto cleanup;
 	}
+	links = NULL;
 
 	/* Set the input hash. */
 	{
@@ -801,6 +802,7 @@ int KSI_TreeLeafHandle_getAggregationChain(const KSI_TreeLeafHandle *handle, KSI
 
 cleanup:
 
+	KSI_HashChainLinkList_free(links);
 	KSI_Integer_free(algoId);
 	KSI_AggregationHashChain_free(tmp);
 

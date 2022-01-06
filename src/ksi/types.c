@@ -743,7 +743,7 @@ cleanup:
 	return res;
 }
 
-int pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
+int KSI_Pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
 		int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**), void *pdu){
 	int res;
 	KSI_DataHash *actualHmac = NULL;
@@ -792,6 +792,11 @@ cleanup:
 	KSI_DataHash_free(actualHmac);
 
 	return res;
+}
+
+int pdu_verifyHmac(KSI_CTX *ctx, const KSI_DataHash *hmac, const char *key, KSI_HashAlgorithm conf_alg,
+		int (*calculateHmac)(const void*, int, const char*, KSI_DataHash**), void *pdu) {
+	return KSI_Pdu_verifyHmac(ctx, hmac, key, conf_alg, calculateHmac, pdu);
 }
 
 static int pdu_calculateHmac(KSI_CTX* ctx, const void* pdu,
@@ -1045,7 +1050,7 @@ int KSI_ExtendPdu_verifyHmac(const KSI_ExtendPdu *pdu, const char *pass) {
 		goto cleanup;
 	}
 
-	res = pdu_verifyHmac(pdu->ctx, respHmac, pass,
+	res = KSI_Pdu_verifyHmac(pdu->ctx, respHmac, pass,
 			(KSI_HashAlgorithm)pdu->ctx->options[KSI_OPT_EXT_HMAC_ALGORITHM],
 			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_ExtendPdu_calculateHmac,
 			(void*)pdu);
@@ -1461,7 +1466,7 @@ int KSI_AggregationPdu_verifyHmac(const KSI_AggregationPdu *pdu, const char *pas
 		goto cleanup;
 	}
 
-	res = pdu_verifyHmac(pdu->ctx, respHmac, pass,
+	res = KSI_Pdu_verifyHmac(pdu->ctx, respHmac, pass,
 			(KSI_HashAlgorithm)pdu->ctx->options[KSI_OPT_AGGR_HMAC_ALGORITHM],
 			(int (*)(const void*, int, const char*, KSI_DataHash**))KSI_AggregationPdu_calculateHmac,
 			(void*)pdu);

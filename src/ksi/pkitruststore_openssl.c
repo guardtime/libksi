@@ -86,25 +86,24 @@ static void openSslGlobal_cleanup(void) {
 	}
 }
 
-
 static int KSI_MD2hashAlg(EVP_MD *hash_alg) {
-	if (hash_alg == EVP_sha256())
-		return KSI_HASHALG_SHA2_256;
-#ifndef OPENSSL_NO_SHA
-	if (hash_alg == EVP_sha1())
-		return KSI_HASHALG_SHA1;
-#endif
-#ifndef OPENSSL_NO_RIPEMD
-	if (hash_alg == EVP_ripemd160())
-		return KSI_HASHALG_RIPEMD160;
-#endif
-#ifndef OPENSSL_NO_SHA512
-	if (hash_alg == EVP_sha384())
-		return KSI_HASHALG_SHA2_384;
-	if (hash_alg == EVP_sha512())
-		return KSI_HASHALG_SHA2_512;
-#endif
-	return -1;
+		if (hash_alg == EVP_sha256())
+			return KSI_HASHALG_SHA2_256;
+	#ifndef OPENSSL_NO_SHA
+		if (hash_alg == EVP_sha1())
+			return KSI_HASHALG_SHA1;
+	#endif
+	#ifndef OPENSSL_NO_RIPEMD
+		if (hash_alg == EVP_ripemd160())
+			return KSI_HASHALG_RIPEMD160;
+	#endif
+	#ifndef OPENSSL_NO_SHA512
+		if (hash_alg == EVP_sha384())
+			return KSI_HASHALG_SHA2_384;
+		if (hash_alg == EVP_sha512())
+			return KSI_HASHALG_SHA2_512;
+	#endif
+		return -1;
 }
 
 void KSI_PKITruststore_free(KSI_PKITruststore *trust) {

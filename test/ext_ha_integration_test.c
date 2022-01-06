@@ -103,7 +103,7 @@ static void verifyOption(CuTest* tc, KSI_AsyncService *s, int opt, size_t defVal
 	CuAssert(tc, "Async service option value mismatch.", res == KSI_OK && optVal == newVal);
 }
 
-static void asyncExtending_verifyOptions(CuTest* tc, const char *scheme) {
+static void asyncExtending_verifyOptions(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
 
@@ -123,16 +123,18 @@ static void asyncExtending_verifyOptions(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaExtend_verifyOptions_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_verifyOptions(tc, TEST_SCHEME_TCP);
+	asyncExtending_verifyOptions(tc, scheme);
 }
 
 void Test_HaExtend_verifyOptions_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_verifyOptions(tc, TEST_SCHEME_HTTP);
+	asyncExtending_verifyOptions(tc, scheme);
 }
 
-static void asyncExtending_verifyCacheSizeOption(CuTest* tc, const char *scheme) {
+static void asyncExtending_verifyCacheSizeOption(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
 	size_t optVal = 0;
@@ -159,13 +161,15 @@ static void asyncExtending_verifyCacheSizeOption(CuTest* tc, const char *scheme)
 }
 
 void Test_HaExtend_verifyCacheSizeOption_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_verifyCacheSizeOption(tc, TEST_SCHEME_TCP);
+	asyncExtending_verifyCacheSizeOption(tc, scheme);
 }
 
 void Test_HaExtend_verifyCacheSizeOption_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_verifyCacheSizeOption(tc, TEST_SCHEME_HTTP);
+	asyncExtending_verifyCacheSizeOption(tc, scheme);
 }
 
 static void asyncExtending_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
@@ -304,12 +308,13 @@ static void asyncExtending_loop_getResponse(CuTest* tc, KSI_AsyncService *as) {
 
 void Test_HaExtend_loop_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.extender, conf.ha.extender);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -320,12 +325,13 @@ void Test_HaExtend_loop_tcp(CuTest* tc) {
 
 void Test_HaExtend_loop_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.extender, conf.ha.extender);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -336,12 +342,13 @@ void Test_HaExtend_loop_http(CuTest* tc) {
 
 void Test_HaExtend_loopResetEndpointLoop_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.extender, conf.ha.extender);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -359,12 +366,13 @@ void Test_HaExtend_loopResetEndpointLoop_tcp(CuTest* tc) {
 
 void Test_HaExtend_loopResetEndpointLoop_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.extender, conf.ha.extender);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -382,34 +390,15 @@ void Test_HaExtend_loopResetEndpointLoop_http(CuTest* tc) {
 
 void Test_HaExtend_loop_http_tcp_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, TEST_SCHEME_TCP, TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	if (strlen(conf.ha.extender[0].host) == 0) {
-		KSI_LOG_debug(ctx, "%s: testing with common extender conf.", __FUNCTION__);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
-		res = KSI_AsyncService_addEndpoint(has,
-				KSITest_composeUri(TEST_SCHEME_HTTP, &conf.extender), conf.extender.user, conf.extender.pass);
-		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-	} else {
-		res = KSI_AsyncService_addEndpoint(has,
-				KSITest_composeUri(TEST_SCHEME_HTTP, &conf.ha.extender[0]), conf.ha.extender[0].user, conf.ha.extender[0].pass);
-		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-		if (strlen(conf.ha.extender[1].host) != 0) {
-			res = KSI_AsyncService_addEndpoint(has,
-					KSITest_composeUri(TEST_SCHEME_TCP, &conf.ha.extender[1]), conf.ha.extender[1].user, conf.ha.extender[1].pass);
-			CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-		}
-
-		if (strlen(conf.ha.extender[2].host) != 0) {
-			res = KSI_AsyncService_addEndpoint(has,
-					KSITest_composeUri(TEST_SCHEME_HTTP, &conf.ha.extender[2]), conf.ha.extender[2].user, conf.ha.extender[2].pass);
-			CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-		}
-	}
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncExtending_loop_getResponse(tc, has);
@@ -419,34 +408,14 @@ void Test_HaExtend_loop_http_tcp_http(CuTest* tc) {
 
 void Test_HaExtend_loop_tcp_http_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, TEST_SCHEME_HTTP, TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	if (strlen(conf.ha.extender[0].host) == 0) {
-		KSI_LOG_debug(ctx, "%s: testing with common extender conf.", __FUNCTION__);
-
-		res = KSI_AsyncService_addEndpoint(has,
-				KSITest_composeUri(TEST_SCHEME_TCP, &conf.extender), conf.extender.user, conf.extender.pass);
-		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-	} else {
-		res = KSI_AsyncService_addEndpoint(has,
-				KSITest_composeUri(TEST_SCHEME_TCP, &conf.ha.extender[0]), conf.ha.extender[0].user, conf.ha.extender[0].pass);
-		CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-
-		if (strlen(conf.ha.extender[1].host) != 0) {
-			res = KSI_AsyncService_addEndpoint(has,
-					KSITest_composeUri(TEST_SCHEME_HTTP, &conf.ha.extender[1]), conf.ha.extender[1].user, conf.ha.extender[1].pass);
-			CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-		}
-
-		if (strlen(conf.ha.extender[2].host) != 0) {
-			res = KSI_AsyncService_addEndpoint(has,
-					KSITest_composeUri(TEST_SCHEME_TCP, &conf.ha.extender[2]), conf.ha.extender[2].user, conf.ha.extender[2].pass);
-			CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
-		}
-	}
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
+	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 	asyncExtending_loop_getResponse(tc, has);
@@ -455,7 +424,7 @@ void Test_HaExtend_loop_tcp_http_tcp(CuTest* tc) {
 }
 
 
-static void asyncExtending_collect_getResponse(CuTest* tc, const char *scheme) {
+static void asyncExtending_collect_getResponse(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	time_t startTime;
@@ -598,16 +567,18 @@ static void asyncExtending_collect_getResponse(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaExtend_collect_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_collect_getResponse(tc, TEST_SCHEME_TCP);
+	asyncExtending_collect_getResponse(tc, scheme);
 }
 
 void Test_HaExtend_collect_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_collect_getResponse(tc, TEST_SCHEME_HTTP);
+	asyncExtending_collect_getResponse(tc, scheme);
 }
 
-static void asyncExtending_getError(CuTest* tc, const char *scheme, KSITest_ServiceConf *srvCfg, KSITest_ServiceConf *haCfg, int expected, long external) {
+static void asyncExtending_getError(CuTest* tc, const char **scheme, KSITest_ServiceConf *srvCfg, KSITest_ServiceConf *haCfg, int expected, long external) {
 	int res;
 	const size_t reqTime = 1435740789;
 	KSI_Integer *aggrTime = NULL;
@@ -700,13 +671,15 @@ static void asyncExtending_getError(CuTest* tc, const char *scheme, KSITest_Serv
 
 
 void Test_HaExtend_useAggregator_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_getError(tc, TEST_SCHEME_TCP, &conf.aggregator, conf.ha.aggregator, KSI_INVALID_FORMAT, 0);
+	asyncExtending_getError(tc, scheme, &conf.aggregator, conf.ha.aggregator, KSI_INVALID_FORMAT, 0);
 }
 
 void Test_HaExtend_useAggregator_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_getError(tc, TEST_SCHEME_HTTP, &conf.aggregator, conf.ha.aggregator, KSI_HTTP_ERROR, 400);
+	asyncExtending_getError(tc, scheme, &conf.aggregator, conf.ha.aggregator, KSI_HTTP_ERROR, 400);
 }
 
 static int createDummyExtAsyncRequest(KSI_AsyncHandle **ah) {
@@ -737,7 +710,7 @@ cleanup:
 	return res;
 }
 
-static void asyncExtending_fillupCache(CuTest* tc, const char *scheme) {
+static void asyncExtending_fillupCache(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *hndl = NULL;
@@ -778,16 +751,18 @@ static void asyncExtending_fillupCache(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaExtend_fillupCache_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_fillupCache(tc, TEST_SCHEME_TCP);
+	asyncExtending_fillupCache(tc, scheme);
 }
 
 void Test_HaExtend_fillupCache_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_fillupCache(tc, TEST_SCHEME_HTTP);
+	asyncExtending_fillupCache(tc, scheme);
 }
 
-static void asyncExtending_addEmptyReq(CuTest* tc, const char *scheme) {
+static void asyncExtending_addEmptyReq(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
@@ -816,13 +791,15 @@ static void asyncExtending_addEmptyReq(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaExtend_addEmptyRequest_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_addEmptyReq(tc, TEST_SCHEME_TCP);
+	asyncExtending_addEmptyReq(tc, scheme);
 }
 
 void Test_HaExtend_addEmptyRequest_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_addEmptyReq(tc, TEST_SCHEME_HTTP);
+	asyncExtending_addEmptyReq(tc, scheme);
 }
 
 static void Test_HaExtend_noEndpoint_addRequest(CuTest* tc) {
@@ -880,7 +857,7 @@ void Test_HaExtend_exceedMaxNofSubservices(CuTest* tc) {
 	KSI_AsyncService_free(has);
 }
 
-static void asyncExtending_runEmpty(CuTest* tc, const char *scheme) {
+static void asyncExtending_runEmpty(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *hndl = NULL;
@@ -904,13 +881,15 @@ static void asyncExtending_runEmpty(CuTest* tc, const char *scheme) {
 }
 
 void Test_HaExtend_runEmpty_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_runEmpty(tc, TEST_SCHEME_TCP);
+	asyncExtending_runEmpty(tc, scheme);
 }
 
 void Test_HaExtend_runEmpty_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_runEmpty(tc, TEST_SCHEME_HTTP);
+	asyncExtending_runEmpty(tc, scheme);
 }
 
 static void asyncExtending_requestConfigOnly(CuTest* tc, KSI_AsyncService *as) {
@@ -989,6 +968,7 @@ static void asyncExtending_requestConfigOnly(CuTest* tc, KSI_AsyncService *as) {
 
 void Test_HaExtend_requestConfigOnly_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -996,7 +976,7 @@ void Test_HaExtend_requestConfigOnly_tcp(CuTest* tc) {
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.extender, conf.ha.extender);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	asyncExtending_requestConfigOnly(tc, has);
@@ -1006,6 +986,7 @@ void Test_HaExtend_requestConfigOnly_tcp(CuTest* tc) {
 
 void Test_HaExtend_requestConfigOnly_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1013,7 +994,7 @@ void Test_HaExtend_requestConfigOnly_http(CuTest* tc) {
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.extender, conf.ha.extender);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	asyncExtending_requestConfigOnly(tc, has);
@@ -1089,6 +1070,7 @@ static void asyncExtending_requestConfigOnlyUseCallback(CuTest* tc, KSI_AsyncSer
 
 void Test_HaExtend_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1096,7 +1078,7 @@ void Test_HaExtend_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_TCP, &conf.extender, conf.ha.extender);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)dummyCallback);
@@ -1109,6 +1091,7 @@ void Test_HaExtend_requestConfigOnlyUseCallback_tcp(CuTest* tc) {
 
 void Test_HaExtend_requestConfigOnlyUseCallback_http(CuTest* tc) {
 	int res;
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_AsyncService *has = NULL;
 
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
@@ -1116,7 +1099,7 @@ void Test_HaExtend_requestConfigOnlyUseCallback_http(CuTest* tc) {
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
 
-	res = KSITest_HighAvailabilityService_setEndpoint(has, TEST_SCHEME_HTTP, &conf.extender, conf.ha.extender);
+	res = KSITest_HighAvailabilityService_setEndpoint(has, scheme, &conf.extender, conf.ha.extender);
 	CuAssert(tc, "Unable to configure service endpoint.", res == KSI_OK);
 
 	res = KSI_AsyncService_setOption(has, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)dummyCallback);
@@ -1127,13 +1110,13 @@ void Test_HaExtend_requestConfigOnlyUseCallback_http(CuTest* tc) {
 	KSI_AsyncService_free(has);
 }
 
-static void asyncExtending_verifySubserviceCallbacksDisabled(CuTest* tc, const char *scheme) {
+static void asyncExtending_verifySubserviceCallbacksDisabled(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
 	size_t i;
 	KSI_AsyncServiceList *list = NULL;
 
-	KSI_LOG_debug(ctx, "%s: %s", __FUNCTION__, scheme);
+	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
 
 	res = KSI_ExtendingHighAvailabilityService_new(ctx, &has);
 	CuAssert(tc, "Unable to create new async service object.", res == KSI_OK && has != NULL);
@@ -1173,16 +1156,18 @@ static void asyncExtending_verifySubserviceCallbacksDisabled(CuTest* tc, const c
 }
 
 static void Test_HaExtend_verifySubserviceCallbacksDisabled_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_verifySubserviceCallbacksDisabled(tc, TEST_SCHEME_TCP);
+	asyncExtending_verifySubserviceCallbacksDisabled(tc, scheme);
 }
 
 static void Test_HaExtend_verifySubserviceCallbacksDisabled_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_verifySubserviceCallbacksDisabled(tc, TEST_SCHEME_HTTP);
+	asyncExtending_verifySubserviceCallbacksDisabled(tc, scheme);
 }
 
-static void asyncExtending_requestConfigWithExtReq(CuTest* tc, const char *scheme) {
+static void asyncExtending_requestConfigWithExtReq(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *as = NULL;
 	KSI_AsyncHandle *handle = NULL;
@@ -1306,16 +1291,18 @@ static void asyncExtending_requestConfigWithExtReq(CuTest* tc, const char *schem
 }
 
 void Test_HaExtend_requestConfigWithExtReq_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_requestConfigWithExtReq(tc, TEST_SCHEME_TCP);
+	asyncExtending_requestConfigWithExtReq(tc, scheme);
 }
 
 void Test_HaExtend_requestConfigWithExtReq_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_requestConfigWithExtReq(tc, TEST_SCHEME_HTTP);
+	asyncExtending_requestConfigWithExtReq(tc, scheme);
 }
 
-static void asyncExtending_requestConfigAndExtRequest_loop(CuTest* tc, const char *scheme) {
+static void asyncExtending_requestConfigAndExtRequest_loop(CuTest* tc, const char **scheme) {
 	int res;
 	KSI_AsyncService *has = NULL;
 	time_t startTime;
@@ -1466,13 +1453,15 @@ static void asyncExtending_requestConfigAndExtRequest_loop(CuTest* tc, const cha
 }
 
 void Test_HaExtend_requestConfigAndExtRequest_loop_tcp(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_TCP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_requestConfigAndExtRequest_loop(tc, TEST_SCHEME_TCP);
+	asyncExtending_requestConfigAndExtRequest_loop(tc, scheme);
 }
 
 void Test_HaExtend_requestConfigAndExtRequest_loop_http(CuTest* tc) {
+	const char *scheme[] = {TEST_SCHEME_HTTP, NULL};
 	KSI_LOG_debug(ctx, "%s", __FUNCTION__);
-	asyncExtending_requestConfigAndExtRequest_loop(tc, TEST_SCHEME_HTTP);
+	asyncExtending_requestConfigAndExtRequest_loop(tc, scheme);
 }
 
 static void preTest(void) {

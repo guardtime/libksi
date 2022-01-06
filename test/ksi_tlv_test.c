@@ -778,6 +778,27 @@ void testTlvElementRemoveMultipleSameId(CuTest *tc) {
 	KSI_TlvElement_free(tlv);
 }
 
+void testTlvElementGetFromCorruptedTlv(CuTest *tc) {
+	int res;
+	KSI_TlvElement *tlv = NULL;
+	KSI_TlvElement *subTlv = NULL;
+	/* # TLV to be parsed.
+		TLV[10]:
+			TLV[01]:
+				000000<several bytes missing>
+	 */
+	unsigned char buf[] = {0x10, 0x5, 0x01, 0x05, 0x00, 0x00, 0x00};
+
+	res = KSI_TlvElement_parse(buf, sizeof(buf), &tlv);
+	CuAssert(tc, "Unable to parse TLV.", res == KSI_OK && tlv != NULL);
+
+	res = KSI_TlvElement_getElement(tlv, 0x01, &subTlv);
+	CuAssert(tc, "It must fail as nested TLV is corrupted.", res == KSI_INVALID_FORMAT && subTlv == NULL);
+
+	KSI_TlvElement_free(tlv);
+	KSI_TlvElement_free(subTlv);
+}
+
 CuSuite* KSITest_TLV_getSuite(void)
 {
 	CuSuite* suite = CuSuiteNew();
@@ -807,6 +828,7 @@ CuSuite* KSITest_TLV_getSuite(void)
 	SUITE_ADD_TEST(suite, testTlvElementRemove);
 	SUITE_ADD_TEST(suite, testTlvElementRemoveNotExisting);
 	SUITE_ADD_TEST(suite, testTlvElementRemoveMultipleSameId);
+	SUITE_ADD_TEST(suite, testTlvElementGetFromCorruptedTlv);
 
 	return suite;
 }
