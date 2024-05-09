@@ -610,7 +610,7 @@ static void testUnavailableFunctionsFromImprint(CuTest *tc) {
 static void testUnavailableFunctionsFromDigest(CuTest *tc) {
 	int res;
 	KSI_DataHash *h = NULL;
-	unsigned char buf[1];
+	unsigned char buf[1] = {0};
 
 	/* Note: the array is actually shorter than the given length - the function should not read any further after it detects
 	 * the hash function is not available. */

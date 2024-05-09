@@ -153,7 +153,9 @@ int main(int argc, char **argv) {
 	/* Init Openssl and KSI. */
 	OpenSSL_add_all_digests();
 	ERR_load_crypto_strings();
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+#endif
 
 	res = KSI_CTX_new(&ctx);
 	if (res != KSI_OK) {

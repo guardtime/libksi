@@ -10,7 +10,7 @@ Architecture: any
 Section: devel
 Priority: optional
 # Note that the libcurl4-gnutls-dev depends on libcurl3-gnutls!
-Depends: libcurl3-gnutls | libcurl3, libssl1.0.2 | libssl1.0.0 | libssl0.9.8
+Depends: libcurl3-gnutls | libcurl3, libssl1.0.2 | libssl1.0.0 | libssl0.9.8 | libssl3 (>= 3.0.0)
 Description: KSI C API.
 
 Package: @PACKAGE@-dev
