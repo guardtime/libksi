@@ -23,11 +23,11 @@ In order to install the `libksi` packages directly from the Guardtime public rep
 
 cd /etc/yum.repos.d
 
-# In case of RHEL/CentOS 6
-sudo curl -O https://download.guardtime.com/ksi/configuration/guardtime.el6.repo
-
 # In case of RHEL/CentOS 7
 sudo curl -O https://download.guardtime.com/ksi/configuration/guardtime.el7.repo
+
+# In case of RHEL/CentOS 8
+sudo curl -O https://download.guardtime.com/ksi/configuration/guardtime.el8.repo
 
 sudo yum install libksi
 
@@ -218,7 +218,7 @@ See `license.txt` file.
 
 | OS/Platform                              | Compatibility                                |
 | :---                                       | :---                                         |
-| CentOS/RHEL 6 and 7, x86_64 architecture | Fully compatible and tested.                  |
+| CentOS/RHEL 7 and 8 x86_64 architecture | Fully compatible and tested.                  |
 | Debian, ...                                | Compatible but not tested on a regular basis. |
 | macOS                                       | Compatible but not tested on a regular basis. |
 | Windows 7, 8, 10                           | Compatible but not tested on a regular basis. |
