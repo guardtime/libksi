@@ -72,7 +72,7 @@ static int openSslGlobal_init(void) {
 	if (KSI_PKITruststore_global_initCount++ > 0) {
 		/* Nothing to do. */
 	} else {
-		OpenSSL_add_all_digests();
+		openssl_compatibility_functions.openssl_setup();
 	}
 
 	return KSI_OK;
@@ -82,7 +82,7 @@ static void openSslGlobal_cleanup(void) {
 	if (--KSI_PKITruststore_global_initCount > 0) {
 		/* Nothing to do. */
 	} else {
-		EVP_cleanup();
+		openssl_compatibility_functions.openssl_cleanup();
 	}
 }
 
