@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2024 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -352,11 +352,11 @@ static int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days
 	const unsigned char email[] = "publications@guardtime.com";
 
 	if ((pk = make_new_key(bits)) == NULL) {
-		goto err;
+		goto cleanup;
 	}
 
 	if ((x = X509_new()) == NULL) {
-		goto err;
+		goto cleanup;
 	}
 
 	X509_set_version(x, 2);
@@ -387,13 +387,13 @@ static int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days
 	add_ext(x, NID_subject_key_identifier, "hash");
 
 	if (!X509_sign(x, pk, EVP_sha256())) {
-		goto err;
+		goto cleanup;
 	}
 
 	*x509p = x;
 	*pkeyp = pk;
 	return 1;
-err:
+cleanup:
 	return 0;
 }
 

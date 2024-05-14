@@ -331,7 +331,7 @@ int KSI_HmacHasher_open(KSI_CTX *ctx, KSI_HashAlgorithm algo_id, const char *key
 	tmp_hasher->openssl_ctx = NULL;
 	tmp_hasher->key = NULL;
 
-	tmp_hasher->openssl_ctx = openssl_compatibility_functions.mac_ctx_new();
+	tmp_hasher->openssl_ctx = KSI_openssl.mac_ctx_new();
 	if (tmp_hasher->openssl_ctx == NULL) {
 		KSI_pushError(ctx, res = KSI_OUT_OF_MEMORY, "Unable to create HMAC context.");
 		goto cleanup;
@@ -375,7 +375,7 @@ int KSI_HmacHasher_reset(KSI_HmacHasher *hasher) {
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	if (!openssl_compatibility_functions.mac_ctx_reset(hasher->openssl_ctx, (const unsigned char*)hasher->key, strlen(hasher->key), hashAlgorithmToEVP(hasher->hash_id))) {
+	if (!KSI_openssl.mac_ctx_reset(hasher->openssl_ctx, (const unsigned char*)hasher->key, strlen(hasher->key), hashAlgorithmToEVP(hasher->hash_id))) {
 		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Unable to reset OpenSSL HMAC");
 		goto cleanup;
 	}
@@ -397,7 +397,7 @@ int KSI_HmacHasher_add(KSI_HmacHasher *hasher, const void *data, size_t data_len
 	KSI_ERR_clearErrors(hasher->ctx);
 
 
-	if (!openssl_compatibility_functions.mac_ctx_update(hasher->openssl_ctx, data, data_length)) {
+	if (!KSI_openssl.mac_ctx_update(hasher->openssl_ctx, data, data_length)) {
 		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Unable to update OpenSSL HMAC");
 		goto cleanup;
 	}
@@ -422,7 +422,7 @@ int KSI_HmacHasher_close(KSI_HmacHasher *hasher, KSI_DataHash **hmac) {
 	}
 	KSI_ERR_clearErrors(hasher->ctx);
 
-	if (!openssl_compatibility_functions.mac_ctx_final(hasher->openssl_ctx, digest, sizeof(digest), &digest_len)) {
+	if (!KSI_openssl.mac_ctx_final(hasher->openssl_ctx, digest, sizeof(digest), &digest_len)) {
 		KSI_pushError(hasher->ctx, res = KSI_UNKNOWN_ERROR, "Unable to finalize OpenSSL HMAC");
 		goto cleanup;
 	}
@@ -447,7 +447,7 @@ cleanup:
 
 void KSI_HmacHasher_free(KSI_HmacHasher *hasher) {
 	if (hasher != NULL) {
-		if (hasher->openssl_ctx != NULL) openssl_compatibility_functions.mac_ctx_free(hasher->openssl_ctx);
+		if (hasher->openssl_ctx != NULL) KSI_openssl.mac_ctx_free(hasher->openssl_ctx);
 		if (hasher->key != NULL) KSI_free(hasher->key);
 		KSI_free(hasher);
 	}

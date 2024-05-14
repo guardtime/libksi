@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2024 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -70,7 +70,7 @@
 	}
 
 	static void openssl_mac_ctx_free(void *ctx) {
-		return EVP_MAC_CTX_free(ctx);
+		EVP_MAC_CTX_free(ctx);
 	}
 
 	static int openssl_mac_ctx_reset(void *ctx, const unsigned char *key, size_t key_len, const EVP_MD *md) {
@@ -103,12 +103,12 @@
 	}
 
 	static void openssl_mac_ctx_free(void *ctx) {
-		return HMAC_CTX_free(ctx);
+		HMAC_CTX_free(ctx);
 	}
 
 	static int openssl_mac_ctx_reset(void *ctx, const unsigned char *key, size_t key_len, const EVP_MD*md) {
 		if (!HMAC_CTX_reset(ctx)) return 0;
-		if (!HMAC_Init_ex(ctx, key, key_len, md, NULL)) return 0;
+		if (!HMAC_Init_ex(ctx, key, (int)key_len, md, NULL)) return 0;
 		return 1;
 	}
 
@@ -135,7 +135,7 @@
 	}
 #endif
 
-struct openssl_compatibility_functions_st openssl_compatibility_functions = {
+struct openssl_compatibility_functions_st KSI_openssl = {
 	openssl_setup,
 	openssl_cleanup,
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L

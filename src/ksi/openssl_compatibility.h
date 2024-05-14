@@ -43,7 +43,7 @@ extern "C" {
 #endif
 	};
 
-	extern struct openssl_compatibility_functions_st openssl_compatibility_functions;
+	extern struct openssl_compatibility_functions_st KSI_openssl;
 
 	/**
 	 * These macros are needed to support both OpenSSL 1.0 and 1.1.
