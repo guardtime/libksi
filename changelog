@@ -1,3 +1,4 @@
+* IMPROVEMENT: Build warnings reduced.
 * IMPROVEMENT: Functions deprecated in OpenSSL 3 replaced with new ones.
 * IMPROVEMENT: OpenSSL 3 is supported for packaging.
 
