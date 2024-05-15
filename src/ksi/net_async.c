@@ -694,7 +694,7 @@ static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 	KSI_Header *hdr = NULL;
 	KSI_AsyncHandle *confHandle = NULL;
 	void *tmpReq = NULL;
-	KSI_HashAlgorithm clientHmacAlg = KSI_HASHALG_INVALID;
+	KSI_HashAlgorithm clientHmacAlg = KSI_HASHALG_INVALID_VALUE;
 	KSI_DataHash *hmac = NULL;
 
 	if (c == NULL || handle == NULL || req == NULL) {
@@ -760,7 +760,7 @@ static int addRequest(KSI_AsyncClient *c, KSI_AsyncHandle *handle, void *req,
 	hdr = NULL;
 	/* Update HMAC if a different algorithm is configured. */
 	clientHmacAlg = (KSI_HashAlgorithm)c->options[KSI_ASYNC_OPT_HMAC_ALGORITHM];
-	if (clientHmacAlg != KSI_HASHALG_INVALID && clientHmacAlg != defaultHmacAlg) {
+	if (clientHmacAlg != KSI_HASHALG_INVALID_VALUE && clientHmacAlg != defaultHmacAlg) {
 		res = pdu_getHmac(pdu, &hmac);
 		if (res != KSI_OK) goto cleanup;
 		KSI_DataHash_free(hmac);
@@ -1296,7 +1296,7 @@ static int processResponseQueue(KSI_AsyncClient *c,
 			}
 
 			res = KSI_Pdu_verifyHmac(c->ctx, hmac, pass,
-					(clientHmacAlg != KSI_HASHALG_INVALID ? clientHmacAlg : defaultHmacAlg),
+					(clientHmacAlg != KSI_HASHALG_INVALID_VALUE ? clientHmacAlg : defaultHmacAlg),
 					pdu_calculateHmac, pdu);
 			if (res != KSI_OK) {
 				KSI_pushError(c->ctx, res, NULL);
@@ -1691,7 +1691,7 @@ static int asyncClient_setDefaultOptions(KSI_AsyncClient *c) {
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_PUSH_CONF_CALLBACK, (void *)NULL)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_CONNECTION_STATE_CALLBACK, (void *)NULL)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_CALLBACK_USERDATA, (void *)NULL)) != KSI_OK) goto cleanup;
-	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_HMAC_ALGORITHM, (void *)KSI_HASHALG_INVALID)) != KSI_OK) goto cleanup;
+	if ((res = asyncClient_setOption(c, KSI_ASYNC_OPT_HMAC_ALGORITHM, (void *)KSI_HASHALG_INVALID_VALUE)) != KSI_OK) goto cleanup;
 	/* Private options. */
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_PRIVOPT_ROUND_DURATION, (void *)KSI_ASYNC_ROUND_DURATION_SEC)) != KSI_OK) goto cleanup;
 	if ((res = asyncClient_setOption(c, KSI_ASYNC_PRIVOPT_INVOKE_CONF_RECEIVED_CALLBACK, (void *)true)) != KSI_OK) goto cleanup;

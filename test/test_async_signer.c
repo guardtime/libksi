@@ -239,7 +239,7 @@ int main(int argc, char **argv) {
 				/* HMAC algorithm configuration. */
 				if (strlen(conf.ha.aggregator[i].hmac)) {
 					KSI_HashAlgorithm algId = KSI_getHashAlgorithmByName(conf.ha.aggregator[i].hmac);
-					if (algId == KSI_HASHALG_INVALID) {
+					if (!KSI_isHashAlgorithmSupported(algId)) {
 						fprintf(stderr, "Invalid hash algorithm for aggregator HMAC: '%s'\n", conf.ha.aggregator[i].hmac);
 						exit(EXIT_FAILURE);
 					}

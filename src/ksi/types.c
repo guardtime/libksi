@@ -204,6 +204,12 @@ KSI_IMPLEMENT_LIST(KSI_AsyncService, KSI_AsyncService_free);
 
 KSI_IMPLEMENT_REF(KSI_MetaDataElement);
 KSI_IMPLEMENT_REF(KSI_MetaData);
+
+// One warning per file is enough.
+enum {
+	KSI_PDU_VERSION_1_NO_WARN = KSI_PDU_VERSION_1
+};
+
 /**
  * KSI_MetaData
  */
@@ -1069,7 +1075,7 @@ int KSI_ExtendPdu_calculateHmac(const KSI_ExtendPdu *t, KSI_HashAlgorithm algo_i
 	if (t == NULL || t->ctx == NULL)
 		return KSI_INVALID_ARGUMENT;
 
-	if (t->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
+	if (t->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 		KSI_LOG_warn(t->ctx, "PDU v1 is deprecated!");
 		res = pdu_calculateHmac(t->ctx, (const void*)t,
 				(int (*)(const void*, KSI_Header**))KSI_ExtendPdu_getHeader,
@@ -1282,13 +1288,13 @@ int KSI_ExtendPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len, KSI_
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendPdu), tmp);
 		}
 	} else if (tlv.tag == 0x320) {
-		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
+		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 			res = KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendReqPdu), tmp);
 		}
 	} else if (tlv.tag == 0x321) {
-		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
+		if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 			res = KSI_SERVICE_EXTENDER_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_ExtendRespPdu), tmp);
@@ -1326,7 +1332,7 @@ int KSI_ExtendPdu_serialize(const KSI_ExtendPdu *t, unsigned char **raw, size_t 
 		goto cleanup;
 	}
 
-	if (t->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
+	if (t->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 		KSI_LOG_warn(t->ctx, "PDU v1 is deprecated!");
 		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x300, 0, 0, KSI_TLV_TEMPLATE(KSI_ExtendPdu), raw, len);
 	} else if (t->ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
@@ -1485,7 +1491,7 @@ int KSI_AggregationPdu_calculateHmac(const KSI_AggregationPdu *t, KSI_HashAlgori
 	if (t == NULL || t->ctx == NULL)
 		return KSI_INVALID_ARGUMENT;
 
-	if (t->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+	if (t->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 		KSI_LOG_warn(t->ctx, "PDU v1 is deprecated!");
 		res = pdu_calculateHmac(t->ctx, (const void*)t,
 				(int (*)(const void*, KSI_Header**))KSI_AggregationPdu_getHeader,
@@ -1582,8 +1588,8 @@ int KSI_AggregationReq_encloseWithHeader(KSI_AggregationReq *req, KSI_Header *hd
 		tmp->confRequest = KSI_Config_ref(req->config);
 	}
 	if (req->requestHash != NULL ||
-			(req->config != NULL && ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1)) {
-		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+			(req->config != NULL && ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN)) {
+		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 			KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
 		}
 		tmp->request = req;
@@ -1704,13 +1710,13 @@ int KSI_AggregationPdu_parse(KSI_CTX *ctx, const unsigned char *raw, size_t len,
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationPdu), tmp);
 		}
 	} else if (tlv.tag == 0x220) {
-		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 			res = KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationReqPdu), tmp);
 		}
 	} else if (tlv.tag == 0x221) {
-		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+		if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 			res = KSI_SERVICE_AGGR_PDU_V2_RESPONSE_TO_PDU_V1_REQUEST;
 		} else {
 			res = KSI_TlvTemplate_parse(ctx, raw, len, KSI_TLV_TEMPLATE(KSI_AggregationRespPdu), tmp);
@@ -1747,7 +1753,7 @@ int KSI_AggregationPdu_serialize(const KSI_AggregationPdu *t, unsigned char **ra
 		goto cleanup;
 	}
 
-	if (t->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+	if (t->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 		KSI_LOG_warn(t->ctx, "PDU v1 is deprecated!");
 		res = KSI_TlvTemplate_serializeObject(t->ctx, t, 0x200, 0, 0, KSI_TLV_TEMPLATE(KSI_AggregationPdu), raw, len);
 	} else if (t->ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
@@ -2085,7 +2091,7 @@ int KSI_AggregationReq_toTlv(KSI_CTX *ctx, const KSI_AggregationReq *data, unsig
 		goto cleanup;
 	}
 
-	if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+	if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 		KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
 		res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_AggregationReq));
 		if (res != KSI_OK) {
@@ -2386,7 +2392,7 @@ int KSI_AggregationResp_toTlv(KSI_CTX *ctx, const KSI_AggregationResp *data, uns
 		goto cleanup;
 	}
 
-	if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1) {
+	if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 		KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
 		res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_AggregationResp));
 	} else if (ctx->options[KSI_OPT_AGGR_PDU_VER] == KSI_PDU_VERSION_2) {
@@ -2542,7 +2548,7 @@ int KSI_ExtendReq_toTlv(KSI_CTX *ctx, const KSI_ExtendReq *data, unsigned tag, i
 		goto cleanup;
 	}
 
-	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
+	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 		KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
 		res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_ExtendReq));
 		if (res != KSI_OK) {
@@ -2825,7 +2831,7 @@ int KSI_ExtendResp_toTlv(KSI_CTX *ctx, const KSI_ExtendResp *data, unsigned tag,
 		goto cleanup;
 	}
 
-	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1) {
+	if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_1_NO_WARN) {
 		KSI_LOG_warn(ctx, "PDU v1 is deprecated!");
 		res = KSI_TlvTemplate_construct(ctx, tmp, data, KSI_TLV_TEMPLATE(KSI_ExtendResp));
 	} else if (ctx->options[KSI_OPT_EXT_PDU_VER] == KSI_PDU_VERSION_2) {
