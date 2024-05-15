@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2024 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -72,7 +72,7 @@ static int openSslGlobal_init(void) {
 	if (KSI_PKITruststore_global_initCount++ > 0) {
 		/* Nothing to do. */
 	} else {
-		OpenSSL_add_all_digests();
+		KSI_openssl.openssl_setup();
 	}
 
 	return KSI_OK;
@@ -82,7 +82,7 @@ static void openSslGlobal_cleanup(void) {
 	if (--KSI_PKITruststore_global_initCount > 0) {
 		/* Nothing to do. */
 	} else {
-		EVP_cleanup();
+		KSI_openssl.openssl_cleanup();
 	}
 }
 

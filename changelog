@@ -1,3 +1,6 @@
+* IMPROVEMENT: Functions deprecated in OpenSSL 3 replaced with new ones.
+* IMPROVEMENT: OpenSSL 3 is supported for packaging.
+
 Version 3.21
 
 2022-01-06 release(3.21.3075)

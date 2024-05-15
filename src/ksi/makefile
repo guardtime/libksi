@@ -161,6 +161,7 @@ EXT_LIB = wsock32.lib wldap32.lib winmm.lib user32.lib gdi32.lib
 
 !IF "$(HASH_PROVIDER)" == "OPENSSL" || "$(TRUST_PROVIDER)" == "OPENSSL"
 CCFLAGS = $(CCFLAGS) /I"$(OPENSSL_DIR)\include"
+LIB_OBJ = $(LIB_OBJ) $(OBJ_DIR)\openssl_compatibility.obj
 !IF "$(DLL)" == "dll"
 LDFLAGS = $(LDFLAGS) /LIBPATH:"$(OPENSSL_DIR)\$(DLL)"
 EXT_LIB = $(EXT_LIB) libeay32$(RTL).lib advapi32.lib
