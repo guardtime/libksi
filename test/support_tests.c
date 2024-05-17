@@ -300,7 +300,7 @@ int KSITest_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const
 
 		if (strlen(srvConf->hmac)) {
 			KSI_HashAlgorithm algId = KSI_getHashAlgorithmByName(srvConf->hmac);
-			if (algId == KSI_HASHALG_INVALID) {
+			if (!KSI_isHashAlgorithmSupported(algId)) {
 				res = KSI_INVALID_ARGUMENT;
 				goto cleanup;
 			}
@@ -329,7 +329,7 @@ int KSITest_HighAvailabilityService_setEndpoint(KSI_AsyncService *service, const
 
 			if (strlen(haConf[i].hmac)) {
 				KSI_HashAlgorithm algId = KSI_getHashAlgorithmByName(haConf[i].hmac);
-				if (algId == KSI_HASHALG_INVALID) {
+				if (!KSI_isHashAlgorithmSupported(algId)) {
 					res = KSI_INVALID_ARGUMENT;
 					goto cleanup;
 				}

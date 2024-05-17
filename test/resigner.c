@@ -1,5 +1,5 @@
 /*
- * Copyright 2013-2015 Guardtime, Inc.
+ * Copyright 2013-2024 Guardtime, Inc.
  *
  * This file is part of the Guardtime client SDK.
  *
@@ -30,18 +30,15 @@
 #include <openssl/pem.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 
 #include "../src/ksi/impl/publicationsfile_impl.h"
 
-int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days);
-int add_ext(X509 *cert, int nid, char *value);
+static int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days);
+static int add_ext(X509 *cert, int nid, char *value);
 
-int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFile, const unsigned char *sig_der, unsigned sig_der_len, const char *out) {
+static int publicationsFile_changePKCS7_signature(KSI_PublicationsFile *publicationsFile, const unsigned char *sig_der, unsigned sig_der_len, const char *out) {
 	int res;
 	int ret = 0;
 	KSI_CTX *ctx = NULL;
@@ -151,9 +148,12 @@ int main(int argc, char **argv) {
 	}
 
 	/* Init Openssl and KSI. */
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
+#else
 	OpenSSL_add_all_digests();
 	ERR_load_crypto_strings();
-	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+#endif
 
 	res = KSI_CTX_new(&ctx);
 	if (res != KSI_OK) {
@@ -254,90 +254,110 @@ cleanup:
 	if (sign_out != NULL) fclose(sign_out);
 	if (key_out != NULL) fclose(key_out);
 
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_cleanup();
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	OPENSSL_cleanup();
+#else
+	void EVP_cleanup(void);
+	void ERR_free_strings(void);
 #endif
-	CRYPTO_cleanup_all_ex_data();
 
 	return ret;
 }
 
-static void callback(int p, int n, void *arg) {
-	char c = 'B';
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+	static void callback(int p, int n, void *arg) {
+		char c = 'B';
 
-	if (p == 0) c = '.';
-	if (p == 1) c = '+';
-	if (p == 2) c = '*';
-	if (p == 3) c = '\n';
-	fputc(c, stderr);
-}
+		if (p == 0) c = '.';
+		if (p == 1) c = '+';
+		if (p == 2) c = '*';
+		if (p == 3) c = '\n';
+		fputc(c, stderr);
+	}
+#endif
 
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
-static RSA *generate_key(int bits, unsigned long e) {
-	return RSA_generate_key(bits, e, callback, NULL);
-}
-#else
-static RSA *generate_key(int bits, BN_ULONG e) {
-	RSA *rsa = NULL;
-	RSA *tmp = RSA_new();
-	BIGNUM *bn = BN_new();
-	BN_GENCB *cb = BN_GENCB_new();
-
-	if (tmp == NULL || bn == NULL || cb == NULL) {
-		goto cleanup;
+	static RSA *generate_key(int bits, unsigned long e) {
+		return RSA_generate_key(bits, e, callback, NULL);
 	}
+#elif OPENSSL_VERSION_NUMBER < 0x30000000L
+	static RSA *generate_key(int bits, BN_ULONG e) {
+		RSA *rsa = NULL;
+		RSA *tmp = RSA_new();
+		BIGNUM *bn = BN_new();
+		BN_GENCB *cb = BN_GENCB_new();
 
-	BN_GENCB_set_old(cb, callback, NULL);
+		if (tmp == NULL || bn == NULL || cb == NULL) {
+			goto cleanup;
+		}
 
-	if (!BN_set_word(bn, e) || !RSA_generate_key_ex(tmp, bits, bn, cb)) {
-		goto cleanup;
+		BN_GENCB_set_old(cb, callback, NULL);
+
+		if (!BN_set_word(bn, e) || !RSA_generate_key_ex(tmp, bits, bn, cb)) {
+			goto cleanup;
+		}
+		rsa = tmp;
+		tmp = NULL;
+	cleanup:
+		RSA_free(tmp);
+		BN_free(bn);
+		BN_GENCB_free(cb);
+		return rsa;
 	}
-	rsa = tmp;
-	tmp = NULL;
-cleanup:
-	RSA_free(tmp);
-	BN_free(bn);
-	BN_GENCB_free(cb);
-	return rsa;
-}
 #endif
+
+
+#if OPENSSL_VERSION_NUMBER >= 0x30000000L
+	static EVP_PKEY *make_new_key(int bits) {
+		return  EVP_RSA_gen(bits);
+	}
+#else
+	static EVP_PKEY *make_new_key(int bits) {
+		EVP_PKEY *tmp = NULL;
+		EVP_PKEY *pk = NULL;
+		RSA *rsa = NULL;
+
+		pk = EVP_PKEY_new();
+		if (pk == NULL) goto cleanup;
+
+		rsa = generate_key(bits, RSA_F4);
+		if (rsa == NULL) goto cleanup;
+
+		if (!EVP_PKEY_assign_RSA(pk, rsa)) {
+			goto cleanup;
+		}
+		rsa = NULL;
+		tmp = pk;
+		pk = NULL;
+
+	cleanup:
+		EVP_PKEY_free(pk);
+		RSA_free(rsa);
+
+		return tmp;
+	}
+#endif
+
 
 /*
  * The following helper functions are based on OpenSSL demo code.
  * See <openssl_dir>/demos/x509/mkcert.c
  */
-int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
+static int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
 	X509 *x = NULL;
 	EVP_PKEY *pk = NULL;
-	RSA *rsa = NULL;
 	X509_NAME *name = NULL;
 	const unsigned char country[] = "EE";
 	const unsigned char orgName[] = "Guardtime AS";
 	const unsigned char email[] = "publications@guardtime.com";
 
-	if ((pkeyp == NULL) || (*pkeyp == NULL)) {
-		if ((pk = EVP_PKEY_new()) == NULL) {
-			abort();
-			return(0);
-		}
-	} else {
-		pk = *pkeyp;
+	if ((pk = make_new_key(bits)) == NULL) {
+		goto cleanup;
 	}
 
-	if ((x509p == NULL) || (*x509p == NULL)) {
-		if ((x = X509_new()) == NULL) {
-			goto err;
-		}
-	} else {
-		x = *x509p;
+	if ((x = X509_new()) == NULL) {
+		goto cleanup;
 	}
-
-	rsa = generate_key(bits, RSA_F4);
-	if (!EVP_PKEY_assign_RSA(pk, rsa)) {
-		abort();
-		goto err;
-	}
-	rsa = NULL;
 
 	X509_set_version(x, 2);
 	ASN1_INTEGER_set(X509_get_serialNumber(x), serial);
@@ -367,19 +387,19 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days) {
 	add_ext(x, NID_subject_key_identifier, "hash");
 
 	if (!X509_sign(x, pk, EVP_sha256())) {
-		goto err;
+		goto cleanup;
 	}
 
 	*x509p = x;
 	*pkeyp = pk;
 	return 1;
-err:
+cleanup:
 	return 0;
 }
 
 /* Add extension using V3 code: we can set the config file as NULL
  * because we won't reference any other sections. */
-int add_ext(X509 *cert, int nid, char *value) {
+static int add_ext(X509 *cert, int nid, char *value) {
 	X509_EXTENSION *ex;
 	X509V3_CTX ctx;
 	/* This sets the 'context' of the extensions.

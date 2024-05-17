@@ -1,5 +1,11 @@
 Version 3.21
 
+2024-05-17 release(3.21.3087)
+
+* IMPROVEMENT: OpenSSL 3 is supported for packaging.
+* IMPROVEMENT: Functions deprecated in OpenSSL 3 replaced with new ones.
+* IMPROVEMENT: Build warnings reduced.
+
 2022-01-06 release(3.21.3075)
 
 * FEATURE: Added SM-3 and SHA-3 family hash functions for OpenSSL (disabled by default).

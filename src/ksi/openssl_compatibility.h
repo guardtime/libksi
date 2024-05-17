@@ -21,9 +21,29 @@
 #ifndef OPENSSL_COMPATIBILITY_H_
 #define OPENSSL_COMPATIBILITY_H_
 
+#include <openssl/opensslv.h>
+#include <openssl/evp.h>
+#include <stddef.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+
+	struct openssl_compatibility_functions_st {
+		void (*openssl_setup)(void);
+		void (*openssl_cleanup)(void);
+
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+		void* (*mac_ctx_new)(void);
+		void (*mac_ctx_free)(void *ctx);
+		int (*mac_ctx_reset)(void *ctx, const unsigned char *key, size_t key_len, const EVP_MD *md);
+		int (*mac_ctx_update)(void *ctx, const unsigned char *data, size_t data_len);
+		int (*mac_ctx_final)(void *ctx, unsigned char *out, size_t out_size, size_t *out_len);
+#endif
+	};
+
+	extern struct openssl_compatibility_functions_st KSI_openssl;
 
 	/**
 	 * These macros are needed to support both OpenSSL 1.0 and 1.1.
