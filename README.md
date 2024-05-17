@@ -29,6 +29,9 @@ sudo curl -O https://download.guardtime.com/ksi/configuration/guardtime.el7.repo
 # In case of RHEL/CentOS 8
 sudo curl -O https://download.guardtime.com/ksi/configuration/guardtime.el8.repo
 
+# In case of RHEL/CentOS 9
+sudo curl -O https://download.guardtime.com/ksi/configuration/guardtime.el9.repo
+
 sudo yum install libksi
 
 
@@ -37,11 +40,8 @@ sudo yum install libksi
 # Add Guardtime pgp key.
 sudo curl https://download.guardtime.com/ksi/GUARDTIME-GPG-KEY | sudo apt-key add -
 
-# In case of Ubuntu 16 (Xenial)
-sudo curl -o /etc/apt/sources.list.d/guardtime.list https://download.guardtime.com/ksi/configuration/guardtime.xenial.list
-
-# In case of Debian 9 (Stretch)
-sudo curl -o /etc/apt/sources.list.d/guardtime.list https://download.guardtime.com/ksi/configuration/guardtime.stretch.list
+# In case of Debian 12 (Bookworm)
+sudo curl -o /etc/apt/sources.list.d/guardtime.list https://download.guardtime.com/ksi/configuration/guardtime.bookworm.list
 
 sudo apt update
 apt-get install libksi
@@ -216,9 +216,10 @@ See `license.txt` file.
 
 ## Compatibility ##
 
-| OS/Platform                              | Compatibility                                |
-| :---                                       | :---                                         |
-| CentOS/RHEL 7 and 8 x86_64 architecture | Fully compatible and tested.                  |
-| Debian, ...                                | Compatible but not tested on a regular basis. |
-| macOS                                       | Compatible but not tested on a regular basis. |
-| Windows 7, 8, 10                           | Compatible but not tested on a regular basis. |
+| OS/Platform                              | Compatibility                                 |
+| :---                                     | :---                                          |
+| CentOS/RHEL 7,8,9 x86_64 architecture    | Fully compatible and tested.                  |
+| Debian 12+                               | Fully compatible and tested.                  |
+| Ubuntu                                   | Compatible but not tested on a regular basis. |
+| macOS                                    | Compatible but not tested on a regular basis. |
+| Windows 7, 8, 10, 11                     | Compatible but not tested on a regular basis. |
