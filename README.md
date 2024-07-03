@@ -38,7 +38,7 @@ sudo yum install libksi
 ### On Debian/Ubuntu ###
 
 # Add Guardtime pgp key.
-sudo curl https://download.guardtime.com/ksi/GUARDTIME-GPG-KEY | sudo apt-key add -
+sudo curl https://download.guardtime.com/ksi/GUARDTIME-GPG-KEY-2 | sudo apt-key add -
 
 # In case of Debian 12 (Bookworm)
 sudo curl -o /etc/apt/sources.list.d/guardtime.list https://download.guardtime.com/ksi/configuration/guardtime.bookworm.list
